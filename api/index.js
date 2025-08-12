@@ -16,7 +16,9 @@ const app = express();
 const allowedOrigins = [
     'https://www.some-sub-domain.render.com',
     'http://localhost:5173',
+    'https://localhost:5173',
     'http://localhost:3000',
+    'https://localhost:3000',
     'http://localhost:4000'
 ]
 
