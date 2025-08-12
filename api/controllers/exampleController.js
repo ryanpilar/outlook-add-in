@@ -2,7 +2,7 @@
 
 // ==============================|| Controler - Example ||============================== //
 
-module.exports = {
+export default {
     // @desc        
     // @route       GET /get-example
     // @access      Public
@@ -11,7 +11,7 @@ module.exports = {
         } catch (error) {            
         }
     },
-}
+};
 
 
 
