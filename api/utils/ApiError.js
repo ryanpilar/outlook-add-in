@@ -1,9 +1,26 @@
-// Tiny helper that carries an HTTP status code alongside the message
+
+/** ================|| ApiError - Custom Error Class ||================
+ *
+ * Represents an application-specific error for API responses.
+ *
+ * Extends the native Error object with:
+ *  - An HTTP status code for client responses
+ *  - A cleaner stack trace that omits the constructor itself
+ *
+ * Useful for throwing errors in routes or services where both a message
+ * and HTTP status need to be returned.
+ */
+
+// Helper that carries an HTTP status code alongside the message
 class ApiError extends Error {
   constructor(statusCode, message) {
     super(message);
-    this.statusCode = statusCode; // preserve the intended HTTP status
-    Error.captureStackTrace(this, this.constructor); // exclude constructor from stack
+
+    // Preserve the intended HTTP status
+    this.statusCode = statusCode;
+
+    // Exclude constructor from stack
+    Error.captureStackTrace(this, this.constructor);
   }
 }
 

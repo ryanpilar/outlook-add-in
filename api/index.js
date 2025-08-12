@@ -7,16 +7,18 @@ import { fileURLToPath } from 'url';
 import router from './routes/index.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 
-dotenv.config(); // Pull in environment variables
+dotenv.config();
 
-const app = express(); // Kick off Express
+const app = express();
 
 const corsOptionsDelegate = function (req, callback) {
     let corsOptions;
     if (req.header('Origin') === process.env.CLIENT_URL) {
-        corsOptions = { origin: true }; // Allow only the configured client
+        // Allow only the configured client
+        corsOptions = { origin: true };
     } else {
-        corsOptions = { origin: false }; // Deny strangers
+        // Deny strangers
+        corsOptions = { origin: false };
     }
     callback(null, corsOptions);
 };
@@ -39,9 +41,9 @@ const __dirname = path.dirname(__filename);
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ------------------------ Routes ----------------------- //
-app.use('/', router); // Mount all API routes here
+app.use('/', router);
 
-// ----------------------- Error Handling ----------------------- //
+// -------------------- Error Handling ------------------- //
 app.use(notFound);
 app.use(errorHandler);
 
