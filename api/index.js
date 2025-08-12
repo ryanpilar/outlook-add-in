@@ -3,30 +3,37 @@ import path from 'path';
 import express from 'express';
 import dotenv from 'dotenv';
 import morgan from 'morgan';
-import { fileURLToPath } from 'url';
+import {fileURLToPath} from 'url';
 import router from './routes/index.js';
-import { notFound, errorHandler } from './middleware/errorMiddleware.js';
+import {notFound, errorHandler} from './middleware/errorMiddleware.js';
 
 dotenv.config();
 
 const app = express();
 
-const corsOptionsDelegate = function (req, callback) {
+// -------------------- CORS POLICY --------------------- //
+
+const allowedOrigins = [
+    'https://www.some-sub-domain.render.com',
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://localhost:4000'
+]
+
+const checkCorsOrigin = function (req, callback) {
+    const origin = req.header('Origin');
     let corsOptions;
-    if (req.header('Origin') === process.env.CLIENT_URL) {
-        // Allow only the configured client
-        corsOptions = { origin: true };
+    if (allowedOrigins.includes(origin)) {
+        corsOptions = {origin: true};  // Allow
     } else {
-        // Deny strangers
-        corsOptions = { origin: false };
+        corsOptions = {origin: false}; // Decline
     }
     callback(null, corsOptions);
 };
-
-app.use(cors(corsOptionsDelegate)); // Enforce CORS per request
+app.use(cors(checkCorsOrigin));
 
 // --------------- BODY PARSER MIDDLEWARE ---------------- //
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({extended: false}));
 app.use(express.json());
 
 // ----------------- LOGGING MIDDLEWARE ------------------ //
