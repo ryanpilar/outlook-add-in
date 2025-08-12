@@ -14,7 +14,7 @@ const app = express();
 // -------------------- CORS POLICY --------------------- //
 
 const allowedOrigins = [
-    process.env.UI_BASE_URL,
+    process.env.API_BASE_URL,
     'http://localhost:5173',
     'https://localhost:5173',
     'http://localhost:3000',
