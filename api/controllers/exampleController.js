@@ -1,18 +1,17 @@
+import asyncHandler from '../middleware/asyncHandler.js';
+import ApiError from '../utils/ApiError.js';
 
-
-// ==============================|| Controler - Example ||============================== //
+// ==============================|| Controller - Example ||============================== //
 
 export default {
-    // @desc        
-    // @route       GET /get-example
-    // @access      Public
-    getExample: async (req, res) => {
-        try {            
-        } catch (error) {            
+    // @desc       Simple example endpoint
+    // @route      GET /get-example
+    // @access     Public
+    getExample: asyncHandler(async (req, res) => {
+        if (!req.query.ok) { // Demonstrate tossing a 400 when data is missing
+            throw new ApiError(400, 'Missing required query parameter: ok');
         }
-    },
+        res.json({ message: 'Example response' }); // Happy path
+    }),
 };
-
-
-
 
