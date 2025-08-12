@@ -14,7 +14,7 @@ const app = express();
 // -------------------- CORS POLICY --------------------- //
 
 const allowedOrigins = [
-    process.env.API_BASE_URL,
+    'https://outlook-add-in-ui.onrender.com',
     'http://localhost:5173',
     'https://localhost:5173',
     'http://localhost:3000',
