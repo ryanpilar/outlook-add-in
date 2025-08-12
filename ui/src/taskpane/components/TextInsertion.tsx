@@ -5,7 +5,7 @@ import { Button, Field, Textarea, tokens, makeStyles } from "@fluentui/react-com
 /* global HTMLTextAreaElement */
 
 interface TextInsertionProps {
-  insertText: (text: string) => void;
+  sendText: (text: string) => void;
 }
 
 const useStyles = makeStyles({
@@ -31,9 +31,9 @@ const useStyles = makeStyles({
 const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) => {
   const [text, setText] = useState<string>("Some text.");
 
-  const handleTextInsertion = async () => {
-    await props.insertText(text);
-  };
+    const handleTextSend = async () => {
+      await props.sendText(text);
+    };
 
   const handleTextChange = async (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setText(event.target.value);
@@ -43,13 +43,13 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
 
   return (
     <div className={styles.textPromptAndInsertion}>
-      <Field className={styles.textAreaField} size="large" label="Enter text to be inserted into the document.">
-        <Textarea size="large" value={text} onChange={handleTextChange} />
-      </Field>
-      <Field className={styles.instructions}>Click the button to insert text.</Field>
-      <Button appearance="primary" disabled={false} size="large" onClick={handleTextInsertion}>
-        Insert text
-      </Button>
+        <Field className={styles.textAreaField} size="large" label="Enter text to send to the API.">
+          <Textarea size="large" value={text} onChange={handleTextChange} />
+        </Field>
+        <Field className={styles.instructions}>Click the button to send text.</Field>
+        <Button appearance="primary" disabled={false} size="large" onClick={handleTextSend}>
+          Send text
+        </Button>
     </div>
   );
 };
