@@ -14,7 +14,7 @@ const app = express();
 // -------------------- CORS POLICY --------------------- //
 
 const allowedOrigins = [
-    'https://www.some-sub-domain.render.com',
+    process.env.UI_BASE_URL,
     'http://localhost:5173',
     'https://localhost:5173',
     'http://localhost:3000',
