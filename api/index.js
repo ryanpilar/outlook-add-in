@@ -4,12 +4,9 @@ import express from 'express';
 import dotenv from 'dotenv';
 import morgan from 'morgan';
 import { fileURLToPath } from 'url';
-
-import connectDB from './config/mongo.js';
 import router from './routes/index.js';
 
 dotenv.config();
-connectDB();
 
 const app = express();
 
