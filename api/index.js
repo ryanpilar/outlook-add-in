@@ -1,12 +1,15 @@
-const cors = require('cors');
-const path = require('path')
-const express = require('express');
-const dotenv = require('dotenv')
-const morgan = require('morgan')
-const connectDB = require('./config/mongo')
+import cors from 'cors';
+import path from 'path';
+import express from 'express';
+import dotenv from 'dotenv';
+import morgan from 'morgan';
+import { fileURLToPath } from 'url';
+
+import connectDB from './config/mongo.js';
+import router from './routes/index.js';
 
 dotenv.config();
-connectDB()
+connectDB();
 
 const app = express();
 
@@ -23,24 +26,28 @@ const corsOptionsDelegate = function (req, callback) {
 app.use(cors(corsOptionsDelegate));
 
 // --------------- BODY PARSER MIDDLEWARE ---------------- //
-app.use(express.urlencoded( {extended: false}))
+app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
 // ----------------- LOGGING MIDDLEWARE ------------------ //
 if (process.env.NODE_ENV === 'development') {
-    app.use(morgan('dev'))
+    app.use(morgan('dev'));
 }
 
 // -------------------- Static Assets -------------------- //
-app.use(express.static(path.join(__dirname, 'public')) )
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
+app.use(express.static(path.join(__dirname, 'public')));
 
 // ------------------------ Routes ----------------------- //
-app.use('/', require('./routes/index'))
+app.use('/', router);
 
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 3000;
 app.listen(
-    PORT, () => console.log(`Server running in ${process.env.NODE_ENV} mode, on port ${PORT}`)
-)
+    PORT,
+    () => console.log(`Server running in ${process.env.NODE_ENV} mode, on port ${PORT}`)
+);
 
-module.exports = app;
+export default app;
+
