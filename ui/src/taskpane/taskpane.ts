@@ -2,7 +2,8 @@
 
 export async function sendText(text: string) {
   try {
-    await fetch(`${process.env.API_BASE_URL}/log-text`, {
+
+    await fetch(`https://outlook-add-in-kdr8.onrender.com/log-text`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text }),
