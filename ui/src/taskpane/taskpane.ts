@@ -1,18 +1,14 @@
-/* global Office console */
+/* global console */
 
-export async function insertText(text: string) {
-  // Write text to the cursor point in the compose surface.
+export async function sendText(text: string) {
   try {
-    Office.context.mailbox.item?.body.setSelectedDataAsync(
-      text,
-      { coercionType: Office.CoercionType.Text },
-      (asyncResult: Office.AsyncResult<void>) => {
-        if (asyncResult.status === Office.AsyncResultStatus.Failed) {
-          throw asyncResult.error.message;
-        }
-      }
-    );
+    await fetch('http://localhost:4000/log-text', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    });
   } catch (error) {
     console.log("Error: " + error);
   }
 }
+
