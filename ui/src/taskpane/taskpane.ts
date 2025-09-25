@@ -23,7 +23,70 @@ const sanitizeString = (value: unknown): string | null => {
 
 // Collect a minimal metadata envelope (subject, sender, threading identifiers) that
 // is useful both for retrieval ranking and for threading responses later on.
-const collectEmailMetadata = (): BasicEmailMetadata => {
+const getSubject = async (currentItem: any): Promise<string | null> => {
+  const rawSubject = currentItem?.subject;
+
+  if (typeof rawSubject === "string") {
+    return sanitizeString(rawSubject);
+  }
+
+  if (
+    rawSubject &&
+    typeof rawSubject === "object" &&
+    typeof (rawSubject as { getAsync?: unknown }).getAsync === "function"
+  ) {
+    return new Promise((resolve) => {
+      const subjectField = rawSubject as {
+        getAsync: (callback: (asyncResult: Office.AsyncResult<string>) => void) => void;
+      };
+
+      subjectField.getAsync((asyncResult: Office.AsyncResult<string>) => {
+        if (asyncResult.status === Office.AsyncResultStatus.Succeeded) {
+          resolve(sanitizeString(asyncResult.value ?? null));
+        } else {
+          resolve(null);
+        }
+      });
+    });
+  }
+
+  const normalizedSubject = sanitizeString((currentItem as any)?.normalizedSubject);
+
+  if (normalizedSubject) {
+    return normalizedSubject;
+  }
+
+  return null;
+};
+
+const collectSender = (currentItem: any): BasicEmailMetadata["sender"] => {
+  const potentialSender =
+    currentItem?.from ?? currentItem?.sender ?? currentItem?.organizer ?? null;
+
+  if (!potentialSender || typeof potentialSender !== "object") {
+    return null;
+  }
+
+  const displayName = sanitizeString(
+    (potentialSender as any).displayName ?? (potentialSender as any).name
+  );
+  const rawEmail =
+    sanitizeString((potentialSender as any).emailAddress) ??
+    sanitizeString((potentialSender as any).smtpAddress) ??
+    sanitizeString((potentialSender as any).address);
+  const emailAddress = rawEmail ? rawEmail.toLowerCase() : null;
+
+  if (!displayName && !emailAddress) {
+    return null;
+  }
+
+  return {
+    displayName,
+    emailAddress,
+  };
+};
+
+const collectEmailMetadata = async (): Promise<BasicEmailMetadata> => {
   const mailbox = Office.context.mailbox;
   const currentItem = mailbox?.item as any;
 
@@ -33,27 +96,11 @@ const collectEmailMetadata = (): BasicEmailMetadata => {
     return {};
   }
 
-  const subject = sanitizeString(currentItem.subject);
+  const subject = await getSubject(currentItem);
   const conversationId = sanitizeString(currentItem.conversationId);
   const internetMessageId = sanitizeString(currentItem.internetMessageId);
 
-  // Depending on the Outlook surface, sender info may live on either `from` or `sender`.
-  const potentialSender = currentItem.from ?? currentItem.sender ?? null;
-  let sender: BasicEmailMetadata["sender"] = null;
-
-  if (potentialSender && typeof potentialSender === "object") {
-    const displayName = sanitizeString((potentialSender as any).displayName);
-    const emailAddressRaw = sanitizeString((potentialSender as any).emailAddress);
-    const emailAddress = emailAddressRaw ? emailAddressRaw.toLowerCase() : null;
-
-    if (displayName || emailAddress) {
-      // Only include the sender object when we have at least one useful attribute.
-      sender = {
-        displayName,
-        emailAddress,
-      };
-    }
-  }
+  const sender = collectSender(currentItem);
 
   return {
     subject,
@@ -95,7 +142,7 @@ export async function sendText(): Promise<void> {
   try {
     // Retrieve the body of the current email as plain text.
     const bodyText = await getBodyText();
-    const metadata = collectEmailMetadata();
+    const metadata = await collectEmailMetadata();
 
     // Post the email content to the local development server for logging.
     await fetch(`http://localhost:4000/log-text`, {
