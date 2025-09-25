@@ -8,7 +8,9 @@ export default {
     // @access     Public
     logText: asyncHandler(async (req, res) => {
         const { text } = req.body;
-        console.log('Received text:', text);
+        console.log('----- Email content received from add-in -----');
+        console.log(text);
+        console.log('----------------------------------------------');
         res.status(200).json({ message: 'Text logged' });
     }),
 };
