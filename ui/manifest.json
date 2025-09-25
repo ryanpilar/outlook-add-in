@@ -36,7 +36,7 @@
         ]
       }
     },
-    "validDomains": ["contoso.com"],
+    "validDomains": ["localhost", "contoso.com"],
     "extensions": [
       {
         "requirements": {
@@ -55,7 +55,7 @@
             "id": "TaskPaneRuntime",
             "type": "general",
             "code": {
-              "page": "https://outlook-add-in-ui.onrender.com/taskpane.html"
+              "page": "https://localhost:3000/taskpane.html"
             },
             "lifetime": "short",
             "actions": [
@@ -71,8 +71,8 @@
             "id": "CommandsRuntime",
             "type": "general",
             "code": {
-              "page": "https://outlook-add-in-ui.onrender.com/commands.html",
-              "script": "https://outlook-add-in-ui.onrender.com/commands.js"
+              "page": "https://localhost:3000/commands.html",
+              "script": "https://localhost:3000/commands.js"
             },
             "lifetime": "short",
             "actions": [
@@ -96,9 +96,9 @@
                     "id": "msgComposeGroup",
                     "label": "Contoso Add-in",
                     "icons": [
-                      { "size": 16, "url": "https://outlook-add-in-ui.onrender.com/assets/icon-16.png" },
-                      { "size": 32, "url": "https://outlook-add-in-ui.onrender.com/assets/icon-32.png" },
-                      { "size": 80, "url": "https://outlook-add-in-ui.onrender.com/assets/icon-80.png" }
+                      { "size": 16, "url": "https://localhost:3000/assets/icon-16.png" },
+                      { "size": 32, "url": "https://localhost:3000/assets/icon-32.png" },
+                      { "size": 80, "url": "https://localhost:3000/assets/icon-80.png" }
                     ],
                     "controls": [
                       {
@@ -106,9 +106,9 @@
                         "type": "button",
                         "label": "Show Task Pane",
                         "icons": [
-                          { "size": 16, "url": "https://outlook-add-in-ui.onrender.com/assets/icon-16.png" },
-                          { "size": 32, "url": "https://outlook-add-in-ui.onrender.com/assets/icon-32.png" },
-                          { "size": 80, "url": "https://outlook-add-in-ui.onrender.com/assets/icon-80.png" }
+                          { "size": 16, "url": "https://localhost:3000/assets/icon-16.png" },
+                          { "size": 32, "url": "https://localhost:3000/assets/icon-32.png" },
+                          { "size": 80, "url": "https://localhost:3000/assets/icon-80.png" }
                         ],
                         "supertip": {
                           "title": "Show Task Pane",
@@ -121,9 +121,9 @@
                         "type": "button",
                         "label": "Perform an action",
                         "icons": [
-                          { "size": 16, "url": "https://outlook-add-in-ui.onrender.com/assets/icon-16.png" },
-                          { "size": 32, "url": "https://outlook-add-in-ui.onrender.com/assets/icon-32.png" },
-                          { "size": 80, "url": "https://outlook-add-in-ui.onrender.com/assets/icon-80.png" }
+                          { "size": 16, "url": "https://localhost:3000/assets/icon-16.png" },
+                          { "size": 32, "url": "https://localhost:3000/assets/icon-32.png" },
+                          { "size": 80, "url": "https://localhost:3000/assets/icon-80.png" }
                         ],
                         "supertip": {
                           "title": "Perform an action",
