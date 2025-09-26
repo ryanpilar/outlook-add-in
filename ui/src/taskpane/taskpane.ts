@@ -78,32 +78,8 @@ const isAsyncEmailAccessor = (value: unknown): value is AsyncEmailAccessor =>
   typeof value === "object" &&
   typeof (value as AsyncEmailAccessor).getAsync === "function";
 
-type AsyncEmailAccessorFunction = (
-  callback: (asyncResult: Office.AsyncResult<Office.EmailAddressDetails>) => void
-) => void;
-
-const isAsyncEmailAccessorFunction = (value: unknown): value is AsyncEmailAccessorFunction =>
-  typeof value === "function";
-
 const loadEmailAddressDetails = async (candidate: unknown): Promise<SenderDetailsLike | null> => {
   if (!candidate || typeof candidate !== "object") {
-    if (isAsyncEmailAccessorFunction(candidate)) {
-      return new Promise((resolve) => {
-        try {
-          candidate((asyncResult: Office.AsyncResult<Office.EmailAddressDetails>) => {
-            if (asyncResult.status === Office.AsyncResultStatus.Succeeded && asyncResult.value) {
-              resolve(asyncResult.value as SenderDetailsLike);
-            } else {
-              resolve(null);
-            }
-          });
-        } catch (error) {
-          console.error("Failed to invoke async email accessor", error);
-          resolve(null);
-        }
-      });
-    }
-
     return null;
   }
 
@@ -186,31 +162,6 @@ const isSenderCurrentUser = (
 const findSenderMetadata = async (currentItem: any): Promise<BasicEmailMetadata["sender"]> => {
   const mailboxItem = Office.context.mailbox?.item as any;
 
-  const bindOptionalAccessor = (
-    accessor: unknown,
-    context: unknown
-  ): AsyncEmailAccessorFunction | null => {
-    if (typeof accessor !== "function") {
-      return null;
-    }
-
-    try {
-      return accessor.bind(context) as AsyncEmailAccessorFunction;
-    } catch (error) {
-      console.error("Unable to bind async email accessor", error);
-      return null;
-    }
-  };
-
-  const asyncAccessors: (AsyncEmailAccessorFunction | null)[] = [
-    bindOptionalAccessor(mailboxItem?.getFromAsync, mailboxItem),
-    bindOptionalAccessor(currentItem?.getFromAsync, currentItem),
-    bindOptionalAccessor(mailboxItem?.getSenderAsync, mailboxItem),
-    bindOptionalAccessor(currentItem?.getSenderAsync, currentItem),
-    bindOptionalAccessor(mailboxItem?.getOrganizerAsync, mailboxItem),
-    bindOptionalAccessor(currentItem?.getOrganizerAsync, currentItem),
-  ];
-
   const candidates: unknown[] = [
     mailboxItem?.from,
     currentItem?.from,
@@ -218,7 +169,6 @@ const findSenderMetadata = async (currentItem: any): Promise<BasicEmailMetadata[
     currentItem?.organizer,
     mailboxItem?.sender,
     currentItem?.sender,
-    ...asyncAccessors,
   ];
   const seen = new Set<unknown>();
   const currentUser = getMailboxUserIdentity();
