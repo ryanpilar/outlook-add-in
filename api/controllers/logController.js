@@ -5,21 +5,23 @@
  * flow for the Outlook add-in. Once the stage controllers are fully
  * implemented, the orchestrator will:
  *
- * 1. Ensure the normalized payload and vector-store metadata produced during
- *    ingestion are threaded through retrieval so the correct OpenAI file
- *    collections are exposed to the Responses API.
- * 2. Coordinate the single `POST /v1/responses` call (with `file_search`) that
- *    drafts three variants, capturing tool-call telemetry and handling retries
- *    or fallbacks when OpenAI throttles.
- * 3. Hand off the raw model output to verification so schema validation,
- *    citation mapping, and safety checks complete before anything is returned to
- *    the client.
+ * 1. Ensure the normalized payload and vector-store metadata (file IDs + label map)
+ *    produced during ingestion are threaded through retrieval so the correct
+ *    OpenAI file collections are exposed to the Responses API, and citations can
+ *    resolve back to human-friendly labels.
+ *          File Search guide: https://platform.openai.com/docs/guides/tools-file-search
  *
- * For now the controller simply invokes the scaffolds to document the intended
- * data flow. As functionality arrives, this file becomes the authoritative entry
- * point that glues the stages together and centralizes cross-cutting concerns
- * like tracing, error handling, and latency measurement.
+ * 2. Coordinate the single `POST /v1/responses` call with File Search enabled,
+ *    attaching the chosen vector store IDs, capturing tool-call telemetry, and
+ *    handling retries/backoff on 429s.
+ *          Responses API: https://platform.openai.com/docs/api-reference/responses
+ *          Rate limits: https://platform.openai.com/docs/guides/rate-limits
+ *          Migration: https://platform.openai.com/docs/guides/migrate-to-responses
+ *
+ * 3. Hand off the raw model output to verification so schema validation, citation
+ *    mapping, and safety checks complete before anything is returned to the client.
  */
+
 import asyncHandler from '../middleware/asyncHandler.js';
 import { ingestEmailSubmission } from './ingestController.js';
 import { retrieveContextForEmail } from './retrieveController.js';

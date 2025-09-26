@@ -13,10 +13,6 @@
  * 3. Enforce fallbacks—if no supporting files were cited or verification prompts
  *    flag contradictions, produce a safe apology/deferral response or trigger a
  *    regeneration request.
- *
- * This scaffold simply captures the intent with TODO notes. Future iterations
- * will add automated fact-check prompts, policy enforcement, optional human
- * review hooks, and telemetry suitable for auditing.
  */
 export const verifyCandidateResponses = async (candidatesBundle) => {
     return {

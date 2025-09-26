@@ -6,19 +6,19 @@
  * When fleshed out, this controller will:
  *
  * 1. Compose a shared system prompt and three differentiated user instructions
- *    (e.g., tone or framing variations) that reference the `file_search` tool
- *    and constrain the model to retrieved context only.
- * 2. Call `POST /v1/responses` with `tools: [{ type: 'file_search' }]`, passing
- *    the selected vector store IDs so OpenAI fetches supporting passages behind
- *    the scenes while tracking token usage and tool call metadata.
- * 3. Parse the structured response (JSON mode) into a normalized candidate list
- *    that includes citations (file IDs, chunk offsets), model configuration, and
- *    any observations needed for verification or UI display.
- *
- * The scaffold below outlines those responsibilities while returning
- * placeholders. Future iterations will add the actual OpenAI client integration,
- * retry/backoff policies, and instrumentation.
+ *    (e.g., tone or framing variations) that enable File Search and constrain
+ *    the model to retrieved context only.
+ * 2. Call `POST /v1/responses`, attach the selected vector store IDs so OpenAI
+ *    fetches supporting passages behind the scenes, and capture tool-call usage
+ *    + timing for observability. (Responses API:
+ *    https://platform.openai.com/docs/api-reference/responses • Tools:
+ *    https://platform.openai.com/docs/guides/tools • Rate limits:
+ *    https://platform.openai.com/docs/guides/rate-limits)
+ * 3. Parse the structured output into a normalized candidate list that includes
+ *    citations (file IDs, offsets/annotations), model configuration, and any
+ *    observations needed for verification or UI display.
  */
+
 export const generateCandidateResponses = async (contextBundle) => {
     return {
         candidates: [],
