@@ -160,15 +160,27 @@ const isSenderCurrentUser = (
 };
 
 const findSenderMetadata = async (currentItem: any): Promise<BasicEmailMetadata["sender"]> => {
-  const candidates = [
-    { accessor: currentItem?.from },
-    { accessor: currentItem?.organizer },
-    { accessor: currentItem?.sender },
+  const mailboxItem = Office.context.mailbox?.item as any;
+
+  const candidates: unknown[] = [
+    mailboxItem?.from,
+    currentItem?.from,
+    mailboxItem?.organizer,
+    currentItem?.organizer,
+    mailboxItem?.sender,
+    currentItem?.sender,
   ];
+  const seen = new Set<unknown>();
   const currentUser = getMailboxUserIdentity();
 
   for (const candidate of candidates) {
-    const details = await loadEmailAddressDetails(candidate.accessor);
+    if (!candidate || seen.has(candidate)) {
+      continue;
+    }
+
+    seen.add(candidate);
+
+    const details = await loadEmailAddressDetails(candidate);
     const sanitized = normalizeEmailAddressDetails(details);
 
     if (sanitized && !isSenderCurrentUser(sanitized, currentUser)) {
