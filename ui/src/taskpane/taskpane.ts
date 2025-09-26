@@ -59,21 +59,55 @@ const getSubject = async (currentItem: any): Promise<string | null> => {
   return null;
 };
 
-const collectSender = (currentItem: any): BasicEmailMetadata["sender"] => {
-  const potentialSender =
-    currentItem?.from ?? currentItem?.sender ?? currentItem?.organizer ?? null;
+type SenderDetailsLike = {
+  displayName?: string | null;
+  emailAddress?: string | null;
+  name?: string | null;
+  smtpAddress?: string | null;
+  address?: string | null;
+};
 
-  if (!potentialSender || typeof potentialSender !== "object") {
+type AsyncEmailAccessor = {
+  getAsync: (
+    callback: (asyncResult: Office.AsyncResult<Office.EmailAddressDetails>) => void
+  ) => void;
+};
+
+const isAsyncEmailAccessor = (value: unknown): value is AsyncEmailAccessor =>
+  !!value &&
+  typeof value === "object" &&
+  typeof (value as AsyncEmailAccessor).getAsync === "function";
+
+const resolveSenderDetails = async (candidate: unknown): Promise<SenderDetailsLike | null> => {
+  if (!candidate || typeof candidate !== "object") {
     return null;
   }
 
-  const displayName = sanitizeString(
-    (potentialSender as any).displayName ?? (potentialSender as any).name
-  );
+  if (isAsyncEmailAccessor(candidate)) {
+    return new Promise((resolve) => {
+      candidate.getAsync((asyncResult: Office.AsyncResult<Office.EmailAddressDetails>) => {
+        if (asyncResult.status === Office.AsyncResultStatus.Succeeded && asyncResult.value) {
+          resolve(asyncResult.value as SenderDetailsLike);
+        } else {
+          resolve(null);
+        }
+      });
+    });
+  }
+
+  return candidate as SenderDetailsLike;
+};
+
+const sanitizeSenderDetails = (details: SenderDetailsLike | null): BasicEmailMetadata["sender"] => {
+  if (!details || typeof details !== "object") {
+    return null;
+  }
+
+  const displayName = sanitizeString(details.displayName ?? details.name ?? null);
   const rawEmail =
-    sanitizeString((potentialSender as any).emailAddress) ??
-    sanitizeString((potentialSender as any).smtpAddress) ??
-    sanitizeString((potentialSender as any).address);
+    sanitizeString(details.emailAddress ?? null) ??
+    sanitizeString(details.smtpAddress ?? null) ??
+    sanitizeString(details.address ?? null);
   const emailAddress = rawEmail ? rawEmail.toLowerCase() : null;
 
   if (!displayName && !emailAddress) {
@@ -84,6 +118,21 @@ const collectSender = (currentItem: any): BasicEmailMetadata["sender"] => {
     displayName,
     emailAddress,
   };
+};
+
+const collectSender = async (currentItem: any): Promise<BasicEmailMetadata["sender"]> => {
+  const candidates = [currentItem?.from, currentItem?.sender, currentItem?.organizer];
+
+  for (const candidate of candidates) {
+    const details = await resolveSenderDetails(candidate);
+    const sanitized = sanitizeSenderDetails(details);
+
+    if (sanitized) {
+      return sanitized;
+    }
+  }
+
+  return null;
 };
 
 const collectEmailMetadata = async (): Promise<BasicEmailMetadata> => {
@@ -100,7 +149,7 @@ const collectEmailMetadata = async (): Promise<BasicEmailMetadata> => {
   const conversationId = sanitizeString(currentItem.conversationId);
   const internetMessageId = sanitizeString(currentItem.internetMessageId);
 
-  const sender = collectSender(currentItem);
+  const sender = await collectSender(currentItem);
 
   return {
     subject,
