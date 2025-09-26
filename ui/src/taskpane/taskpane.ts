@@ -78,6 +78,17 @@ const isAsyncEmailAccessor = (value: unknown): value is AsyncEmailAccessor =>
   typeof value === "object" &&
   typeof (value as AsyncEmailAccessor).getAsync === "function";
 
+type AsyncRecipientAccessor = {
+  getAsync: (
+    callback: (asyncResult: Office.AsyncResult<Office.EmailAddressDetails[]>) => void
+  ) => void;
+};
+
+const isAsyncRecipientAccessor = (value: unknown): value is AsyncRecipientAccessor =>
+  !!value &&
+  typeof value === "object" &&
+  typeof (value as AsyncRecipientAccessor).getAsync === "function";
+
 const loadEmailAddressDetails = async (candidate: unknown): Promise<SenderDetailsLike | null> => {
   if (!candidate || typeof candidate !== "object") {
     return null;
@@ -96,6 +107,34 @@ const loadEmailAddressDetails = async (candidate: unknown): Promise<SenderDetail
   }
 
   return candidate as SenderDetailsLike;
+};
+
+const loadRecipientList = async (candidate: unknown): Promise<SenderDetailsLike[]> => {
+  if (!candidate) {
+    return [];
+  }
+
+  if (Array.isArray(candidate)) {
+    return candidate as SenderDetailsLike[];
+  }
+
+  if (isAsyncRecipientAccessor(candidate)) {
+    return new Promise((resolve) => {
+      candidate.getAsync((asyncResult: Office.AsyncResult<Office.EmailAddressDetails[]>) => {
+        if (asyncResult.status === Office.AsyncResultStatus.Succeeded && Array.isArray(asyncResult.value)) {
+          resolve(asyncResult.value as SenderDetailsLike[]);
+        } else {
+          resolve([]);
+        }
+      });
+    });
+  }
+
+  if (typeof candidate === "object") {
+    return [candidate as SenderDetailsLike];
+  }
+
+  return [];
 };
 
 const normalizeEmailAddressDetails = (
@@ -185,6 +224,36 @@ const findSenderMetadata = async (currentItem: any): Promise<BasicEmailMetadata[
 
     if (sanitized && !isSenderCurrentUser(sanitized, currentUser)) {
       return sanitized;
+    }
+  }
+
+  const recipientGroups = await Promise.all([
+    loadRecipientList(mailboxItem?.to),
+    loadRecipientList(currentItem?.to),
+  ]);
+
+  const seenRecipients = new Set<string>();
+
+  for (const group of recipientGroups) {
+    for (const recipient of group) {
+      const sanitized = normalizeEmailAddressDetails(recipient);
+
+      if (!sanitized) {
+        continue;
+      }
+
+      const identifier =
+        sanitized.emailAddress?.toLowerCase() ?? sanitized.displayName?.toLowerCase();
+
+      if (!identifier || seenRecipients.has(identifier)) {
+        continue;
+      }
+
+      seenRecipients.add(identifier);
+
+      if (!isSenderCurrentUser(sanitized, currentUser)) {
+        return sanitized;
+      }
     }
   }
 
