@@ -23,7 +23,7 @@ const sanitizeString = (value: unknown): string | null => {
 
 // Collect a minimal metadata envelope (subject, sender, threading identifiers) that
 // is useful both for retrieval ranking and for threading responses later on.
-const getSubject = async (currentItem: any): Promise<string | null> => {
+const getSubjectLine = async (currentItem: any): Promise<string | null> => {
   const rawSubject = currentItem?.subject;
 
   if (typeof rawSubject === "string") {
@@ -78,7 +78,7 @@ const isAsyncEmailAccessor = (value: unknown): value is AsyncEmailAccessor =>
   typeof value === "object" &&
   typeof (value as AsyncEmailAccessor).getAsync === "function";
 
-const resolveSenderDetails = async (candidate: unknown): Promise<SenderDetailsLike | null> => {
+const loadEmailAddressDetails = async (candidate: unknown): Promise<SenderDetailsLike | null> => {
   if (!candidate || typeof candidate !== "object") {
     return null;
   }
@@ -98,7 +98,9 @@ const resolveSenderDetails = async (candidate: unknown): Promise<SenderDetailsLi
   return candidate as SenderDetailsLike;
 };
 
-const sanitizeSenderDetails = (details: SenderDetailsLike | null): BasicEmailMetadata["sender"] => {
+const normalizeEmailAddressDetails = (
+  details: SenderDetailsLike | null
+): BasicEmailMetadata["sender"] => {
   if (!details || typeof details !== "object") {
     return null;
   }
@@ -120,14 +122,56 @@ const sanitizeSenderDetails = (details: SenderDetailsLike | null): BasicEmailMet
   };
 };
 
-const collectSender = async (currentItem: any): Promise<BasicEmailMetadata["sender"]> => {
-  const candidates = [currentItem?.from, currentItem?.sender, currentItem?.organizer];
+type MailboxUserIdentity = { displayName: string | null; emailAddress: string | null };
+
+const getMailboxUserIdentity = (): MailboxUserIdentity => {
+  const mailbox = Office.context.mailbox;
+  const profile = mailbox?.userProfile;
+
+  const displayName = sanitizeString(profile?.displayName ?? null);
+  const emailAddress = sanitizeString(profile?.emailAddress ?? null);
+
+  return {
+    displayName: displayName ? displayName.toLowerCase() : null,
+    emailAddress: emailAddress ? emailAddress.toLowerCase() : null,
+  };
+};
+
+const isSenderCurrentUser = (
+  sender: BasicEmailMetadata["sender"],
+  currentUser: MailboxUserIdentity
+): boolean => {
+  if (!sender) {
+    return false;
+  }
+
+  const normalizedSenderEmail = sender.emailAddress?.toLowerCase() ?? null;
+  const normalizedSenderName = sender.displayName?.toLowerCase() ?? null;
+
+  if (normalizedSenderEmail && currentUser.emailAddress) {
+    return normalizedSenderEmail === currentUser.emailAddress;
+  }
+
+  if (normalizedSenderName && currentUser.displayName) {
+    return normalizedSenderName === currentUser.displayName;
+  }
+
+  return false;
+};
+
+const findSenderMetadata = async (currentItem: any): Promise<BasicEmailMetadata["sender"]> => {
+  const candidates = [
+    { accessor: currentItem?.from },
+    { accessor: currentItem?.organizer },
+    { accessor: currentItem?.sender },
+  ];
+  const currentUser = getMailboxUserIdentity();
 
   for (const candidate of candidates) {
-    const details = await resolveSenderDetails(candidate);
-    const sanitized = sanitizeSenderDetails(details);
+    const details = await loadEmailAddressDetails(candidate.accessor);
+    const sanitized = normalizeEmailAddressDetails(details);
 
-    if (sanitized) {
+    if (sanitized && !isSenderCurrentUser(sanitized, currentUser)) {
       return sanitized;
     }
   }
@@ -135,7 +179,7 @@ const collectSender = async (currentItem: any): Promise<BasicEmailMetadata["send
   return null;
 };
 
-const collectEmailMetadata = async (): Promise<BasicEmailMetadata> => {
+const buildEmailMetadata = async (): Promise<BasicEmailMetadata> => {
   const mailbox = Office.context.mailbox;
   const currentItem = mailbox?.item as any;
 
@@ -145,11 +189,11 @@ const collectEmailMetadata = async (): Promise<BasicEmailMetadata> => {
     return {};
   }
 
-  const subject = await getSubject(currentItem);
+  const subject = await getSubjectLine(currentItem);
   const conversationId = sanitizeString(currentItem.conversationId);
   const internetMessageId = sanitizeString(currentItem.internetMessageId);
 
-  const sender = await collectSender(currentItem);
+  const sender = await findSenderMetadata(currentItem);
 
   return {
     subject,
@@ -191,7 +235,7 @@ export async function sendText(): Promise<void> {
   try {
     // Retrieve the body of the current email as plain text.
     const bodyText = await getBodyText();
-    const metadata = await collectEmailMetadata();
+    const metadata = await buildEmailMetadata();
 
     // Post the email content to the local development server for logging.
     await fetch(`http://localhost:4000/log-text`, {
