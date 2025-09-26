@@ -36,6 +36,22 @@ export default {
     // @access     Public
     logText: asyncHandler(async (req, res) => {
         const ingestResult = await ingestEmailSubmission(req.body);
+
+        const {
+            body: normalizedBody,
+            metadata: { subject, sender },
+        } = ingestResult.normalizedEmail;
+
+        const senderLabel = sender?.displayName || sender?.emailAddress || 'Unknown sender';
+        const preview = normalizedBody.replace(/\s+/g, ' ').trim().slice(0, 200);
+
+        console.info('📬  Email submission received from Outlook add-in');
+        console.info(`     From   : ${senderLabel}`);
+        console.info(`     Subject: ${subject || '(no subject)'}`);
+        console.info(
+            `     Preview: ${preview}${normalizedBody.length > 200 ? '…' : ''}`
+        );
+
         const retrievalPlan = await retrieveContextForEmail(ingestResult.normalizedEmail);
         const generationPlan = await generateCandidateResponses(retrievalPlan);
         const verificationPlan = await verifyCandidateResponses(generationPlan);
