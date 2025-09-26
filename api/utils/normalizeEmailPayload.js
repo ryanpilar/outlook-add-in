@@ -6,10 +6,6 @@ const INVISIBLE_MICROSOFT_CHARS = /[\u200B\u200C\u200D\u200E\u200F\u202A-\u202E\
 // Outlook often relies on non-breaking spaces for layout; replacing them with normal
 // spaces makes it easier for LLM prompts to treat them as word separators.
 const NBSP_REGEX = /\u00A0/g;
-// Collapse consecutive spaces and tabs so the prompt is easier to read. We leave two
-// newlines intact because they communicate paragraph breaks.
-const MULTI_SPACE_REGEX = /[ \t]{2,}/g;
-
 // Generic string sanitizer that trims leading/trailing whitespace and normalizes
 // empty strings to null so callers can easily test the presence of a value.
 const sanitizeString = (value) => {
@@ -47,23 +43,17 @@ const sanitizeSender = (sender) => {
 // This helper strips those artifacts while preserving deliberate formatting such as
 // paragraph breaks so we can hand OpenAI a clean, human-readable prompt.
 const normalizeBodyText = (text) => {
-    const sanitized = sanitizeString(text) ?? '';
-
-    if (!sanitized) {
+    if (typeof text !== 'string') {
         return '';
     }
 
-    return sanitized
+    return text
         // First remove invisible control characters that contribute noise.
         .replace(INVISIBLE_MICROSOFT_CHARS, '')
         // Then replace non-breaking spaces with standard spaces.
         .replace(NBSP_REGEX, ' ')
         // Normalise Windows line endings to plain \n so downstream diffs are stable.
-        .replace(/\r\n?/g, '\n')
-        // Collapse sequences of spaces/tabs while leaving single spaces untouched.
-        .replace(MULTI_SPACE_REGEX, ' ')
-        // Finally, trim again in case the replacements introduced leading/trailing spaces.
-        .trim();
+        .replace(/\r\n?/g, '\n');
 };
 
 const normalizeEmailPayload = (payload = {}) => {
