@@ -33,8 +33,12 @@ export async function sendText(): Promise<void> {
     });
 
   try {
+    console.info("[Taskpane] Send email content button pressed. Retrieving email body...");
     // Retrieve the body of the current email as plain text so it can be sent to the backend.
     const bodyText = await getBodyText();
+    console.info(
+      `[Taskpane] Email body retrieved (${bodyText.length} characters). Preparing to post to the logging service...`
+    );
     // Build a metadata payload (subject, sender, conversation info) to accompany the body content.
     const metadata = await buildEmailMetadata();
 
@@ -46,6 +50,7 @@ export async function sendText(): Promise<void> {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text: bodyText, metadata }),
     });
+    console.info("[Taskpane] Email content successfully posted to the logging service.");
     // await fetch(`https://outlook-add-in-kdr8.onrender.com/log-text`, {
     //   method: "POST",
     //   headers: { "Content-Type": "application/json" },
