@@ -6,20 +6,30 @@
 /* global Office */
 
 Office.onReady(() => {
-  if (Office && Office.addin && typeof Office.addin.showAsTaskpane === "function") {
-    Office.addin
-      .showAsTaskpane()
-      .then(() => {
-        if (
-          Office.context &&
-          Office.context.ui &&
-          typeof Office.context.ui.closeContainer === "function"
-        ) {
-          Office.context.ui.closeContainer();
-        }
-      })
-      .catch(() => {
-        // no-op: if the host does not support showAsTaskpane we leave the default behavior
-      });
-  }
+  // If needed, Office.js is ready to be called.
 });
+
+/**
+ * Shows a notification when the add-in command is executed.
+ * @param event
+ */
+function action(event: Office.AddinCommands.Event) {
+  const message: Office.NotificationMessageDetails = {
+    type: Office.MailboxEnums.ItemNotificationMessageType.InformationalMessage,
+    message: "Performed action.",
+    icon: "Icon.80x80",
+    persistent: true,
+  };
+
+  // Show a notification message.
+  Office.context.mailbox.item?.notificationMessages.replaceAsync(
+    "ActionPerformanceNotification",
+    message
+  );
+
+  // Be sure to indicate when the add-in command function is complete.
+  event.completed();
+}
+
+// Register the function with Office.
+Office.actions.associate("action", action);
