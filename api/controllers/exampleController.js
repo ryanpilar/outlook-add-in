@@ -1,3 +1,7 @@
+/**
+ * Example Controller Title
+ * ---------------------------------------------------------------------------
+ */
 import asyncHandler from '../middleware/asyncHandler.js';
 import ApiError from '../utils/ApiError.js';
 
