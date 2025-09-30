@@ -92,7 +92,7 @@ export const getQuestionResponsePlan = async (normalizedEmail) => {
         };
 
         const payload = {
-            model: process.env.OPENAI_RESPONSES_MODEL || 'gpt-4.1-mini',
+            model: process.env.OPENAI_RESPONSES_MODEL || 'gpt-5',
             input: inputMessages,
             response_format: responseFormat,
             temperature: 0.2,
