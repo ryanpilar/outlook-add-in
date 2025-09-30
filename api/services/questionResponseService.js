@@ -86,7 +86,7 @@ export const getQuestionResponsePlan = async (normalizedEmail) => {
         // Build the structured message array + JSON schema before hitting the wire. Keeping
         // these helpers pure makes it trivial to unit test prompt changes in isolation.
         const inputMessages = buildQuestionResponsePrompt(normalizedEmail);
-        const responseFormat = {
+        const textFormat = {
             type: 'json_schema',
             json_schema: getQuestionResponseSchema(),
         };
@@ -94,7 +94,9 @@ export const getQuestionResponsePlan = async (normalizedEmail) => {
         const payload = {
             model: process.env.OPENAI_RESPONSES_MODEL || 'gpt-5',
             input: inputMessages,
-            response_format: responseFormat,
+            text: {
+                format: textFormat,
+            },
             temperature: 0.2,
         };
 
