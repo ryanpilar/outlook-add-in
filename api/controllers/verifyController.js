@@ -17,6 +17,7 @@
 export const verifyCandidateResponses = async (candidatesBundle) => {
     return {
         verifiedCandidates: [],
+        questionPlan: candidatesBundle?.questionPlan || null,
         verificationNotes: [
             'Validate JSON schema + sanitize any HTML fragments.',
             'Map OpenAI file IDs to stored metadata for citations.',
