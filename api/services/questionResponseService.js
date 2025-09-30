@@ -21,6 +21,22 @@ import {
     getQuestionResponseSchema,
 } from '../utils/promptWrappers.js';
 
+// Opt-in support for OpenAI's web_search tool. When the environment flag is
+// enabled we send the documented `tools` payload so the model can fetch fresh
+// context before responding. Keeping this logic isolated makes it obvious how
+// to wire additional tool configuration without touching the core prompt flow.
+const getWebSearchTools = () => {
+    if (process.env.OPENAI_ENABLE_WEB_SEARCH !== 'true') {
+        return undefined;
+    }
+
+    return [
+        {
+            type: 'web_search',
+        },
+    ];
+};
+
 // Provide a friendly manual-review plan so front-end messaging stays consistent even when
 // we cannot reach OpenAI. This mirrors the schema returned by the happy path call.
 const DEFAULT_ASSISTANT_PLAN = {
@@ -81,6 +97,13 @@ export const getQuestionResponsePlan = async (normalizedEmail) => {
             response_format: responseFormat,
             temperature: 0.2,
         };
+
+        const webSearchTools = getWebSearchTools();
+
+        if (webSearchTools) {
+            payload.tools = webSearchTools;
+            payload.tool_choice = 'auto';
+        }
 
         // ============================|| API Invocation ||============================ //
         // Call the Responses API (SDK v5.23.2). When File Search or tool outputs are
