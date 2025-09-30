@@ -56,8 +56,13 @@ export default {
         const generationPlan = await generateCandidateResponses(retrievalPlan);
         const verificationPlan = await verifyCandidateResponses(generationPlan);
 
+        const questionPlan = verificationPlan?.questionPlan || null;
+
         res.status(200).json({
             message: 'Pipeline scaffold executed',
+            questionMatch: questionPlan?.match || null,
+            assistantPlan: questionPlan?.assistantPlan || null,
+            approvedQuestions: questionPlan?.approvedQuestions || [],
             pipeline: {
                 ingest: ingestResult,
                 retrieve: retrievalPlan,
