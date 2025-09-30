@@ -52,8 +52,47 @@ export default {
             `     Preview: ${preview}${normalizedBody.length > 200 ? '…' : ''}`
         );
 
+        if (ingestResult?.ingestTelemetry) {
+            console.info('🧾  Ingest telemetry snapshot:');
+            console.dir(ingestResult.ingestTelemetry, { depth: null });
+        }
+
+        if (Array.isArray(ingestResult?.vectorStoreIndex)) {
+            console.info(
+                `📚  Indexed vector store handles: ${ingestResult.vectorStoreIndex.length}`
+            );
+        }
+
         const retrievalPlan = await retrieveContextForEmail(ingestResult.normalizedEmail);
+
+        console.info('🧠  Retrieval plan hints:');
+        console.dir(
+            {
+                vectorStoreHandles: retrievalPlan?.vectorStoreHandles || [],
+                searchHints: retrievalPlan?.searchHints || {},
+            },
+            { depth: null }
+        );
+
         const generationPlan = await generateCandidateResponses(retrievalPlan);
+
+        if (generationPlan?.questionPlan) {
+            const { match, assistantPlan } = generationPlan.questionPlan;
+            console.info('🤖  Question classification result:');
+            console.dir(
+                {
+                    isApprovedQuestion: match?.isApprovedQuestion || false,
+                    questionId: match?.questionId || null,
+                    confidence: match?.confidence || null,
+                    reasoning: match?.reasoning || null,
+                    answerSummary: assistantPlan?.answerSummary || null,
+                },
+                { depth: null }
+            );
+        } else {
+            console.info('🤖  Question classification result: unavailable');
+        }
+
         const verificationPlan = await verifyCandidateResponses(generationPlan);
 
         const questionPlan = verificationPlan?.questionPlan || null;

@@ -21,12 +21,54 @@
  * 3. Capture an execution plan (chosen stores, filters/hints, observability hooks)
  *    that the generation stage can pass directly to the Responses client.
  */
+const deriveSubjectKeywords = (subject) => {
+    if (typeof subject !== 'string' || subject.length === 0) {
+        return [];
+    }
+
+    const tokens = subject
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, ' ')
+        .split(/\s+/)
+        .filter((token) => token.length > 2);
+
+    const unique = [];
+    for (const token of tokens) {
+        if (!unique.includes(token)) {
+            unique.push(token);
+        }
+        if (unique.length >= 8) {
+            break;
+        }
+    }
+
+    return unique;
+};
+
+const getSenderDomain = (normalizedEmail) => {
+    const senderEmail = normalizedEmail?.metadata?.sender?.emailAddress;
+
+    if (typeof senderEmail !== 'string') {
+        return null;
+    }
+
+    const atIndex = senderEmail.indexOf('@');
+
+    if (atIndex === -1 || atIndex === senderEmail.length - 1) {
+        return null;
+    }
+
+    return senderEmail.slice(atIndex + 1);
+};
+
 export const retrieveContextForEmail = async (normalizedEmail) => {
+    const subjectKeywords = deriveSubjectKeywords(normalizedEmail?.metadata?.subject || '');
+
     return {
         vectorStoreHandles: [],
         searchHints: {
-            keywords: [],
-            senderDomain: normalizedEmail?.metadata?.from?.address?.split('@')[1] || null,
+            keywords: subjectKeywords,
+            senderDomain: getSenderDomain(normalizedEmail),
             summary: null,
         },
         retrievalNotes: [
