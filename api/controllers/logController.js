@@ -70,10 +70,10 @@ export default {
 
         console.info('🚦  Pipeline stage: Retrieve ➜ queued');
         console.time('⏱️  Retrieval stage duration');
-        console.info('⏳  Waiting for retrieval service to assemble context hints…');
+        console.info('⏳  Waiting on retrieval service to assemble context hints…');
         const retrievalPlan = await retrieveContextForEmail(ingestResult.normalizedEmail);
         console.timeEnd('⏱️  Retrieval stage duration');
-        console.info('✅  Retrieval stage complete. Transitioning to generation…');
+        console.info('✅  Retrieval stage complete. Now waiting on, generation…');
 
         console.info('🧠  Retrieval plan hints:');
         console.dir(
@@ -129,9 +129,6 @@ export default {
                 verify: verificationPlan,
             },
         };
-
-        console.info('📤  Outlook response payload:');
-        console.dir(responsePayload, { depth: null });
 
         res.status(200).json(responsePayload);
     }),
