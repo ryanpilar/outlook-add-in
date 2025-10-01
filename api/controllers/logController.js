@@ -35,7 +35,12 @@ export default {
     // @route      POST /log-text
     // @access     Public
     logText: asyncHandler(async (req, res) => {
+        console.info('🚦  Pipeline stage: Ingest ➜ queued');
+        console.time('⏱️  Ingest stage duration');
+        console.info('⏳  Waiting for ingest service to normalize payload…');
         const ingestResult = await ingestEmailSubmission(req.body);
+        console.timeEnd('⏱️  Ingest stage duration');
+        console.info('✅  Ingest stage complete. Transitioning to retrieval…');
 
         const {
             body: normalizedBody,
@@ -63,7 +68,12 @@ export default {
             );
         }
 
+        console.info('🚦  Pipeline stage: Retrieve ➜ queued');
+        console.time('⏱️  Retrieval stage duration');
+        console.info('⏳  Waiting for retrieval service to assemble context hints…');
         const retrievalPlan = await retrieveContextForEmail(ingestResult.normalizedEmail);
+        console.timeEnd('⏱️  Retrieval stage duration');
+        console.info('✅  Retrieval stage complete. Transitioning to generation…');
 
         console.info('🧠  Retrieval plan hints:');
         console.dir(
@@ -74,7 +84,12 @@ export default {
             { depth: null }
         );
 
+        console.info('🚦  Pipeline stage: Generate ➜ queued');
+        console.time('⏱️  Generation stage duration');
+        console.info('⏳  Waiting for generation service to draft assistant plan…');
         const generationPlan = await generateCandidateResponses(retrievalPlan);
+        console.timeEnd('⏱️  Generation stage duration');
+        console.info('✅  Generation stage complete. Transitioning to verification…');
 
         if (generationPlan?.questionPlan) {
             const { match, assistantPlan } = generationPlan.questionPlan;
@@ -93,11 +108,16 @@ export default {
             console.info('🤖  Question classification result: unavailable');
         }
 
+        console.info('🚦  Pipeline stage: Verify ➜ queued');
+        console.time('⏱️  Verification stage duration');
+        console.info('⏳  Waiting for verification service to review candidate plan…');
         const verificationPlan = await verifyCandidateResponses(generationPlan);
+        console.timeEnd('⏱️  Verification stage duration');
+        console.info('✅  Verification stage complete. Preparing Outlook response payload…');
 
         const questionPlan = verificationPlan?.questionPlan || null;
 
-        res.status(200).json({
+        const responsePayload = {
             message: 'Pipeline scaffold executed',
             questionMatch: questionPlan?.match || null,
             assistantPlan: questionPlan?.assistantPlan || null,
@@ -108,6 +128,11 @@ export default {
                 generate: generationPlan,
                 verify: verificationPlan,
             },
-        });
+        };
+
+        console.info('📤  Outlook response payload:');
+        console.dir(responsePayload, { depth: null });
+
+        res.status(200).json(responsePayload);
     }),
 };
