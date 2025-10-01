@@ -160,7 +160,7 @@ export const buildQuestionResponsePrompt = (normalizedEmail) => {
             role: 'system',
             content: [
                 {
-                    type: 'text',
+                    type: 'input_text',
                     text: baseSystemInstruction,
                 },
             ],
@@ -169,7 +169,7 @@ export const buildQuestionResponsePrompt = (normalizedEmail) => {
             role: 'user',
             content: [
                 {
-                    type: 'text',
+                    type: 'input_text',
                     text: userInstruction,
                 },
             ],
