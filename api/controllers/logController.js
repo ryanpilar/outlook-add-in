@@ -70,10 +70,10 @@ export default {
 
         console.info('🚦  Pipeline stage: Retrieve ➜ queued');
         console.time('⏱️  Retrieval stage duration');
-        console.info('⏳  Waiting on retrieval service to assemble context hints…');
+        console.info('⏳   Waiting on retrieval service to assemble context hints…');
         const retrievalPlan = await retrieveContextForEmail(ingestResult.normalizedEmail);
         console.timeEnd('⏱️  Retrieval stage duration');
-        console.info('✅  Retrieval stage complete. Now waiting on, generation…');
+        console.info('✅   Retrieval stage complete. Now waiting on, generation…');
 
         console.info('🧠  Retrieval plan hints:');
         console.dir(

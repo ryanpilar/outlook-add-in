@@ -197,10 +197,10 @@ export const buildQuestionResponsePrompt = (normalizedEmail) => {
         '5. If not matched, clearly explain that you are stepping outside PEKA internal resources, use the web_search tool to gather guidance from reputable public sources, and keep searching until you find trustworthy material or exhaust reasonable options.',
         '6. When external research yields usable guidance, base your answer entirely on that material and describe any limitations or uncertainties you observed.',
         '7. If no credible information can be found, explicitly state that outcome, highlight the open questions, and recommend a human follow-up instead of speculating.',
-        '8. Draft emailReply as a complete, empathetic email response addressed to the resident. Open with a friendly greeting, reference the verified language you just reviewed, quote or paraphrase the key instructions, include the exact URL, and close with a supportive sign-off that invites further questions.',
+        '8. Draft emailReply as a complete, empathetic email response addressed to the resident. Open with a friendly greeting, reference the verified language you just reviewed, quote or paraphrase the key instructions, include the exact URL, and close with a supportive sign-off that invites further questions. Please refrain from including final signatures, in general, or including PEKA contact information as a signature',
         '9. When relying on external research because no catalog question applied, explicitly note in emailReply that the guidance comes from public sources and mention any limitations or uncertainty.',
-        '10. Produce 2-4 actionable internal follow-up steps with short titles and supporting details that reflect the certainty level.',
-        '11. Suggest 1-3 resident-facing follow-up messages that maintain a helpful tone and communicate any uncertainty honestly.',
+        '10. Produce 2-8 actionable internal follow-up steps with short titles and supporting details that reflect the certainty level.',
+        '11. Only when applicable, suggest 1-3 resident-facing follow-up messages that maintain a helpful tone and communicate any uncertainty honestly.',
         '12. Populate sourceCitations with every supporting link you used; do not impose an artificial cap. Each citation must contain the exact URL visited, a short title, and the excerpt or policy detail that supports your summary. If no reliable source exists, include a single placeholder citation that clearly states no trustworthy reference was found and recommend human follow-up.',
         '13. Always fill the provided JSON schema and do not include extra commentary or markdown.',
     ].join('\n');
