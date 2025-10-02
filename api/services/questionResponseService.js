@@ -39,7 +39,7 @@ const getWebSearchTools = () => {
 
 // Provide a friendly manual-review plan so front-end messaging stays consistent even when
 // we cannot reach OpenAI. This mirrors the schema returned by the happy path call.
-const DEFAULT_ASSISTANT_PLAN = {
+const DEFAULT_AGENT_PLAN = {
     emailReply:
         'Thanks for reaching out. Our automated assistant is offline right now, so a teammate will review your note and follow up as quickly as possible.',
     recommendedActions: [
@@ -71,12 +71,10 @@ const DEFAULT_ASSISTANT_PLAN = {
 const buildFallbackPayload = (error) => ({
     match: {
         isApprovedQuestion: false,
-        questionId: null,
-        questionTitle: null,
-        confidence: 'low',
         reasoning: `Fell back to manual handling: ${error.message}`,
+        questions: [],
     },
-    assistantPlan: DEFAULT_ASSISTANT_PLAN,
+    agentPlan: DEFAULT_AGENT_PLAN,
     approvedQuestions: APPROVED_QUESTIONS,
 });
 
@@ -94,11 +92,12 @@ export const getQuestionResponsePlan = async (normalizedEmail) => {
         // Build the structured message array + JSON schema before hitting the wire. Keeping
         // these helpers pure makes it trivial to unit test prompt changes in isolation.
         const inputMessages = buildQuestionResponsePrompt(normalizedEmail);
-        // const { name: schemaName, strict, schema } = getQuestionResponseSchema();
+        // Wrap the schema in the SDK's `text.format` helper so the model streams a
+        // single JSON blob that respects our contract. This keeps the payload aligned
+        // with the Responses API evolution without hard-coding field names here.
         const textFormat = {
             type: 'json_schema',
             ...getQuestionResponseSchema(),
-
         };
 
         const payload = {
@@ -149,9 +148,42 @@ export const getQuestionResponsePlan = async (normalizedEmail) => {
 
         // Always echo the latest approved question metadata with the response to simplify
         // front-end rendering and keep a single source of truth for the catalog.
+        const matchQuestions = Array.isArray(parsed?.match?.questions)
+            ? parsed.match.questions
+            : [];
+
+        // Normalize the model classification so downstream consumers never have to
+        // defensively program around partial fields. Every branch here intentionally
+        // converts undefined values into deterministic defaults so logging and UI views
+        // stay readable even when the model skips optional reasoning.
+        const normalizedMatch = {
+            isApprovedQuestion:
+                typeof parsed?.match?.isApprovedQuestion === 'boolean'
+                    ? parsed.match.isApprovedQuestion
+                    : matchQuestions.length > 0,
+            reasoning:
+                typeof parsed?.match?.reasoning === 'string' && parsed.match.reasoning.trim()
+                    ? parsed.match.reasoning.trim()
+                    : matchQuestions.length > 0
+                        ? 'Model reported approved question matches but omitted overall reasoning.'
+                        : 'Model reported no approved question matches.',
+            questions: matchQuestions.map((question) => ({
+                questionId: question?.questionId || 'unknown_question_id',
+                questionTitle: question?.questionTitle || 'Unknown question',
+                confidence: question?.confidence || 'low',
+                reasoning:
+                    typeof question?.reasoning === 'string' && question.reasoning.trim()
+                        ? question.reasoning.trim()
+                        : 'No rationale supplied for this match.',
+            })),
+        };
 
         return {
             ...parsed,
+            // Merge the hardened classification so API consumers see a consistent shape
+            // regardless of how the Responses API evolves.
+            match: normalizedMatch,
+            agentPlan: parsed?.agentPlan || DEFAULT_AGENT_PLAN,
             approvedQuestions: APPROVED_QUESTIONS,
         };
     } catch (error) {
