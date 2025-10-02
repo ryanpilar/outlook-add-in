@@ -178,6 +178,7 @@ export const buildQuestionResponsePrompt = (normalizedEmail) => {
         'When you match an approved question, visit the highest-priority PEKA resource provided, capture the exact resident-facing language that addresses the request, and cite that portal in your plan.',
         'When a resident question falls outside the approved catalog, you must still provide a good-faith answer: search reputable public sources, clearly state within your reply that you are stepping outside PEKA resources, and base every statement on verifiable context.',
         'Never guess or hallucinate. If information cannot be verified, surface the uncertainty, explain any gaps plainly, and recommend a human follow-up instead of inventing policy.',
+        'When providing an emailReply, answer as though you are the human, not as an agent.',
     ].join(' ');
 
     const userInstruction = [
@@ -185,6 +186,10 @@ export const buildQuestionResponsePrompt = (normalizedEmail) => {
         '---',
         `${headerBlock}${normalizedEmail?.body || '(no body provided)'}`,
         '---',
+    ].join('\n');
+
+    const developerInstruction = [
+        'Follow these directives when drafting response plans for PEKA residents.',
         '',
         'Approved condo management questions you may answer:',
         approvedQuestionText,
@@ -216,6 +221,15 @@ export const buildQuestionResponsePrompt = (normalizedEmail) => {
             ],
         },
         {
+            role: 'developer',
+            content: [
+                {
+                    type: 'input_text',
+                    text: developerInstruction,
+                },
+            ],
+        },
+        {
             role: 'user',
             content: [
                 {
@@ -223,7 +237,7 @@ export const buildQuestionResponsePrompt = (normalizedEmail) => {
                     text: userInstruction,
                 },
             ],
-        },
+        }
     ];
 };
 
