@@ -86,22 +86,22 @@ export default {
 
         console.info('🚦  Pipeline stage: Generate ➜ queued');
         console.time('⏱️  Generation stage duration');
-        console.info('⏳  Waiting for generation service to draft agent plan…');
+        console.info('⏳  Waiting for generation service to draft assistant plan…');
         const generationPlan = await generateCandidateResponses(retrievalPlan);
         console.timeEnd('⏱️  Generation stage duration');
         console.info('✅  Generation stage complete. Transitioning to verification…');
 
         if (generationPlan?.questionPlan) {
-            const { match, agentPlan } = generationPlan.questionPlan;
-            const matchQuestions = match?.questions || [];
+            const { match, assistantPlan } = generationPlan.questionPlan;
             console.info('🤖  Question classification result:');
             console.dir(
                 {
                     isApprovedQuestion: match?.isApprovedQuestion || false,
+                    questionId: match?.questionId || null,
+                    confidence: match?.confidence || null,
                     reasoning: match?.reasoning || null,
-                    questions: matchQuestions,
-                    emailReply: agentPlan?.emailReply || null,
-                    sourceCitations: agentPlan?.sourceCitations || [],
+                    emailReply: assistantPlan?.emailReply || null,
+                    sourceCitations: assistantPlan?.sourceCitations || [],
                 },
                 { depth: null }
             );
@@ -118,12 +118,10 @@ export default {
 
         const questionPlan = verificationPlan?.questionPlan || null;
 
-        // Hand back the fully assembled question classification + agent plan so the UI can
-        // render the answer preview while still exposing every pipeline stage for debugging.
         const responsePayload = {
             message: 'Pipeline scaffold executed',
             questionMatch: questionPlan?.match || null,
-            agentPlan: questionPlan?.agentPlan || null,
+            assistantPlan: questionPlan?.assistantPlan || null,
             approvedQuestions: questionPlan?.approvedQuestions || [],
             pipeline: {
                 ingest: ingestResult,
