@@ -100,7 +100,8 @@ export default {
                     questionId: match?.questionId || null,
                     confidence: match?.confidence || null,
                     reasoning: match?.reasoning || null,
-                    answerSummary: assistantPlan?.answerSummary || null,
+                    emailReply: assistantPlan?.emailReply || null,
+                    sourceCitations: assistantPlan?.sourceCitations || [],
                 },
                 { depth: null }
             );

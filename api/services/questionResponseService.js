@@ -40,8 +40,8 @@ const getWebSearchTools = () => {
 // Provide a friendly manual-review plan so front-end messaging stays consistent even when
 // we cannot reach OpenAI. This mirrors the schema returned by the happy path call.
 const DEFAULT_ASSISTANT_PLAN = {
-    answerSummary:
-        'We received your email and a teammate will review it shortly because the automated assistant is unavailable.',
+    emailReply:
+        'Thanks for reaching out. Our automated assistant is offline right now, so a teammate will review your note and follow up as quickly as possible.',
     recommendedActions: [
         {
             title: 'Route to concierge team',
@@ -53,9 +53,17 @@ const DEFAULT_ASSISTANT_PLAN = {
         },
     ],
     suggestedFollowUps: [
-        'Provide the resident with an estimated response time once an agent has reviewed the message.',
+        'Follow up with the resident once a teammate has reviewed their email so they know what to expect next.',
     ],
     knowledgeConfidence: 'low',
+    sourceCitations: [
+        {
+            url: 'https://peka.ab.ca/',
+            title: 'PEKA Property Management',
+            excerpt:
+                'Manual handling required. A PEKA teammate will review the message and respond directly.',
+        },
+    ],
 };
 
 // Compose the deterministic fallback payload that mirrors the model response. We expose the

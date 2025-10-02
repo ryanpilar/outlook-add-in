@@ -41,7 +41,7 @@ const QUESTION_RESPONSE_SCHEMA = {
                 type: 'object',
                 additionalProperties: false,
                 properties: {
-                    answerSummary: { type: 'string' },
+                    emailReply: { type: 'string' },
                     recommendedActions: {
                         type: 'array',
                         minItems: 2,
@@ -66,8 +66,29 @@ const QUESTION_RESPONSE_SCHEMA = {
                         type: 'string',
                         enum: ['high', 'medium', 'low'],
                     },
+                    sourceCitations: {
+                        type: 'array',
+                        minItems: 1,
+                        maxItems: 4,
+                        items: {
+                            type: 'object',
+                            additionalProperties: false,
+                            properties: {
+                                url: { type: 'string' },
+                                title: { type: 'string' },
+                                excerpt: { type: 'string' },
+                            },
+                            required: ['url', 'title', 'excerpt'],
+                        },
+                    },
                 },
-                required: ['answerSummary', 'recommendedActions', 'suggestedFollowUps', 'knowledgeConfidence'],
+                required: [
+                    'emailReply',
+                    'recommendedActions',
+                    'suggestedFollowUps',
+                    'knowledgeConfidence',
+                    'sourceCitations',
+                ],
             },
         },
         required: ['match', 'assistantPlan'],
@@ -134,8 +155,11 @@ export const buildQuestionResponsePrompt = (normalizedEmail) => {
     // unless we have personally confirmed details on the site, so we codify that here.
     const baseSystemInstruction = [
         'You are a meticulous condo management operations assistant for PEKA Property Management.',
-        'Use the approved question catalog, condo resource links, and guidance notes to craft reliable, empathetic responses.',
+        'Use the approved question catalog, condo resource links, and guidance notes to craft reliable, empathetic responses that read like direct emails from the PEKA support team.',
         'Consult the peka.ab.ca resources before relying on memory, and defer to a human whenever the site does not confirm the answer.',
+        'When you match an approved question, visit the highest-priority PEKA resource provided, capture the exact resident-facing language that addresses the request, and cite that portal in your plan.',
+        'When a resident question falls outside the approved catalog, you must still provide a good-faith answer: search reputable public sources, clearly state within your reply that you are stepping outside PEKA resources, and base every statement on verifiable context.',
+        'Never guess or hallucinate. If information cannot be verified, surface the uncertainty, explain any gaps plainly, and recommend a human follow-up instead of inventing policy.',
     ].join(' ');
 
     const userInstruction = [
@@ -149,10 +173,17 @@ export const buildQuestionResponsePrompt = (normalizedEmail) => {
         '',
         'Tasks:',
         '1. Determine if the resident is effectively asking one of the approved questions (allowing paraphrasing).',
-        '2. If matched, visit or reference the linked PEKA resources first. Only restate what those sources confirm or request that a teammate double-check.',
-        '3. Produce 2-4 actionable internal follow-up steps with short titles and supporting details.',
-        '4. Suggest 1-3 resident-facing follow-up messages that maintain a helpful tone.',
-        '5. Always fill the provided JSON schema and do not include extra commentary or markdown.',
+        '2. If matched, open and read the first linked PEKA resource (and any other relevant condo resources) before answering. Capture the exact language that resolves the question and plan to echo it back to the resident.',
+        '3. When the email maps to an approved question, you must provide a direct answer using that verified PEKA context—do not defer unless the resource leaves the core request unresolved.',
+        '4. If not matched, clearly explain that you are stepping outside PEKA internal resources, use the web_search tool to gather guidance from reputable public sources, and keep searching until you find trustworthy material or exhaust reasonable options.',
+        '5. When external research yields usable guidance, base your answer entirely on that material and describe any limitations or uncertainties you observed.',
+        '6. If no credible information can be found, explicitly state that outcome, highlight the open questions, and recommend a human follow-up instead of speculating.',
+        '7. Draft emailReply as a complete, empathetic email response addressed to the resident. Open with a friendly greeting, reference the verified language you just reviewed, quote or paraphrase the key instructions, include the exact URL, and close with a supportive sign-off that invites further questions.',
+        '8. When relying on external research because no catalog question applied, explicitly note in emailReply that the guidance comes from public sources and mention any limitations or uncertainty.',
+        '9. Produce 2-4 actionable internal follow-up steps with short titles and supporting details that reflect the certainty level.',
+        '10. Suggest 1-3 resident-facing follow-up messages that maintain a helpful tone and communicate any uncertainty honestly.',
+        '11. Populate sourceCitations with at least one entry containing the exact URL you visited, a short title, and the excerpt or policy detail that supports your summary. If no reliable source exists, include a single placeholder citation that clearly states no trustworthy reference was found and recommend human follow-up.',
+        '12. Always fill the provided JSON schema and do not include extra commentary or markdown.',
     ].join('\n');
 
     return [
