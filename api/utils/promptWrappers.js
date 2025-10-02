@@ -64,7 +64,7 @@ const QUESTION_RESPONSE_SCHEMA = {
                     recommendedActions: {
                         type: 'array',
                         minItems: 2,
-                        maxItems: 4,
+                        maxItems: 8,
                         items: {
                             type: 'object',
                             additionalProperties: false,

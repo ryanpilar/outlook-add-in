@@ -19,6 +19,7 @@ export const APPROVED_QUESTIONS = [
             // Keep guidance grounded in official, publicly visible resources.
             'Direct residents to sign in to the PEKA Resident Portal for the most current rental application steps.',
             'Encourage them to review the portal checklist so they gather every document the page requests before submission.',
+            'Remind them that the linked form itself sets out the specific documentation and signature requirements — your reply should acknowledge this without paraphrasing line-items.',
             'Advise residents to contact PEKA through the portal if they encounter issues completing the process.',
         ],
         resourceHints: [
