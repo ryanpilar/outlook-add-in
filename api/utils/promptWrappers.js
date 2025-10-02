@@ -29,13 +29,32 @@ const QUESTION_RESPONSE_SCHEMA = {
                     isApprovedQuestion: { type: 'boolean' },
                     questionId: { type: ['string', 'null'] },
                     questionTitle: { type: ['string', 'null'] },
+                    matchedQuestions: {
+                        type: 'array',
+                        items: {
+                            type: 'object',
+                            additionalProperties: false,
+                            properties: {
+                                questionId: { type: 'string' },
+                                questionTitle: { type: 'string' },
+                            },
+                            required: ['questionId', 'questionTitle'],
+                        },
+                    },
                     confidence: {
                         type: 'string',
                         enum: ['high', 'medium', 'low'],
                     },
                     reasoning: { type: 'string' },
                 },
-                required: ['isApprovedQuestion', 'questionId', 'questionTitle', 'confidence', 'reasoning'],
+                required: [
+                    'isApprovedQuestion',
+                    'questionId',
+                    'questionTitle',
+                    'matchedQuestions',
+                    'confidence',
+                    'reasoning',
+                ],
             },
             assistantPlan: {
                 type: 'object',
@@ -69,7 +88,6 @@ const QUESTION_RESPONSE_SCHEMA = {
                     sourceCitations: {
                         type: 'array',
                         minItems: 1,
-                        maxItems: 4,
                         items: {
                             type: 'object',
                             additionalProperties: false,
@@ -173,17 +191,18 @@ export const buildQuestionResponsePrompt = (normalizedEmail) => {
         '',
         'Tasks:',
         '1. Determine if the resident is effectively asking one of the approved questions (allowing paraphrasing).',
-        '2. If matched, open and read the first linked PEKA resource (and any other relevant condo resources) before answering. Capture the exact language that resolves the question and plan to echo it back to the resident.',
-        '3. When the email maps to an approved question, you must provide a direct answer using that verified PEKA context—do not defer unless the resource leaves the core request unresolved.',
-        '4. If not matched, clearly explain that you are stepping outside PEKA internal resources, use the web_search tool to gather guidance from reputable public sources, and keep searching until you find trustworthy material or exhaust reasonable options.',
-        '5. When external research yields usable guidance, base your answer entirely on that material and describe any limitations or uncertainties you observed.',
-        '6. If no credible information can be found, explicitly state that outcome, highlight the open questions, and recommend a human follow-up instead of speculating.',
-        '7. Draft emailReply as a complete, empathetic email response addressed to the resident. Open with a friendly greeting, reference the verified language you just reviewed, quote or paraphrase the key instructions, include the exact URL, and close with a supportive sign-off that invites further questions.',
-        '8. When relying on external research because no catalog question applied, explicitly note in emailReply that the guidance comes from public sources and mention any limitations or uncertainty.',
-        '9. Produce 2-4 actionable internal follow-up steps with short titles and supporting details that reflect the certainty level.',
-        '10. Suggest 1-3 resident-facing follow-up messages that maintain a helpful tone and communicate any uncertainty honestly.',
-        '11. Populate sourceCitations with at least one entry containing the exact URL you visited, a short title, and the excerpt or policy detail that supports your summary. If no reliable source exists, include a single placeholder citation that clearly states no trustworthy reference was found and recommend human follow-up.',
-        '12. Always fill the provided JSON schema and do not include extra commentary or markdown.',
+        '2. If matched, list every approved question that applies in match.matchedQuestions (the first entry should be the primary focus) and mirror the leading entry in match.questionId and match.questionTitle.',
+        '3. If matched, open and read the first linked PEKA resource (and any other relevant condo resources) before answering. Capture the exact language that resolves the question and plan to echo it back to the resident.',
+        '4. When the email maps to an approved question, you must provide a direct answer using that verified PEKA context—do not defer unless the resource leaves the core request unresolved.',
+        '5. If not matched, clearly explain that you are stepping outside PEKA internal resources, use the web_search tool to gather guidance from reputable public sources, and keep searching until you find trustworthy material or exhaust reasonable options.',
+        '6. When external research yields usable guidance, base your answer entirely on that material and describe any limitations or uncertainties you observed.',
+        '7. If no credible information can be found, explicitly state that outcome, highlight the open questions, and recommend a human follow-up instead of speculating.',
+        '8. Draft emailReply as a complete, empathetic email response addressed to the resident. Open with a friendly greeting, reference the verified language you just reviewed, quote or paraphrase the key instructions, include the exact URL, and close with a supportive sign-off that invites further questions.',
+        '9. When relying on external research because no catalog question applied, explicitly note in emailReply that the guidance comes from public sources and mention any limitations or uncertainty.',
+        '10. Produce 2-4 actionable internal follow-up steps with short titles and supporting details that reflect the certainty level.',
+        '11. Suggest 1-3 resident-facing follow-up messages that maintain a helpful tone and communicate any uncertainty honestly.',
+        '12. Populate sourceCitations with every supporting link you used; do not impose an artificial cap. Each citation must contain the exact URL visited, a short title, and the excerpt or policy detail that supports your summary. If no reliable source exists, include a single placeholder citation that clearly states no trustworthy reference was found and recommend human follow-up.',
+        '13. Always fill the provided JSON schema and do not include extra commentary or markdown.',
     ].join('\n');
 
     return [

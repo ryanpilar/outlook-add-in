@@ -98,6 +98,7 @@ export default {
                 {
                     isApprovedQuestion: match?.isApprovedQuestion || false,
                     questionId: match?.questionId || null,
+                    matchedQuestions: match?.matchedQuestions || [],
                     confidence: match?.confidence || null,
                     reasoning: match?.reasoning || null,
                     emailReply: assistantPlan?.emailReply || null,
