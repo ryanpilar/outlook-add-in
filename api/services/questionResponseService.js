@@ -73,6 +73,7 @@ const buildFallbackPayload = (error) => ({
         isApprovedQuestion: false,
         questionId: null,
         questionTitle: null,
+        matchedQuestions: [],
         confidence: 'low',
         reasoning: `Fell back to manual handling: ${error.message}`,
     },
@@ -147,11 +148,19 @@ export const getQuestionResponsePlan = async (normalizedEmail) => {
         // it can surface "other questions you can ask" without another import.
         const parsed = JSON.parse(outputText);
 
+        const normalizedMatch = {
+            ...parsed.match,
+            matchedQuestions: Array.isArray(parsed?.match?.matchedQuestions)
+                ? parsed.match.matchedQuestions
+                : [],
+        };
+
         // Always echo the latest approved question metadata with the response to simplify
         // front-end rendering and keep a single source of truth for the catalog.
 
         return {
             ...parsed,
+            match: normalizedMatch,
             approvedQuestions: APPROVED_QUESTIONS,
         };
     } catch (error) {

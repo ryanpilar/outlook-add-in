@@ -11,9 +11,9 @@
  *    window, improves precision, and keeps latency/cost predictable.
  *          Tools: https://platform.openai.com/docs/guides/tools
  *
- * 2. Derive search hints from the normalized email—subject keywords, sender
- *    domain, lightweight summaries—so they can be injected into prompts and/or
- *    used as metadata filters to steer retrieval toward the right files. Prefer
+ * 2. Derive search hints from the normalized email—sender domain and a
+ *    lightweight summary—so they can be injected into prompts and/or used as
+ *    metadata filters to steer retrieval toward the right files. Prefer
  *    deterministic filters when possible; keep hints concise.
  *          Retrieval guide: https://platform.openai.com/docs/guides/retrieval
  *          File Search: https://platform.openai.com/docs/guides/tools-file-search
@@ -21,30 +21,6 @@
  * 3. Capture an execution plan (chosen stores, filters/hints, observability hooks)
  *    that the generation stage can pass directly to the Responses client.
  */
-const deriveSubjectKeywords = (subject) => {
-    if (typeof subject !== 'string' || subject.length === 0) {
-        return [];
-    }
-
-    const tokens = subject
-        .toLowerCase()
-        .replace(/[^a-z0-9\s-]/g, ' ')
-        .split(/\s+/)
-        .filter((token) => token.length > 2);
-
-    const unique = [];
-    for (const token of tokens) {
-        if (!unique.includes(token)) {
-            unique.push(token);
-        }
-        if (unique.length >= 8) {
-            break;
-        }
-    }
-
-    return unique;
-};
-
 const getSenderDomain = (normalizedEmail) => {
     const senderEmail = normalizedEmail?.metadata?.sender?.emailAddress;
 
@@ -62,14 +38,17 @@ const getSenderDomain = (normalizedEmail) => {
 };
 
 export const retrieveContextForEmail = async (normalizedEmail) => {
-    const subjectKeywords = deriveSubjectKeywords(normalizedEmail?.metadata?.subject || '');
+    const normalizedBody = typeof normalizedEmail?.body === 'string' ? normalizedEmail.body : '';
+    const summaryText = normalizedBody
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 240);
 
     return {
         vectorStoreHandles: [],
         searchHints: {
-            keywords: subjectKeywords,
             senderDomain: getSenderDomain(normalizedEmail),
-            summary: null,
+            summary: summaryText.length > 0 ? summaryText : null,
         },
         retrievalNotes: [
             'Select appropriate vector stores / file sets based on metadata.',
