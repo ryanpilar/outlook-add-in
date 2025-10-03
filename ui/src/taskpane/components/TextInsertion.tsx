@@ -31,15 +31,19 @@ const useStyles = makeStyles({
   optionalPromptField: {
     width: "100%",
   },
-  optionalPromptTextArea: {
+  optionalPromptTextAreaContainer: {
     width: "100%",
+  },
+  optionalPromptTextArea: {
     minHeight: "140px",
   },
   statusField: {
     width: "100%",
   },
-  statusTextArea: {
+  statusTextAreaContainer: {
     width: "100%",
+  },
+  statusTextArea: {
     minHeight: "56px",
     resize: "none",
   },
@@ -49,9 +53,12 @@ const useStyles = makeStyles({
     display: "flex",
     flexDirection: "column",
   },
-  responseTextArea: {
+  responseTextAreaContainer: {
     width: "100%",
     flexGrow: 1,
+    display: "flex",
+  },
+  responseTextArea: {
     minHeight: "400px",
   },
   linksList: {
@@ -70,6 +77,16 @@ const useStyles = makeStyles({
     display: "flex",
     flexWrap: "wrap",
     gap: "12px",
+  },
+  sendButtonRow: {
+    position: "sticky",
+    bottom: "24px",
+    display: "flex",
+    justifyContent: "flex-end",
+    paddingTop: "16px",
+    backgroundColor: tokens.colorNeutralBackground1,
+    zIndex: 1,
+    marginTop: "auto",
   },
 });
 
@@ -125,7 +142,8 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
           hint="Provide extra guidance for the assistant."
         >
           <Textarea
-            className={styles.optionalPromptTextArea}
+            className={styles.optionalPromptTextAreaContainer}
+            textarea={{ className: styles.optionalPromptTextArea }}
             value={optionalPrompt}
             onChange={(
               _event: React.ChangeEvent<HTMLTextAreaElement>,
@@ -137,11 +155,17 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
         </Field>
       ) : null}
       <Field className={styles.statusField} label="Status" size="large">
-        <Textarea className={styles.statusTextArea} value={statusMessage} readOnly />
+        <Textarea
+          className={styles.statusTextAreaContainer}
+          textarea={{ className: styles.statusTextArea }}
+          value={statusMessage}
+          readOnly
+        />
       </Field>
       <Field className={styles.responseField} label="Email response" size="large">
         <Textarea
-          className={styles.responseTextArea}
+          className={styles.responseTextAreaContainer}
+          textarea={{ className: styles.responseTextArea }}
           value={emailResponse}
           placeholder="The generated email response will appear here."
           readOnly
@@ -165,9 +189,11 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
           </Field>
         </div>
       ) : null}
-      <Button appearance="primary" disabled={isSending} size="large" onClick={handleTextSend}>
-        {isSending ? "Sending..." : "Send email content"}
-      </Button>
+      <div className={styles.sendButtonRow}>
+        <Button appearance="primary" disabled={isSending} size="large" onClick={handleTextSend}>
+          {isSending ? "Sending..." : "Send email content"}
+        </Button>
+      </div>
     </div>
   );
 };
