@@ -118,17 +118,25 @@ export default {
         console.info('✅  Verification stage complete. Preparing Outlook response payload…');
 
         const questionPlan = verificationPlan?.questionPlan || null;
+        const assistantPlan = questionPlan?.assistantPlan || null;
+
+        const emailResponse = typeof assistantPlan?.emailReply === 'string'
+            ? assistantPlan.emailReply
+            : null;
+
+        const sourceCitations = Array.isArray(assistantPlan?.sourceCitations)
+            ? assistantPlan.sourceCitations.map((citation = {}) => ({
+                  url: typeof citation.url === 'string' ? citation.url : null,
+                  title: typeof citation.title === 'string' ? citation.title : null,
+              }))
+            : [];
 
         const responsePayload = {
             message: 'Pipeline scaffold executed',
             questionMatch: questionPlan?.match || null,
-            assistantPlan: questionPlan?.assistantPlan || null,
-            approvedQuestions: questionPlan?.approvedQuestions || [],
-            pipeline: {
-                ingest: ingestResult,
-                retrieve: retrievalPlan,
-                generate: generationPlan,
-                verify: verificationPlan,
+            assistantResponse: {
+                emailResponse,
+                sourceCitations,
             },
         };
 
