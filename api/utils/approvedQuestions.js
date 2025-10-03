@@ -20,11 +20,8 @@ export const APPROVED_QUESTIONS = [
             'Direct residents to sign in to the PEKA Resident Portal for the most current rental application steps.',
             'Encourage them to review the portal checklist so they gather every document the page requests before submission.',
             'Remind them that the linked form itself sets out the specific documentation and signature requirements — your reply should acknowledge this without paraphrasing line-items.',
-            'Include the direct Vue Canmore application link (https://peka.ab.ca/client-portal-vue/online-application) when appropriate, noting both the Online Tenancy Application and PDF options.',
-            'When relevant, include the Bow Valley long-term rentals page (https://peka.ab.ca/canmore-long-term-rentals) so applicants can browse all PEKA-managed listings, not just Vue Canmore.',
-            'Always include links to the PEKA Renter Portal (https://peka.ab.ca/portal-renters) as the “source of truth” for applications and inquiries.',
+            'Always include links to the PEKA Renter Portal for applications and for general information for inquiries.',
             'Do not offer to personally check availability, follow up, or confirm receipt unless the resident directly requests it.',
-            'Conclude by reiterating that the official portals and forms are the definitive channels, and that support requests should go through the portal rather than improvised contact methods.',
         ],
         resourceHints: [
             {

@@ -38,7 +38,7 @@ const useStyles = makeStyles({
   responseTextArea: {
     width: "100%",
     flexGrow: 1,
-    minHeight: "240px",
+    minHeight: "400px",
   },
   linksList: {
     margin: 0,
