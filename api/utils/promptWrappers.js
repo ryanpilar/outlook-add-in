@@ -119,6 +119,10 @@ export const buildQuestionResponsePrompt = (normalizedEmail) => {
     const subject = normalizedEmail?.metadata?.subject;
     const senderName = normalizedEmail?.metadata?.sender?.displayName;
     const senderEmail = normalizedEmail?.metadata?.sender?.emailAddress;
+    const optionalPrompt =
+        typeof normalizedEmail?.optionalPrompt === 'string'
+            ? normalizedEmail.optionalPrompt
+            : null;
 
     // ============================|| Email Header Stitching ||============================ //
     // The model performs better when it sees the same headers a human agent would use to
@@ -210,7 +214,7 @@ export const buildQuestionResponsePrompt = (normalizedEmail) => {
         '13. Always fill the provided JSON schema and do not include extra commentary or markdown.',
     ].join('\n');
 
-    return [
+    const messages = [
         {
             role: 'system',
             content: [
@@ -229,16 +233,34 @@ export const buildQuestionResponsePrompt = (normalizedEmail) => {
                 },
             ],
         },
-        {
-            role: 'user',
+    ];
+
+    if (optionalPrompt) {
+        messages.push({
+            role: 'developer',
             content: [
                 {
                     type: 'input_text',
-                    text: userInstruction,
+                    text: [
+                        'Additional operator instructions for this request:',
+                        optionalPrompt,
+                    ].join('\n\n'),
                 },
             ],
-        }
-    ];
+        });
+    }
+
+    messages.push({
+        role: 'user',
+        content: [
+            {
+                type: 'input_text',
+                text: userInstruction,
+            },
+        ],
+    });
+
+    return messages;
 };
 
 export default {
