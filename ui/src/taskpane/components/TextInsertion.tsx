@@ -1,9 +1,10 @@
 import * as React from "react";
 import { useState } from "react";
 import { Button, Field, Textarea, tokens, makeStyles } from "@fluentui/react-components";
+import { PipelineResponse } from "../taskpane";
 
 interface TextInsertionProps {
-  sendText: () => Promise<void>;
+  sendText: () => Promise<PipelineResponse>;
 }
 
 const useStyles = makeStyles({
@@ -28,17 +29,21 @@ const useStyles = makeStyles({
 
 const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) => {
   const [statusMessage, setStatusMessage] = useState<string>("");
+  const [pipelineResponse, setPipelineResponse] = useState<string>("");
   const [isSending, setIsSending] = useState<boolean>(false);
 
   const handleTextSend = async () => {
     try {
       setIsSending(true);
       setStatusMessage("Sending the current email content...");
-      await props.sendText();
+      setPipelineResponse("");
+      const response = await props.sendText();
       setStatusMessage("Email content sent to the server.");
+      setPipelineResponse(JSON.stringify(response, null, 2));
     } catch (error) {
       console.error(error);
       setStatusMessage("We couldn't send the email content. Please try again.");
+      setPipelineResponse("");
     } finally {
       setIsSending(false);
     }
@@ -53,6 +58,9 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
       </Field>
       <Field className={styles.textAreaField} label="Status" size="large">
         <Textarea value={statusMessage} readOnly resize="vertical" />
+      </Field>
+      <Field className={styles.textAreaField} label="Pipeline response" size="large">
+        <Textarea value={pipelineResponse} readOnly resize="vertical" />
       </Field>
       <Button appearance="primary" disabled={isSending} size="large" onClick={handleTextSend}>
         {isSending ? "Sending..." : "Send email content"}
