@@ -16,15 +16,29 @@ const useStyles = makeStyles({
     padding: "24px",
     width: "100%",
     boxSizing: "border-box",
+    height: "100%",
   },
   instructions: {
     fontWeight: tokens.fontWeightSemibold,
   },
-  textAreaField: {
+  statusField: {
     width: "100%",
   },
-  textArea: {
+  statusTextArea: {
     width: "100%",
+    minHeight: "56px",
+    resize: "none",
+  },
+  responseField: {
+    width: "100%",
+    flexGrow: 1,
+    display: "flex",
+    flexDirection: "column",
+  },
+  responseTextArea: {
+    width: "100%",
+    flexGrow: 1,
+    minHeight: "240px",
   },
   linksList: {
     margin: 0,
@@ -34,6 +48,9 @@ const useStyles = makeStyles({
     display: "flex",
     flexDirection: "column",
     gap: "4px",
+  },
+  linksField: {
+    width: "100%",
   },
 });
 
@@ -60,8 +77,8 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
   };
 
   const styles = useStyles();
-  const pipelineResponseAsJson = useMemo(
-    () => (pipelineResponse ? JSON.stringify(pipelineResponse, null, 2) : ""),
+  const emailResponse = useMemo(
+    () => pipelineResponse?.assistantResponse?.emailResponse?.trim() ?? "",
     [pipelineResponse]
   );
 
@@ -70,20 +87,21 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
       <Field className={styles.instructions}>
         Press the button to send the body of the email you're viewing to the server.
       </Field>
-      <Field className={styles.textAreaField} label="Status" size="large">
-        <Textarea className={styles.textArea} value={statusMessage} readOnly resize="vertical" />
+      <Field className={styles.statusField} label="Status" size="large">
+        <Textarea className={styles.statusTextArea} value={statusMessage} readOnly />
       </Field>
-      <Field className={styles.textAreaField} label="Pipeline response" size="large">
+      <Field className={styles.responseField} label="Email response" size="large">
         <Textarea
-          className={styles.textArea}
-          value={pipelineResponseAsJson}
+          className={styles.responseTextArea}
+          value={emailResponse}
+          placeholder="The generated email response will appear here."
           readOnly
           resize="vertical"
         />
       </Field>
       {pipelineResponse?.assistantResponse?.sourceCitations?.length ? (
         <div className={styles.linksSection}>
-          <Field className={styles.textAreaField} label="Links provided">
+          <Field className={styles.linksField} label="Links provided">
             <ul className={styles.linksList}>
               {pipelineResponse.assistantResponse.sourceCitations.map((citation, index) =>
                 citation?.url ? (
