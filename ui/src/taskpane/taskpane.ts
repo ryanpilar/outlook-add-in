@@ -14,7 +14,7 @@ export interface PipelineResponse {
   };
 }
 
-export async function sendText(): Promise<PipelineResponse> {
+export async function sendText(optionalPrompt?: string): Promise<PipelineResponse> {
   // The Outlook item that is currently being viewed is available via Office.js.
   // We wrap the callback-based body.getAsync API in a Promise so it plays nicely with async/await.
   // Using a helper here keeps the flow in the try/catch block easy to read.
@@ -60,7 +60,11 @@ export async function sendText(): Promise<PipelineResponse> {
     const response = await fetch(`http://localhost:4000/log-text`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: bodyText, metadata }),
+      body: JSON.stringify({
+        text: bodyText,
+        metadata,
+        optionalPrompt: optionalPrompt?.trim() || undefined,
+      }),
     });
     if (!response.ok) {
       const errorText = await response.text();
