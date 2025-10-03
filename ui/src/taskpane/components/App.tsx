@@ -13,6 +13,10 @@ interface AppProps {
 const useStyles = makeStyles({
     root: {
         minHeight: "100vh",
+        width: "100%",
+        maxWidth: "100%",
+        display: "flex",
+        flexDirection: "column",
     },
 });
 
