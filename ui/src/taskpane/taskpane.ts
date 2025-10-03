@@ -2,7 +2,19 @@
 
 import { buildEmailMetadata } from "./helpers/emailMetadata";
 
-export async function sendText(): Promise<void> {
+export interface PipelineResponse {
+  message: string;
+  questionMatch: Record<string, unknown> | null;
+  assistantResponse: {
+    emailResponse: string | null;
+    sourceCitations: Array<{
+      url: string | null;
+      title: string | null;
+    }>;
+  };
+}
+
+export async function sendText(): Promise<PipelineResponse> {
   // The Outlook item that is currently being viewed is available via Office.js.
   // We wrap the callback-based body.getAsync API in a Promise so it plays nicely with async/await.
   // Using a helper here keeps the flow in the try/catch block easy to read.
@@ -45,17 +57,26 @@ export async function sendText(): Promise<void> {
     // Post the email content to the local development server for logging.
     // The payload includes both the raw text and the metadata envelope so downstream
     // services have enough context to store, index, or reply to the message.
-    await fetch(`http://localhost:4000/log-text`, {
+    const response = await fetch(`http://localhost:4000/log-text`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text: bodyText, metadata }),
     });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `[Taskpane] Logging service responded with ${response.status}: ${errorText || response.statusText}`
+      );
+    }
+
+    const responsePayload = (await response.json()) as PipelineResponse;
     console.info("[Taskpane] Email content successfully posted to the logging service.");
     // await fetch(`https://outlook-add-in-kdr8.onrender.com/log-text`, {
     //   method: "POST",
     //   headers: { "Content-Type": "application/json" },
     //   body: JSON.stringify({ text: bodyText }),
     // });
+    return responsePayload;
   } catch (error) {
     console.log("Error: " + error);
     throw error;
