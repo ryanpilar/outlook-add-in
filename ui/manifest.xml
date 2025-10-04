@@ -47,7 +47,7 @@
       <Hosts>
         <Host xsi:type="MailHost">
           <DesktopFormFactor>
-            <FunctionFile resid="Commands.Url"/>
+            <FunctionFile resid="Taskpane.Url"/>
             <ExtensionPoint xsi:type="MessageComposeCommandSurface">
               <OfficeTab id="TabDefault">
                 <Group id="msgComposeGroup">
@@ -98,8 +98,6 @@
           <bt:Image id="Icon.80x80" DefaultValue="https://localhost:3000/assets/icon-80.png"/>
         </bt:Images>
         <bt:Urls>
-          <!-- <bt:Url id="Commands.Url" DefaultValue="https://outlook-add-in-ui.onrender.com/commands.html"/> -->
-          <bt:Url id="Commands.Url" DefaultValue="https://localhost:3000/commands.html"/>
           <!-- <bt:Url id="Taskpane.Url" DefaultValue="https://outlook-add-in-ui.onrender.com/taskpane.html"/> -->
           <bt:Url id="Taskpane.Url" DefaultValue="https://localhost:3000/taskpane.html"/>
         </bt:Urls>

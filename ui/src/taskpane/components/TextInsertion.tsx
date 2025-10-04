@@ -11,7 +11,13 @@ import {
 import { PipelineResponse } from "../taskpane";
 
 interface TextInsertionProps {
-  sendText: (optionalPrompt?: string) => Promise<PipelineResponse>;
+  optionalPrompt: string;
+  onOptionalPromptChange: (value: string) => void;
+  isOptionalPromptVisible: boolean;
+  onOptionalPromptVisibilityChange: (visible: boolean) => void;
+  statusMessage: string;
+  pipelineResponse: PipelineResponse | null;
+  onSend: () => Promise<void>;
 }
 
 const useStyles = makeStyles({
@@ -74,24 +80,14 @@ const useStyles = makeStyles({
 });
 
 const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) => {
-  const [statusMessage, setStatusMessage] = useState<string>("");
-  const [pipelineResponse, setPipelineResponse] = useState<PipelineResponse | null>(null);
   const [isSending, setIsSending] = useState<boolean>(false);
-  const [isOptionalPromptVisible, setIsOptionalPromptVisible] = useState<boolean>(false);
-  const [optionalPrompt, setOptionalPrompt] = useState<string>("");
 
   const handleTextSend = async () => {
     try {
       setIsSending(true);
-      setStatusMessage("Sending the current email content...");
-      setPipelineResponse(null);
-      const response = await props.sendText(optionalPrompt.trim() || undefined);
-      setStatusMessage("Email content sent to the server.");
-      setPipelineResponse(response);
+      await props.onSend();
     } catch (error) {
       console.error(error);
-      setStatusMessage("We couldn't send the email content. Please try again.");
-      setPipelineResponse(null);
     } finally {
       setIsSending(false);
     }
@@ -99,8 +95,8 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
 
   const styles = useStyles();
   const emailResponse = useMemo(
-    () => pipelineResponse?.assistantResponse?.emailResponse?.trim() ?? "",
-    [pipelineResponse]
+    () => props.pipelineResponse?.assistantResponse?.emailResponse?.trim() ?? "",
+    [props.pipelineResponse]
   );
 
   return (
@@ -112,12 +108,12 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
         <Button
           appearance="secondary"
           disabled={isSending}
-          onClick={() => setIsOptionalPromptVisible((previous) => !previous)}
+          onClick={() => props.onOptionalPromptVisibilityChange(!props.isOptionalPromptVisible)}
         >
-          {isOptionalPromptVisible ? "Hide instructions" : "Add instructions"}
+          {props.isOptionalPromptVisible ? "Hide instructions" : "Add instructions"}
         </Button>
       </div>
-      {isOptionalPromptVisible ? (
+      {props.isOptionalPromptVisible ? (
         <Field
           className={styles.optionalPromptField}
           label="Additional instructions"
@@ -126,18 +122,18 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
         >
           <Textarea
             className={styles.optionalPromptTextArea}
-            value={optionalPrompt}
+            value={props.optionalPrompt}
             onChange={(
               _event: React.ChangeEvent<HTMLTextAreaElement>,
               data: TextareaOnChangeData
-            ) => setOptionalPrompt(data.value)}
+            ) => props.onOptionalPromptChange(data.value)}
             placeholder="Add extra details or tone preferences for the generated response."
             resize="vertical"
           />
         </Field>
       ) : null}
       <Field className={styles.statusField} label="Status" size="large">
-        <Textarea className={styles.statusTextArea} value={statusMessage} readOnly />
+        <Textarea className={styles.statusTextArea} value={props.statusMessage} readOnly />
       </Field>
       <Field className={styles.responseField} label="Email response" size="large">
         <Textarea
@@ -148,11 +144,11 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
           resize="vertical"
         />
       </Field>
-      {pipelineResponse?.assistantResponse?.sourceCitations?.length ? (
+      {props.pipelineResponse?.assistantResponse?.sourceCitations?.length ? (
         <div className={styles.linksSection}>
           <Field className={styles.linksField} label="Links provided">
             <ul className={styles.linksList}>
-              {pipelineResponse.assistantResponse.sourceCitations.map((citation, index) =>
+              {props.pipelineResponse.assistantResponse.sourceCitations.map((citation, index) =>
                 citation?.url ? (
                   <li key={`${citation.url}-${index}`}>
                     <a href={citation.url} target="_blank" rel="noreferrer">
