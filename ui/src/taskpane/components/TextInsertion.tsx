@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Button,
   Field,
@@ -9,13 +9,9 @@ import {
   makeStyles,
 } from "@fluentui/react-components";
 import { PipelineResponse } from "../taskpane";
-import { usePerItemPersistedState } from "../hooks/usePerItemPersistedState";
-import type { TaskPaneSnapshot } from "../storage/taskPaneSnapshot";
-import { writeSnapshotForItem } from "../storage/taskPaneStorage";
 
 interface TextInsertionProps {
   sendText: (optionalPrompt?: string) => Promise<PipelineResponse>;
-  activeItemId: string | null;
 }
 
 const useStyles = makeStyles({
@@ -78,66 +74,28 @@ const useStyles = makeStyles({
 });
 
 const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) => {
-  const { sendText, activeItemId } = props;
-  const { snapshot, setSnapshot, isHydrated } = usePerItemPersistedState(activeItemId);
+  const [statusMessage, setStatusMessage] = useState<string>("");
+  const [pipelineResponse, setPipelineResponse] = useState<PipelineResponse | null>(null);
   const [isSending, setIsSending] = useState<boolean>(false);
+  const [isOptionalPromptVisible, setIsOptionalPromptVisible] = useState<boolean>(false);
+  const [optionalPrompt, setOptionalPrompt] = useState<string>("");
 
-  // The persisted snapshot drives all UI fields so rehydration from storage and
-  // the live React state always agree.
-  const statusMessage = snapshot.statusMessage;
-  const pipelineResponse = snapshot.pipelineResponse;
-  const isOptionalPromptVisible = snapshot.isOptionalPromptVisible;
-  const optionalPrompt = snapshot.optionalPrompt;
-
-  const handleTextSend = useCallback(async () => {
-    const itemIdAtRequestStart = activeItemId;
-    const baselineSnapshot: TaskPaneSnapshot = { ...snapshot };
-    let sendingSnapshot: TaskPaneSnapshot | null = null;
-
+  const handleTextSend = async () => {
     try {
       setIsSending(true);
-      const preparedSnapshot: TaskPaneSnapshot = {
-        ...baselineSnapshot,
-        statusMessage: "Sending the current email content...",
-        pipelineResponse: null,
-      };
-      sendingSnapshot = preparedSnapshot;
-      setSnapshot(preparedSnapshot);
-
-      // Send the email content using the optional instructions (if any). Trimming
-      // avoids storing accidental whitespace-only prompts in the persisted state.
-      const response = await sendText(optionalPrompt.trim() || undefined);
-      const baseSnapshot = sendingSnapshot ?? preparedSnapshot;
-      const successSnapshot: TaskPaneSnapshot = {
-        ...baseSnapshot,
-        statusMessage: "Email content sent to the server.",
-        pipelineResponse: response,
-      };
-
-      if (itemIdAtRequestStart === activeItemId) {
-        setSnapshot(successSnapshot);
-      } else if (itemIdAtRequestStart) {
-        // If the user switched messages mid-request we still persist the
-        // originating snapshot so it's ready when they navigate back.
-        await writeSnapshotForItem(itemIdAtRequestStart, successSnapshot);
-      }
+      setStatusMessage("Sending the current email content...");
+      setPipelineResponse(null);
+      const response = await props.sendText(optionalPrompt.trim() || undefined);
+      setStatusMessage("Email content sent to the server.");
+      setPipelineResponse(response);
     } catch (error) {
       console.error(error);
-      const failureSnapshot: TaskPaneSnapshot = {
-        ...(sendingSnapshot ?? baselineSnapshot),
-        statusMessage: "We couldn't send the email content. Please try again.",
-        pipelineResponse: null,
-      };
-
-      if (itemIdAtRequestStart === activeItemId) {
-        setSnapshot(failureSnapshot);
-      } else if (itemIdAtRequestStart) {
-        await writeSnapshotForItem(itemIdAtRequestStart, failureSnapshot);
-      }
+      setStatusMessage("We couldn't send the email content. Please try again.");
+      setPipelineResponse(null);
     } finally {
       setIsSending(false);
     }
-  }, [activeItemId, optionalPrompt, sendText, setSnapshot, snapshot]);
+  };
 
   const styles = useStyles();
   const emailResponse = useMemo(
@@ -153,13 +111,8 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
       <div className={styles.actionsRow}>
         <Button
           appearance="secondary"
-          disabled={isSending || !isHydrated}
-          onClick={() =>
-            setSnapshot((previous) => ({
-              ...previous,
-              isOptionalPromptVisible: !previous.isOptionalPromptVisible,
-            }))
-          }
+          disabled={isSending}
+          onClick={() => setIsOptionalPromptVisible((previous) => !previous)}
         >
           {isOptionalPromptVisible ? "Hide instructions" : "Add instructions"}
         </Button>
@@ -177,12 +130,7 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
             onChange={(
               _event: React.ChangeEvent<HTMLTextAreaElement>,
               data: TextareaOnChangeData
-            ) =>
-              setSnapshot((previous) => ({
-                ...previous,
-                optionalPrompt: data.value,
-              }))
-            }
+            ) => setOptionalPrompt(data.value)}
             placeholder="Add extra details or tone preferences for the generated response."
             resize="vertical"
           />
@@ -217,12 +165,7 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
           </Field>
         </div>
       ) : null}
-      <Button
-        appearance="primary"
-        disabled={isSending || !isHydrated}
-        size="large"
-        onClick={handleTextSend}
-      >
+      <Button appearance="primary" disabled={isSending} size="large" onClick={handleTextSend}>
         {isSending ? "Sending..." : "Send email content"}
       </Button>
     </div>
