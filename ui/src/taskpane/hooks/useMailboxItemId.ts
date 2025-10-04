@@ -1,4 +1,4 @@
-/* global console, Office */
+/* global Office */
 /**
  * Mailbox Item Tracking Hook
  * ---------------------------------------------------------------------------
@@ -22,19 +22,9 @@ import { MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } f
 const generateFallbackKey = (): string =>
   `compose:${Date.now().toString(36)}:${Math.random().toString(36).slice(2)}`;
 
-const describeItemId = (itemId: string | null): string => {
-  if (!itemId) {
-    return "<none>";
-  }
-
-  if (itemId.length <= 32) {
-    return itemId;
-  }
-
-  return `${itemId.slice(0, 12)}…${itemId.slice(-6)}`;
-};
-
-const getCurrentItemKey = (composeFallbackRef: MutableRefObject<string | null>): string | null => {
+const getCurrentItemKey = (
+  composeFallbackRef: MutableRefObject<string | null>
+): string | null => {
   const mailbox = Office.context?.mailbox;
   const item = mailbox?.item;
 
@@ -54,9 +44,6 @@ const getCurrentItemKey = (composeFallbackRef: MutableRefObject<string | null>):
 
   if (!composeFallbackRef.current) {
     composeFallbackRef.current = generateFallbackKey();
-    console.info(
-      `[MailboxItemId] Generated compose fallback key ${describeItemId(composeFallbackRef.current)} because Outlook has not provided a permanent itemId yet.`
-    );
   }
 
   return composeFallbackRef.current;
@@ -79,16 +66,7 @@ export const useMailboxItemId = (): { itemId: string | null; isFallbackId: boole
     const nextItemId = getCurrentItemKey(composeFallbackRef);
 
     if (isMountedRef.current) {
-      setItemId((current) => {
-        if (current === nextItemId) {
-          return current;
-        }
-
-        console.info(
-          `[MailboxItemId] Active mailbox item changed from ${describeItemId(current)} to ${describeItemId(nextItemId)}.`
-        );
-        return nextItemId;
-      });
+      setItemId((current) => (current === nextItemId ? current : nextItemId));
     }
   }, []);
 
@@ -106,8 +84,6 @@ export const useMailboxItemId = (): { itemId: string | null; isFallbackId: boole
     mailbox.addHandlerAsync(Office.EventType.ItemChanged, refreshItemId, (asyncResult) => {
       if (asyncResult.status !== Office.AsyncResultStatus.Succeeded) {
         console.error("Failed to subscribe to mailbox item changes", asyncResult.error);
-      } else {
-        console.info("[MailboxItemId] Subscribed to Office.EventType.ItemChanged.");
       }
     });
 
@@ -120,8 +96,6 @@ export const useMailboxItemId = (): { itemId: string | null; isFallbackId: boole
         (asyncResult) => {
           if (asyncResult.status !== Office.AsyncResultStatus.Succeeded) {
             console.error("Failed to remove mailbox item change handler", asyncResult.error);
-          } else {
-            console.info("[MailboxItemId] Removed Office.EventType.ItemChanged subscription.");
           }
         }
       );
@@ -133,14 +107,6 @@ export const useMailboxItemId = (): { itemId: string | null; isFallbackId: boole
     // can skip persistence until Outlook provides a real id.
     return composeFallbackRef.current !== null && composeFallbackRef.current === itemId;
   }, [itemId]);
-
-  useEffect(() => {
-    if (isFallbackId) {
-      console.info(
-        `[MailboxItemId] Using fallback compose identifier ${describeItemId(itemId)} until Outlook publishes a permanent itemId.`
-      );
-    }
-  }, [isFallbackId, itemId]);
 
   return { itemId, isFallbackId };
 };
