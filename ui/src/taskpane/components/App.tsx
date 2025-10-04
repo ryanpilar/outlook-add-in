@@ -35,6 +35,7 @@ const App: React.FC<AppProps> = ({ title }) => {
         statusMessage={state.statusMessage}
         pipelineResponse={state.pipelineResponse}
         onSend={actions.sendCurrentEmail}
+        isSending={state.isSending}
       />
     </div>
   );
