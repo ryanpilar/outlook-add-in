@@ -34,6 +34,7 @@ const App: React.FC<AppProps> = ({ title }) => {
         onOptionalPromptVisibilityChange={actions.setOptionalPromptVisible}
         statusMessage={state.statusMessage}
         pipelineResponse={state.pipelineResponse}
+        isSending={state.isSending}
         onSend={actions.sendCurrentEmail}
       />
     </div>

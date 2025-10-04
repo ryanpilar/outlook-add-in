@@ -7,6 +7,8 @@ export interface PersistedTaskPaneState {
   statusMessage: string;
   pipelineResponse: PipelineResponse | null;
   isOptionalPromptVisible: boolean;
+  isSending: boolean;
+  pendingRequestId: string | null;
   lastUpdatedUtc?: string;
 }
 
@@ -61,6 +63,8 @@ const createDefaultState = (): PersistedTaskPaneState => ({
   statusMessage: "",
   pipelineResponse: null,
   isOptionalPromptVisible: false,
+  isSending: false,
+  pendingRequestId: null,
 });
 
 const buildStorageKey = (itemKey: string): string => `${STORAGE_NAMESPACE}:${itemKey}`;
@@ -79,6 +83,8 @@ export const loadPersistedState = async (itemKey: string): Promise<PersistedTask
       ...createDefaultState(),
       ...parsed,
       pipelineResponse: parsed.pipelineResponse ?? null,
+      isSending: parsed.isSending ?? false,
+      pendingRequestId: parsed.pendingRequestId ?? null,
     };
   } catch (error) {
     console.warn(`[Taskpane] Failed to parse persisted state for key ${itemKey}.`, error);
@@ -111,7 +117,13 @@ export const updatePersistedState = async (
     pipelineResponse:
       partial.pipelineResponse !== undefined
         ? partial.pipelineResponse
-        : currentState.pipelineResponse ?? null,
+        : (currentState.pipelineResponse ?? null),
+    isSending:
+      partial.isSending !== undefined ? partial.isSending : (currentState.isSending ?? false),
+    pendingRequestId:
+      partial.pendingRequestId !== undefined
+        ? partial.pendingRequestId
+        : (currentState.pendingRequestId ?? null),
     lastUpdatedUtc: new Date().toISOString(),
   };
 
