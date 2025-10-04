@@ -179,7 +179,6 @@ const usePersistedState = () => {
       if (mailbox?.removeHandlerAsync) {
         mailbox.removeHandlerAsync(
           Office.EventType.ItemChanged,
-          { handler: itemChangedHandler },
           (result) => {
             if (result.status !== Office.AsyncResultStatus.Succeeded) {
               console.warn("[Taskpane] Failed to remove ItemChanged handler.", result.error);
