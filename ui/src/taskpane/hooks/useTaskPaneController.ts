@@ -30,6 +30,9 @@ const usePersistedState = () => {
   const isMountedRef = React.useRef<boolean>(false);
   const visibilityCleanupRef = React.useRef<(() => Promise<void>) | null>(null);
   const latestStateRef = React.useRef<PersistedTaskPaneState>(state);
+  // Track the active network operation for each mailbox item so we can correlate responses
+  // even if the user navigates away and back while the request is still running.
+  const pendingRequestsRef = React.useRef<Map<string, string>>(new Map());
 
   React.useEffect(() => {
     latestStateRef.current = state;
@@ -106,6 +109,7 @@ const usePersistedState = () => {
       console.info("[Taskpane] No mailbox item detected. Resetting state to defaults.");
       currentItemKeyRef.current = null;
       setState(createEmptyState());
+      pendingRequestsRef.current.clear();
       return;
     }
 
@@ -129,12 +133,21 @@ const usePersistedState = () => {
 
       console.info(`[Taskpane] Persisted state loaded for key ${key}.`);
       setState(storedState);
+      if (storedState.pendingRequestId) {
+        console.debug(
+          `[Taskpane] Restored pending request ${storedState.pendingRequestId} for key ${key} from storage.`
+        );
+        pendingRequestsRef.current.set(key, storedState.pendingRequestId);
+      } else {
+        pendingRequestsRef.current.delete(key);
+      }
     } catch (error) {
       console.warn(`[Taskpane] Failed to load persisted state for key ${key}.`, error);
 
       if (isMountedRef.current && currentItemKeyRef.current === key) {
         console.info("[Taskpane] Falling back to empty state after load failure.");
         setState(createEmptyState());
+        pendingRequestsRef.current.delete(key);
       }
     }
   }, []);
@@ -177,16 +190,13 @@ const usePersistedState = () => {
       }
 
       if (mailbox?.removeHandlerAsync) {
-        mailbox.removeHandlerAsync(
-          Office.EventType.ItemChanged,
-          (result) => {
-            if (result.status !== Office.AsyncResultStatus.Succeeded) {
-              console.warn("[Taskpane] Failed to remove ItemChanged handler.", result.error);
-            } else {
-              console.info("[Taskpane] ItemChanged handler removed.");
-            }
+        mailbox.removeHandlerAsync(Office.EventType.ItemChanged, (result) => {
+          if (result.status !== Office.AsyncResultStatus.Succeeded) {
+            console.warn("[Taskpane] Failed to remove ItemChanged handler.", result.error);
+          } else {
+            console.info("[Taskpane] ItemChanged handler removed.");
           }
-        );
+        });
       }
     };
   }, [refreshFromCurrentItem]);
@@ -211,9 +221,35 @@ const usePersistedState = () => {
     console.info("[Taskpane] Initiating send workflow for current email content.");
     const targetKey = currentItemKeyRef.current;
 
+    if (!targetKey) {
+      console.warn("[Taskpane] Cannot send email content because there is no active item key.");
+      mergeState({
+        statusMessage:
+          "We couldn't find the current email. Please reopen the task pane and try again.",
+        isSending: false,
+        pendingRequestId: null,
+      });
+      return;
+    }
+
+    // Prevent duplicate sends so the UI stays in sync with the active background operation.
+    if (latestStateRef.current.isSending) {
+      console.info(
+        "[Taskpane] Ignoring send request because another operation is already in progress."
+      );
+      return;
+    }
+
+    // Generate a lightweight correlation identifier so we can ignore stale responses
+    // if the user triggers another request for the same item.
+    const requestId = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    pendingRequestsRef.current.set(targetKey, requestId);
+
     mergeState({
       statusMessage: "Sending the current email content...",
       pipelineResponse: null,
+      isSending: true,
+      pendingRequestId: requestId,
     });
 
     try {
@@ -221,14 +257,37 @@ const usePersistedState = () => {
       const response = await sendText(prompt ? prompt : undefined);
 
       console.info("[Taskpane] Email content successfully sent to the logging service.");
+      if (pendingRequestsRef.current.get(targetKey) !== requestId) {
+        console.info(
+          `[Taskpane] Ignoring response for request ${requestId} because a newer request is active for key ${targetKey}.`
+        );
+        return;
+      }
+
+      pendingRequestsRef.current.delete(targetKey);
+
       await applyStateForKey(targetKey, {
         statusMessage: "Email content sent to the server.",
         pipelineResponse: response,
+        isSending: false,
+        pendingRequestId: null,
       });
     } catch (error) {
       console.error("[Taskpane] Failed to send email content.", error);
+      const isLatestRequest = pendingRequestsRef.current.get(targetKey) === requestId;
+
+      if (isLatestRequest) {
+        pendingRequestsRef.current.delete(targetKey);
+      }
+
+      // If the request that failed is still the latest one we can safely reset the sending flag.
+      // Otherwise we preserve the identifier for the newer request so the UI stays disabled.
       await applyStateForKey(targetKey, {
         statusMessage: "We couldn't send the email content. Please try again.",
+        isSending: false,
+        pendingRequestId: isLatestRequest
+          ? null
+          : (pendingRequestsRef.current.get(targetKey) ?? null),
       });
     }
   }, [applyStateForKey, mergeState]);
