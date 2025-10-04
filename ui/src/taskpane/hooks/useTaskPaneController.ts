@@ -83,6 +83,13 @@ const usePersistedState = () => {
       try {
         await updatePersistedState(itemKey, partial);
         console.info(`[Taskpane] Persisted background state update for key ${itemKey}.`);
+
+        if (isMountedRef.current && currentItemKeyRef.current === itemKey) {
+          console.debug(
+            `[Taskpane] Item key ${itemKey} became active after background persistence. Synchronizing in-memory state.`
+          );
+          mergeState(partial);
+        }
       } catch (error) {
         console.warn(
           `[Taskpane] Failed to apply background state update for key ${itemKey}.`,
@@ -211,9 +218,15 @@ const usePersistedState = () => {
     console.info("[Taskpane] Initiating send workflow for current email content.");
     const targetKey = currentItemKeyRef.current;
 
+    if (latestStateRef.current.isSending) {
+      console.info("[Taskpane] Send request ignored because another send is already in progress.");
+      return;
+    }
+
     mergeState({
       statusMessage: "Sending the current email content...",
       pipelineResponse: null,
+      isSending: true,
     });
 
     try {
@@ -224,11 +237,13 @@ const usePersistedState = () => {
       await applyStateForKey(targetKey, {
         statusMessage: "Email content sent to the server.",
         pipelineResponse: response,
+        isSending: false,
       });
     } catch (error) {
       console.error("[Taskpane] Failed to send email content.", error);
       await applyStateForKey(targetKey, {
         statusMessage: "We couldn't send the email content. Please try again.",
+        isSending: false,
       });
     }
   }, [applyStateForKey, mergeState]);
