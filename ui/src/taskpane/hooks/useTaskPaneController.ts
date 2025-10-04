@@ -6,6 +6,7 @@ import {
   loadPersistedState,
   PersistedTaskPaneState,
   savePersistedState,
+  updatePersistedState,
 } from "../helpers/persistence";
 import { resolveStorageKeyForCurrentItem } from "../helpers/mailboxItem";
 import { registerTaskpaneVisibilityHandler } from "../helpers/runtime";
@@ -65,6 +66,31 @@ const usePersistedState = () => {
       }));
     },
     [applyStateUpdate]
+  );
+
+  const applyStateForKey = React.useCallback(
+    async (itemKey: string | null, partial: Partial<PersistedTaskPaneState>) => {
+      if (!itemKey) {
+        console.debug("[Taskpane] Skipping background persistence because the item key was null.");
+        return;
+      }
+
+      if (isMountedRef.current && currentItemKeyRef.current === itemKey) {
+        mergeState(partial);
+        return;
+      }
+
+      try {
+        await updatePersistedState(itemKey, partial);
+        console.info(`[Taskpane] Persisted background state update for key ${itemKey}.`);
+      } catch (error) {
+        console.warn(
+          `[Taskpane] Failed to apply background state update for key ${itemKey}.`,
+          error
+        );
+      }
+    },
+    [mergeState]
   );
 
   const refreshFromCurrentItem = React.useCallback(async () => {
@@ -184,6 +210,8 @@ const usePersistedState = () => {
 
   const sendCurrentEmail = React.useCallback(async () => {
     console.info("[Taskpane] Initiating send workflow for current email content.");
+    const targetKey = currentItemKeyRef.current;
+
     mergeState({
       statusMessage: "Sending the current email content...",
       pipelineResponse: null,
@@ -194,17 +222,17 @@ const usePersistedState = () => {
       const response = await sendText(prompt ? prompt : undefined);
 
       console.info("[Taskpane] Email content successfully sent to the logging service.");
-      mergeState({
+      await applyStateForKey(targetKey, {
         statusMessage: "Email content sent to the server.",
         pipelineResponse: response,
       });
     } catch (error) {
       console.error("[Taskpane] Failed to send email content.", error);
-      mergeState({
+      await applyStateForKey(targetKey, {
         statusMessage: "We couldn't send the email content. Please try again.",
       });
     }
-  }, [mergeState]);
+  }, [applyStateForKey, mergeState]);
 
   const actions: TaskPaneActions = React.useMemo(
     () => ({

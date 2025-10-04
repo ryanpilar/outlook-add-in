@@ -100,4 +100,24 @@ export const clearPersistedState = async (itemKey: string): Promise<void> => {
   await storage.removeItem(storageKey);
 };
 
+export const updatePersistedState = async (
+  itemKey: string,
+  partial: Partial<PersistedTaskPaneState>
+): Promise<PersistedTaskPaneState> => {
+  const currentState = await loadPersistedState(itemKey);
+  const nextState: PersistedTaskPaneState = {
+    ...currentState,
+    ...partial,
+    pipelineResponse:
+      partial.pipelineResponse !== undefined
+        ? partial.pipelineResponse
+        : currentState.pipelineResponse ?? null,
+    lastUpdatedUtc: new Date().toISOString(),
+  };
+
+  await savePersistedState(itemKey, nextState);
+
+  return nextState;
+};
+
 export const createEmptyState = createDefaultState;
