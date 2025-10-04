@@ -4,12 +4,19 @@ import * as React from "react";
 import {
   createEmptyState,
   loadPersistedState,
+  PersistedStateUpdate,
   PersistedTaskPaneState,
   savePersistedState,
   updatePersistedState,
 } from "../helpers/persistence";
 import { resolveStorageKeyForCurrentItem } from "../helpers/mailboxItem";
 import { registerTaskpaneVisibilityHandler } from "../helpers/runtime";
+import {
+  attachToSendOperation,
+  clearSendOperation,
+  MAX_SEND_OPERATION_RETRIES,
+  scheduleSendOperationRetry,
+} from "../helpers/sendOperations";
 import { sendText } from "../taskpane";
 
 export interface TaskPaneActions {
@@ -24,16 +31,83 @@ export interface TaskPaneController {
   actions: TaskPaneActions;
 }
 
+const describeError = (error: unknown): string => {
+  if (!error) {
+    return "";
+  }
+
+  if (error instanceof Error) {
+    return error.message || error.name || "";
+  }
+
+  if (typeof error === "string") {
+    return error;
+  }
+
+  try {
+    return JSON.stringify(error);
+  } catch (serializationError) {
+    console.debug("[Taskpane] Failed to serialize error payload.", serializationError);
+    return String(error);
+  }
+};
+
+const isRetryableNetworkError = (error: unknown): boolean => {
+  const candidateName = (error as { name?: string } | null)?.name?.toLowerCase() ?? "";
+
+  if (candidateName.includes("network") || candidateName.includes("abort")) {
+    return true;
+  }
+
+  const message = describeError(error).toLowerCase();
+
+  if (!message) {
+    return false;
+  }
+
+  return (
+    message.includes("failed to fetch") ||
+    message.includes("networkerror") ||
+    message.includes("network error") ||
+    message.includes("load failed") ||
+    message.includes("connection was aborted")
+  );
+};
+
+const formatRetryStatusMessage = (attempt: number, delayMs: number): string => {
+  const seconds = Math.ceil(delayMs / 1000);
+  const pluralSuffix = seconds === 1 ? "" : "s";
+
+  return `Connection interrupted. Retrying (attempt ${attempt} of ${MAX_SEND_OPERATION_RETRIES}) in ${seconds} second${pluralSuffix}...`;
+};
+
 const usePersistedState = () => {
   const [state, setState] = React.useState<PersistedTaskPaneState>(() => createEmptyState());
   const currentItemKeyRef = React.useRef<string | null>(null);
   const isMountedRef = React.useRef<boolean>(false);
   const visibilityCleanupRef = React.useRef<(() => Promise<void>) | null>(null);
   const latestStateRef = React.useRef<PersistedTaskPaneState>(state);
+  const operationSubscriptionsRef = React.useRef<Map<string, () => void>>(new Map());
 
   React.useEffect(() => {
     latestStateRef.current = state;
   }, [state]);
+
+  const detachOperationSubscription = React.useCallback((requestId: string) => {
+    const subscription = operationSubscriptionsRef.current.get(requestId);
+
+    if (!subscription) {
+      return;
+    }
+
+    try {
+      subscription();
+    } catch (error) {
+      console.warn(`[Taskpane] Failed to detach send operation ${requestId}.`, error);
+    }
+
+    operationSubscriptionsRef.current.delete(requestId);
+  }, []);
 
   const applyStateUpdate = React.useCallback(
     (updater: (previous: PersistedTaskPaneState) => PersistedTaskPaneState) => {
@@ -58,30 +132,43 @@ const usePersistedState = () => {
   );
 
   const mergeState = React.useCallback(
-    (partial: Partial<PersistedTaskPaneState>) => {
-      applyStateUpdate((previous) => ({
-        ...previous,
-        ...partial,
-        lastUpdatedUtc: new Date().toISOString(),
-      }));
+    (update: PersistedStateUpdate) => {
+      applyStateUpdate((previous) => {
+        const nextState =
+          typeof update === "function"
+            ? update(previous)
+            : {
+                ...previous,
+                ...update,
+              };
+
+        return {
+          ...nextState,
+          pipelineResponse: nextState.pipelineResponse ?? null,
+          isSending: nextState.isSending ?? false,
+          activeRequestId: nextState.activeRequestId ?? null,
+          activeRequestPrompt: nextState.activeRequestPrompt ?? null,
+          lastUpdatedUtc: new Date().toISOString(),
+        };
+      });
     },
     [applyStateUpdate]
   );
 
   const applyStateForKey = React.useCallback(
-    async (itemKey: string | null, partial: Partial<PersistedTaskPaneState>) => {
+    async (itemKey: string | null, update: PersistedStateUpdate) => {
       if (!itemKey) {
         console.debug("[Taskpane] Skipping background persistence because the item key was null.");
         return;
       }
 
       if (isMountedRef.current && currentItemKeyRef.current === itemKey) {
-        mergeState(partial);
+        mergeState(update);
         return;
       }
 
       try {
-        await updatePersistedState(itemKey, partial);
+        await updatePersistedState(itemKey, update);
         console.info(`[Taskpane] Persisted background state update for key ${itemKey}.`);
       } catch (error) {
         console.warn(
@@ -91,6 +178,136 @@ const usePersistedState = () => {
       }
     },
     [mergeState]
+  );
+
+  const handleSendSuccess = React.useCallback(
+    async (itemKey: string, requestId: string, response: Awaited<ReturnType<typeof sendText>>) => {
+      console.info(`[Taskpane] Send operation ${requestId} completed successfully.`);
+
+      await applyStateForKey(itemKey, (currentState) => {
+        if (currentState.activeRequestId && currentState.activeRequestId !== requestId) {
+          return currentState;
+        }
+
+        return {
+          ...currentState,
+          statusMessage: "Email content sent to the server.",
+          pipelineResponse: response,
+          isSending: false,
+          activeRequestId: null,
+          activeRequestPrompt: null,
+        };
+      });
+
+      detachOperationSubscription(requestId);
+      clearSendOperation(requestId);
+    },
+    [applyStateForKey, clearSendOperation, detachOperationSubscription]
+  );
+
+  const handleSendFailure = React.useCallback(
+    async (itemKey: string, requestId: string, error: unknown) => {
+      const errorMessage = describeError(error);
+
+      if (isRetryableNetworkError(error)) {
+        const retryPlan = scheduleSendOperationRetry(requestId);
+
+        if (retryPlan.scheduled) {
+          console.warn(
+            `[Taskpane] Send operation ${requestId} will retry in ${retryPlan.delayMs}ms (attempt ${retryPlan.attempt}).`,
+            error
+          );
+
+          await applyStateForKey(itemKey, (currentState) => {
+            if (currentState.activeRequestId && currentState.activeRequestId !== requestId) {
+              return currentState;
+            }
+
+            return {
+              ...currentState,
+              statusMessage: formatRetryStatusMessage(retryPlan.attempt, retryPlan.delayMs),
+              isSending: true,
+            };
+          });
+
+          return;
+        }
+      }
+
+      console.error(`[Taskpane] Send operation ${requestId} failed.`, error);
+
+      const truncatedError = errorMessage ? errorMessage.slice(0, 200) : "";
+      const failureMessage = truncatedError
+        ? `We couldn't send the email content. Reason: ${truncatedError}`
+        : "We couldn't send the email content. Please try again.";
+
+      await applyStateForKey(itemKey, (currentState) => {
+        if (currentState.activeRequestId && currentState.activeRequestId !== requestId) {
+          return currentState;
+        }
+
+        return {
+          ...currentState,
+          statusMessage: failureMessage,
+          isSending: false,
+          activeRequestId: null,
+          activeRequestPrompt: null,
+        };
+      });
+
+      detachOperationSubscription(requestId);
+      clearSendOperation(requestId);
+    },
+    [applyStateForKey, clearSendOperation, detachOperationSubscription, scheduleSendOperationRetry]
+  );
+
+  const ensureSendLifecycle = React.useCallback(
+    (itemKey: string, requestId: string, prompt: string | null) => {
+      if (!requestId) {
+        return;
+      }
+
+      const sanitizedPrompt = prompt?.trim() ?? "";
+
+      // Replace any previous subscription to avoid duplicate handlers when the
+      // user rapidly toggles between emails or reopens the task pane.
+      detachOperationSubscription(requestId);
+
+      const subscription = attachToSendOperation(
+        requestId,
+        () => sendText(sanitizedPrompt ? sanitizedPrompt : undefined),
+        {
+          onSuccess: (response) => {
+            void handleSendSuccess(itemKey, requestId, response);
+          },
+          onError: (error) => {
+            void handleSendFailure(itemKey, requestId, error);
+          },
+        }
+      );
+
+      operationSubscriptionsRef.current.set(requestId, subscription.detach);
+    },
+    [attachToSendOperation, detachOperationSubscription, handleSendFailure, handleSendSuccess]
+  );
+
+  const resumePendingOperationIfNeeded = React.useCallback(
+    (itemKey: string, persistedState: PersistedTaskPaneState) => {
+      if (!persistedState.isSending || !persistedState.activeRequestId) {
+        return;
+      }
+
+      console.info(
+        `[Taskpane] Reconnecting to in-flight request ${persistedState.activeRequestId} for mailbox item ${itemKey}.`
+      );
+
+      ensureSendLifecycle(
+        itemKey,
+        persistedState.activeRequestId,
+        persistedState.activeRequestPrompt ?? null
+      );
+    },
+    [ensureSendLifecycle]
   );
 
   const refreshFromCurrentItem = React.useCallback(async () => {
@@ -128,6 +345,7 @@ const usePersistedState = () => {
       }
 
       console.info(`[Taskpane] Persisted state loaded for key ${key}.`);
+      resumePendingOperationIfNeeded(key, storedState);
       setState(storedState);
     } catch (error) {
       console.warn(`[Taskpane] Failed to load persisted state for key ${key}.`, error);
@@ -137,7 +355,7 @@ const usePersistedState = () => {
         setState(createEmptyState());
       }
     }
-  }, []);
+  }, [resumePendingOperationIfNeeded]);
 
   React.useEffect(() => {
     isMountedRef.current = true;
@@ -177,16 +395,13 @@ const usePersistedState = () => {
       }
 
       if (mailbox?.removeHandlerAsync) {
-        mailbox.removeHandlerAsync(
-          Office.EventType.ItemChanged,
-          (result) => {
-            if (result.status !== Office.AsyncResultStatus.Succeeded) {
-              console.warn("[Taskpane] Failed to remove ItemChanged handler.", result.error);
-            } else {
-              console.info("[Taskpane] ItemChanged handler removed.");
-            }
+        mailbox.removeHandlerAsync(Office.EventType.ItemChanged, (result) => {
+          if (result.status !== Office.AsyncResultStatus.Succeeded) {
+            console.warn("[Taskpane] Failed to remove ItemChanged handler.", result.error);
+          } else {
+            console.info("[Taskpane] ItemChanged handler removed.");
           }
-        );
+        });
       }
     };
   }, [refreshFromCurrentItem]);
@@ -211,27 +426,41 @@ const usePersistedState = () => {
     console.info("[Taskpane] Initiating send workflow for current email content.");
     const targetKey = currentItemKeyRef.current;
 
-    mergeState({
+    if (latestStateRef.current.isSending) {
+      // When a request is already running we simply ignore additional presses so the
+      // background workflow is not duplicated.
+      console.info(
+        "[Taskpane] A send operation is already in progress. Ignoring duplicate request."
+      );
+      return;
+    }
+
+    if (!targetKey) {
+      console.warn(
+        "[Taskpane] Unable to determine a storage key for the current item. Aborting send."
+      );
+      return;
+    }
+
+    // Generate a lightweight identifier so we can correlate the response with the request
+    // when it completes, even if the user navigates away from the original email.
+    const requestId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const optionalPrompt = latestStateRef.current.optionalPrompt.trim();
+
+    // Persist the "sending" flag against the originating item key so the UI can resume the
+    // pending state after navigation. This runs through `applyStateForKey` so we reuse the same
+    // code path regardless of whether the item is currently displayed or only updated in storage.
+    await applyStateForKey(targetKey, (previous) => ({
+      ...previous,
       statusMessage: "Sending the current email content...",
       pipelineResponse: null,
-    });
+      isSending: true,
+      activeRequestId: requestId,
+      activeRequestPrompt: optionalPrompt || null,
+    }));
 
-    try {
-      const prompt = latestStateRef.current.optionalPrompt.trim();
-      const response = await sendText(prompt ? prompt : undefined);
-
-      console.info("[Taskpane] Email content successfully sent to the logging service.");
-      await applyStateForKey(targetKey, {
-        statusMessage: "Email content sent to the server.",
-        pipelineResponse: response,
-      });
-    } catch (error) {
-      console.error("[Taskpane] Failed to send email content.", error);
-      await applyStateForKey(targetKey, {
-        statusMessage: "We couldn't send the email content. Please try again.",
-      });
-    }
-  }, [applyStateForKey, mergeState]);
+    ensureSendLifecycle(targetKey, requestId, optionalPrompt || null);
+  }, [applyStateForKey, ensureSendLifecycle]);
 
   const actions: TaskPaneActions = React.useMemo(
     () => ({

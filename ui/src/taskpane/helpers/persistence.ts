@@ -7,6 +7,17 @@ export interface PersistedTaskPaneState {
   statusMessage: string;
   pipelineResponse: PipelineResponse | null;
   isOptionalPromptVisible: boolean;
+  isSending: boolean;
+  /**
+   * Tracks the identifier of the in-flight request, if any, so the UI can resume
+   * waiting when the task pane is reopened on another item.
+   */
+  activeRequestId?: string | null;
+  /**
+   * Stores the sanitized optional prompt that accompanied the pending request so
+   * retries or resumed operations reuse the exact same payload.
+   */
+  activeRequestPrompt?: string | null;
   lastUpdatedUtc?: string;
 }
 
@@ -61,6 +72,9 @@ const createDefaultState = (): PersistedTaskPaneState => ({
   statusMessage: "",
   pipelineResponse: null,
   isOptionalPromptVisible: false,
+  isSending: false,
+  activeRequestId: null,
+  activeRequestPrompt: null,
 });
 
 const buildStorageKey = (itemKey: string): string => `${STORAGE_NAMESPACE}:${itemKey}`;
@@ -79,6 +93,9 @@ export const loadPersistedState = async (itemKey: string): Promise<PersistedTask
       ...createDefaultState(),
       ...parsed,
       pipelineResponse: parsed.pipelineResponse ?? null,
+      isSending: parsed.isSending ?? false,
+      activeRequestId: parsed.activeRequestId ?? null,
+      activeRequestPrompt: parsed.activeRequestPrompt ?? null,
     };
   } catch (error) {
     console.warn(`[Taskpane] Failed to parse persisted state for key ${itemKey}.`, error);
@@ -100,20 +117,55 @@ export const clearPersistedState = async (itemKey: string): Promise<void> => {
   await storage.removeItem(storageKey);
 };
 
-export const updatePersistedState = async (
-  itemKey: string,
+export type PersistedStateUpdate =
+  | Partial<PersistedTaskPaneState>
+  | ((previous: PersistedTaskPaneState) => PersistedTaskPaneState);
+
+const mergeWithDefaults = (
+  previous: PersistedTaskPaneState,
   partial: Partial<PersistedTaskPaneState>
-): Promise<PersistedTaskPaneState> => {
-  const currentState = await loadPersistedState(itemKey);
-  const nextState: PersistedTaskPaneState = {
-    ...currentState,
+): PersistedTaskPaneState => {
+  const draft: PersistedTaskPaneState = {
+    ...previous,
     ...partial,
+  };
+
+  return {
+    ...draft,
     pipelineResponse:
       partial.pipelineResponse !== undefined
         ? partial.pipelineResponse
-        : currentState.pipelineResponse ?? null,
-    lastUpdatedUtc: new Date().toISOString(),
+        : (draft.pipelineResponse ?? null),
+    isSending: partial.isSending !== undefined ? partial.isSending : (draft.isSending ?? false),
+    activeRequestId:
+      partial.activeRequestId !== undefined
+        ? partial.activeRequestId
+        : (draft.activeRequestId ?? null),
+    activeRequestPrompt:
+      partial.activeRequestPrompt !== undefined
+        ? partial.activeRequestPrompt
+        : (draft.activeRequestPrompt ?? null),
   };
+};
+
+const normalizeUpdatedState = (candidate: PersistedTaskPaneState): PersistedTaskPaneState => ({
+  ...candidate,
+  pipelineResponse: candidate.pipelineResponse ?? null,
+  isSending: candidate.isSending ?? false,
+  activeRequestId: candidate.activeRequestId ?? null,
+  activeRequestPrompt: candidate.activeRequestPrompt ?? null,
+  lastUpdatedUtc: new Date().toISOString(),
+});
+
+export const updatePersistedState = async (
+  itemKey: string,
+  update: PersistedStateUpdate
+): Promise<PersistedTaskPaneState> => {
+  const currentState = await loadPersistedState(itemKey);
+
+  const nextState = normalizeUpdatedState(
+    typeof update === "function" ? update(currentState) : mergeWithDefaults(currentState, update)
+  );
 
   await savePersistedState(itemKey, nextState);
 
