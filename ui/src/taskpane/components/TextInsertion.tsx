@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Button,
   Field,
@@ -17,7 +17,6 @@ interface TextInsertionProps {
   onOptionalPromptVisibilityChange: (visible: boolean) => void;
   statusMessage: string;
   pipelineResponse: PipelineResponse | null;
-  isSending: boolean;
   onSend: () => Promise<void>;
 }
 
@@ -81,11 +80,16 @@ const useStyles = makeStyles({
 });
 
 const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) => {
+  const [isSending, setIsSending] = useState<boolean>(false);
+
   const handleTextSend = async () => {
     try {
+      setIsSending(true);
       await props.onSend();
     } catch (error) {
       console.error(error);
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -103,7 +107,7 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
       <div className={styles.actionsRow}>
         <Button
           appearance="secondary"
-          disabled={props.isSending}
+          disabled={isSending}
           onClick={() => props.onOptionalPromptVisibilityChange(!props.isOptionalPromptVisible)}
         >
           {props.isOptionalPromptVisible ? "Hide instructions" : "Add instructions"}
@@ -157,8 +161,8 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
           </Field>
         </div>
       ) : null}
-      <Button appearance="primary" disabled={props.isSending} size="large" onClick={handleTextSend}>
-        {props.isSending ? "Sending..." : "Send email content"}
+      <Button appearance="primary" disabled={isSending} size="large" onClick={handleTextSend}>
+        {isSending ? "Sending..." : "Send email content"}
       </Button>
     </div>
   );
