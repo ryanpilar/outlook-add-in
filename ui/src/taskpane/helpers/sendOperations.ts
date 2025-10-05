@@ -37,6 +37,7 @@ interface RetryScheduleResult {
 }
 
 const GLOBAL_REGISTRY_KEY = "__contoso_pendingSendOperations__";
+const GLOBAL_BACKGROUND_KEY = "__contoso_sendOperationBackgroundHost__";
 const MAX_RETRIES = 3;
 const BASE_RETRY_DELAY_MS = 1500;
 const MAX_RETRY_DELAY_MS = 10000;
@@ -218,3 +219,18 @@ export const clearSendOperation = (requestId: string): void => {
 export const MAX_SEND_OPERATION_RETRIES = MAX_RETRIES;
 
 export type { OperationRecord, OperationStatus };
+
+export const initializeSendOperationBackgroundHost = (): void => {
+  const globalScope = globalThis as typeof globalThis & {
+    [GLOBAL_BACKGROUND_KEY]?: boolean;
+  };
+
+  if (globalScope[GLOBAL_BACKGROUND_KEY]) {
+    return;
+  }
+
+  globalScope[GLOBAL_BACKGROUND_KEY] = true;
+  getRegistry();
+
+  console.log("[Taskpane] Send operation background host activated.");
+};

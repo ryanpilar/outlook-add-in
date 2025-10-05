@@ -5,8 +5,12 @@
 
 /* global Office */
 
-Office.onReady(() => {
-  // If needed, Office.js is ready to be called.
+import { enableSharedRuntimeFeatures } from "../taskpane/helpers/runtime";
+import { initializeSendOperationBackgroundHost } from "../taskpane/helpers/sendOperations";
+
+Office.onReady(async () => {
+  await enableSharedRuntimeFeatures();
+  initializeSendOperationBackgroundHost();
 });
 
 /**
