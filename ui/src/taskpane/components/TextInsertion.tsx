@@ -14,7 +14,7 @@ import {
     tokens,
     makeStyles,
 } from "@fluentui/react-components";
-import {Copy16Regular, CheckmarkCircle16Filled, CircleSmall20Regular} from "@fluentui/react-icons";
+import {Copy16Regular, Checkmark16Regular} from "@fluentui/react-icons";
 import {PipelineResponse} from "../taskpane";
 
 interface TextInsertionProps {
@@ -101,7 +101,7 @@ const useStyles = makeStyles({
     tabLabelWithBadge: {
         display: "inline-flex",
         alignItems: "center",
-        gap: "8px",
+        gap: "4px",
     },
     linksList: {
         margin: 0,
@@ -242,10 +242,9 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
     const linksCount = sourceCitations.length;
 
     const responseBadge = hasResponse ? (
-        <Badge appearance="filled" color="success" icon={<CheckmarkCircle16Filled/>}/>
-    ) : (
-        <Badge appearance="outline" icon={<CircleSmall20Regular/>}/>
-    );
+        <Badge appearance="filled" shape="circular" color="success" icon={<Checkmark16Regular/>}/>
+    ) : null;
+
 
     return (
         <div className={styles.textPromptAndInsertion}>
