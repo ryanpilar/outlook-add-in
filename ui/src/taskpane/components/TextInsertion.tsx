@@ -95,6 +95,16 @@ const useStyles = makeStyles({
         gap: "12px",
         alignItems: "center",
     },
+    fullWidthButton: {
+        width: "100%",
+    },
+    stopButton: {
+        display: "flex",
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "8px",
+    },
     primaryActionButton: {
         width: "100%",
     },
@@ -156,9 +166,17 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
             <Field className={styles.instructions}>
                 Press the button to send the body of the email you're viewing to the server.
             </Field>
+            <Field className={styles.statusField} label="Status" size="large">
+                <Textarea
+                    value={props.statusMessage}
+                    readOnly
+                    textarea={{className: styles.statusTextArea}}
+                />
+            </Field>
             <div className={styles.actionsRow}>
                 <Button
                     appearance="secondary"
+                    className={styles.fullWidthButton}
                     disabled={props.isSending}
                     onClick={() => props.onOptionalPromptVisibilityChange(!props.isOptionalPromptVisible)}
                 >
@@ -185,13 +203,6 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                     />
                 </Field>
             ) : null}
-            <Field className={styles.statusField} label="Status" size="large">
-                <Textarea
-                    value={props.statusMessage}
-                    readOnly
-                    textarea={{className: styles.statusTextArea}}
-                />
-            </Field>
             <Field className={styles.responseField} label="Email response" size="large">
                 <Textarea
                     // className={styles.responseTextArea}
@@ -254,7 +265,12 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                     {props.isSending ? "Sending..." : emailResponse ? "Generate new response" : "Generate response"}
                 </Button>
                 {props.isSending ? (
-                    <Button appearance="secondary" size="large" onClick={handleCancel}>
+                    <Button
+                        appearance="secondary"
+                        size="large"
+                        onClick={handleCancel}
+                        className={styles.stopButton}
+                    >
                         Stop
                     </Button>
                 ) : null}
