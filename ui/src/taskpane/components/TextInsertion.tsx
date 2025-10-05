@@ -96,6 +96,22 @@ const useStyles = makeStyles({
     },
     tabList: {
         width: "100%",
+        paddingLeft: "0px",
+        paddingInlineStart: "0px",
+        marginLeft: "0px",
+        marginInlineStart: "0px",
+    },
+    firstTab: {
+        paddingLeft: "0px",
+        paddingInlineStart: "0px",
+        marginLeft: "0px",
+        marginInlineStart: "0px",
+        "&::before": {
+            left: "0px",
+        },
+        "&::after": {
+            left: "0px",
+        },
     },
     tabPanel: {
         display: "flex",
@@ -269,7 +285,9 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                     onTabSelect={handleTabSelect}
                     className={styles.tabList}
                 >
-                    <Tab value="instruct">Instruct</Tab>
+                    <Tab value="instruct" className={styles.firstTab}>
+                        Instruct
+                    </Tab>
                     <Tab value="response">
                         <span className={styles.tabLabelWithBadge}>
                             Response
