@@ -65,10 +65,6 @@
                 "type": "openPage",
                 "pinnable": false,
                 "view": "dashboard"
-              },
-              {
-                "id": "action",
-                "type": "executeFunction"
               }
             ]
           }
@@ -105,21 +101,6 @@
                           "description": "Opens a task pane."
                         },
                         "actionId": "ShowTaskPane"
-                      },
-                      {
-                        "id": "ActionButton",
-                        "type": "button",
-                        "label": "Perform an action",
-                        "icons": [
-                          { "size": 16, "url": "https://localhost:3000/assets/icon-16.png" },
-                          { "size": 32, "url": "https://localhost:3000/assets/icon-32.png" },
-                          { "size": 80, "url": "https://localhost:3000/assets/icon-80.png" }
-                        ],
-                        "supertip": {
-                          "title": "Perform an action",
-                          "description": "Perform an action when clicked."
-                        },
-                        "actionId": "action"
                       }
                     ]
                   }
