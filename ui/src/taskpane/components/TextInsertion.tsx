@@ -91,9 +91,9 @@ const useStyles = makeStyles({
     },
     actionsRow: {
         display: "flex",
-        flexWrap: "wrap",
-        gap: "12px",
+        gap: "5px",
         alignItems: "center",
+        justifyContent: "space-between",
     },
     fullWidthButton: {
         width: "100%",
@@ -230,7 +230,7 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                     >
                         Insert
                     </Button>
-                    <Button appearance="secondary" size="small" onClick={handleClear} className={styles.responseButtons}>
+                    <Button appearance="secondary" size="small" onClick={handleClear} className={styles.responseButtons} disabled={props.isSending}>
                         Clear
                     </Button>
 
@@ -262,7 +262,7 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                     onClick={handleTextSend}
                     className={styles.primaryActionButton}
                 >
-                    {props.isSending ? "Sending..." : emailResponse ? "Generate new response" : "Generate response"}
+                    {props.isSending ? "Sending..." : emailResponse ? "Get New Response" : "Generate response"}
                 </Button>
                 {props.isSending ? (
                     <Button
