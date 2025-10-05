@@ -37,6 +37,8 @@ const App: React.FC<AppProps> = ({ title }) => {
         onSend={actions.sendCurrentEmail}
         isSending={state.isSending}
         onCancel={actions.cancelCurrentSend}
+        onCopyResponse={actions.copyResponseToClipboard}
+        onInjectResponse={actions.injectResponseIntoEmail}
       />
     </div>
   );
