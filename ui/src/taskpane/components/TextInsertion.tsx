@@ -8,6 +8,7 @@ import {
   tokens,
   makeStyles,
 } from "@fluentui/react-components";
+import { Copy16Regular } from "@fluentui/react-icons";
 import { PipelineResponse } from "../taskpane";
 
 interface TextInsertionProps {
@@ -77,6 +78,12 @@ const useStyles = makeStyles({
     width: "100%",
   },
   actionsRow: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "12px",
+    alignItems: "center",
+  },
+  secondaryActions: {
     display: "flex",
     flexWrap: "wrap",
     gap: "12px",
@@ -198,27 +205,30 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
         <Button appearance="primary" disabled={props.isSending} size="large" onClick={handleTextSend}>
           {props.isSending ? "Sending..." : "Send email content"}
         </Button>
-        <Button
-          appearance="secondary"
-          size="large"
-          disabled={!emailResponse}
-          onClick={handleCopyResponse}
-        >
-          Copy response
-        </Button>
-        <Button
-          appearance="secondary"
-          size="large"
-          disabled={!emailResponse}
-          onClick={handleInjectResponse}
-        >
-          Insert into email
-        </Button>
         {props.isSending ? (
           <Button appearance="secondary" size="large" onClick={handleCancel}>
             Stop
           </Button>
         ) : null}
+        <div className={styles.secondaryActions}>
+          <Button
+            appearance="secondary"
+            icon={<Copy16Regular />}
+            size="large"
+            disabled={!emailResponse}
+            onClick={handleCopyResponse}
+          >
+            Copy
+          </Button>
+          <Button
+            appearance="secondary"
+            size="large"
+            disabled={!emailResponse}
+            onClick={handleInjectResponse}
+          >
+            Insert into email
+          </Button>
+        </div>
       </div>
     </div>
   );

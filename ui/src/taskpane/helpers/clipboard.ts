@@ -5,12 +5,22 @@ export const copyTextToClipboard = async (text: string): Promise<void> => {
     return;
   }
 
+  let clipboardError: unknown = null;
+
   if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(text);
-    return;
+    try {
+      await navigator.clipboard.writeText(text);
+      return;
+    } catch (error) {
+      clipboardError = error;
+    }
   }
 
   if (typeof document === "undefined") {
+    if (clipboardError) {
+      throw clipboardError;
+    }
+
     throw new Error("Clipboard APIs are not available in this environment.");
   }
 
@@ -25,10 +35,19 @@ export const copyTextToClipboard = async (text: string): Promise<void> => {
   textarea.select();
   textarea.setSelectionRange(0, textarea.value.length);
 
-  const successful = document.execCommand("copy");
-  document.body.removeChild(textarea);
+  try {
+    const successful = document.execCommand("copy");
 
-  if (!successful) {
-    throw new Error("Copy command was rejected by the browser.");
+    if (!successful) {
+      throw new Error("Copy command was rejected by the browser.");
+    }
+  } catch (error) {
+    if (clipboardError) {
+      throw clipboardError;
+    }
+
+    throw error;
+  } finally {
+    document.body.removeChild(textarea);
   }
 };
