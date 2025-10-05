@@ -69,9 +69,13 @@ const useStyles = makeStyles({
     },
     responseActions: {
         display: "flex",
-        flexWrap: "wrap",
         gap: "4px",
-        justifyContent: "flex-start",
+        justifyContent: "space-between",
+        width: "100%",
+    },
+    responseButtons: {
+        flex: 1,
+        maxWidth: "100px",
     },
     linksList: {
         margin: 0,
@@ -211,29 +215,26 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                 <div className={styles.responseActions}>
                     <Button
                         appearance="secondary"
-                        size="large"
+                        icon={<Copy16Regular/>}
+                        size="small"
+                        disabled={!emailResponse}
+                        onClick={handleCopyResponse}
+                        className={styles.responseButtons}
+                    />
+                    <Button
+                        appearance="secondary"
+                        size="small"
                         disabled={!emailResponse}
                         onClick={handleInjectResponse}
+                        className={styles.responseButtons}
                     >
                         Insert
                     </Button>
-                    <Button
-                        appearance="secondary"
-                        // icon={<Copy16Regular/>}
-                        size="medium"
-                        disabled={!emailResponse}
-                        onClick={handleCopyResponse}
-                    >
-                        Copy
-                    </Button>
-                    <Button
-                        appearance="secondary"
-                        size="medium"
-                        disabled={props.isSending}
-                        onClick={handleClear}
-                    >
+                    <Button appearance="secondary" size="small" onClick={handleClear} className={styles.responseButtons}>
                         Clear
                     </Button>
+
+
                 </div>
             </Field>
             {props.pipelineResponse?.assistantResponse?.sourceCitations?.length ? (
