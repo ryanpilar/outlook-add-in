@@ -48,7 +48,7 @@ export async function sendText(
     });
 
   try {
-    console.info("[Taskpane] Send email content button pressed. Retrieving email body...");
+    console.info("[Taskpane] Generate response button pressed. Retrieving email body...");
     // Retrieve the body of the current email as plain text so it can be sent to the backend.
     const bodyText = await getBodyText();
     console.info(

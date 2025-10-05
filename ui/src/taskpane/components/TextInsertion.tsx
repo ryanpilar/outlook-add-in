@@ -59,11 +59,17 @@ const useStyles = makeStyles({
     flexGrow: 1,
     display: "flex",
     flexDirection: "column",
+    gap: "12px",
   },
   responseTextArea: {
     width: "100%",
     flexGrow: 1,
     minHeight: "400px",
+  },
+  responseActions: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "12px",
   },
   linksList: {
     margin: 0,
@@ -82,11 +88,6 @@ const useStyles = makeStyles({
     flexWrap: "wrap",
     gap: "12px",
     alignItems: "center",
-  },
-  secondaryActions: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "12px",
   },
 });
 
@@ -183,6 +184,25 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
           resize="vertical"
           textarea={{ className: styles.responseTextArea }}
         />
+        <div className={styles.responseActions}>
+          <Button
+            appearance="secondary"
+            icon={<Copy16Regular />}
+            size="large"
+            disabled={!emailResponse}
+            onClick={handleCopyResponse}
+          >
+            Copy
+          </Button>
+          <Button
+            appearance="secondary"
+            size="large"
+            disabled={!emailResponse}
+            onClick={handleInjectResponse}
+          >
+            Insert into email
+          </Button>
+        </div>
       </Field>
       {props.pipelineResponse?.assistantResponse?.sourceCitations?.length ? (
         <div className={styles.linksSection}>
@@ -203,32 +223,13 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
       ) : null}
       <div className={styles.actionsRow}>
         <Button appearance="primary" disabled={props.isSending} size="large" onClick={handleTextSend}>
-          {props.isSending ? "Sending..." : "Send email content"}
+          {props.isSending ? "Sending..." : "Generate response"}
         </Button>
         {props.isSending ? (
           <Button appearance="secondary" size="large" onClick={handleCancel}>
             Stop
           </Button>
         ) : null}
-        <div className={styles.secondaryActions}>
-          <Button
-            appearance="secondary"
-            icon={<Copy16Regular />}
-            size="large"
-            disabled={!emailResponse}
-            onClick={handleCopyResponse}
-          >
-            Copy
-          </Button>
-          <Button
-            appearance="secondary"
-            size="large"
-            disabled={!emailResponse}
-            onClick={handleInjectResponse}
-          >
-            Insert into email
-          </Button>
-        </div>
       </div>
     </div>
   );
