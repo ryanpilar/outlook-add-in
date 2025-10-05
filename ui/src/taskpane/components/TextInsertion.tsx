@@ -42,6 +42,15 @@ const useStyles = makeStyles({
         width: "100%",
         boxSizing: "border-box",
         height: "100%",
+        minHeight: 0,
+    },
+    contentArea: {
+        display: "flex",
+        flexDirection: "column",
+        gap: "16px",
+        flexGrow: 1,
+        minHeight: 0,
+        overflow: "hidden",
     },
     instructions: {
         fontWeight: tokens.fontWeightSemibold,
@@ -67,11 +76,13 @@ const useStyles = makeStyles({
         display: "flex",
         flexDirection: "column",
         gap: "12px",
+        minHeight: 0,
     },
     responseTextArea: {
         width: "100%",
         flexGrow: 1,
-        minHeight: "400px",
+        minHeight: 0,
+        height: "100%",
     },
     responseActions: {
         display: "flex",
@@ -93,6 +104,8 @@ const useStyles = makeStyles({
         flexDirection: "column",
         gap: "12px",
         flexGrow: 1,
+        minHeight: 0,
+        overflow: "hidden",
     },
     tabList: {
         width: "100%",
@@ -118,6 +131,8 @@ const useStyles = makeStyles({
         flexDirection: "column",
         gap: "12px",
         flexGrow: 1,
+        minHeight: 0,
+        overflowY: "auto",
     },
     tabLabelWithBadge: {
         display: "inline-flex",
@@ -150,6 +165,9 @@ const useStyles = makeStyles({
         gap: "5px",
         alignItems: "center",
         justifyContent: "space-between",
+        marginTop: "auto",
+        paddingTop: "8px",
+        backgroundColor: tokens.colorNeutralBackground1,
     },
     fullWidthButton: {
         width: "100%",
@@ -269,17 +287,18 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
 
     return (
         <div className={styles.textPromptAndInsertion}>
-            <Field className={styles.instructions}>
-                Press the button to send the body of the email you're viewing to the server.
-            </Field>
-            <Field className={styles.statusField} label="Status" size="large">
-                <Textarea
-                    value={props.statusMessage}
-                    readOnly
-                    textarea={{className: styles.statusTextArea}}
-                />
-            </Field>
-            <div className={styles.tabContainer}>
+            <div className={styles.contentArea}>
+                <Field className={styles.instructions}>
+                    Press the button to send the body of the email you're viewing to the server.
+                </Field>
+                <Field className={styles.statusField} label="Status" size="large">
+                    <Textarea
+                        value={props.statusMessage}
+                        readOnly
+                        textarea={{className: styles.statusTextArea}}
+                    />
+                </Field>
+                <div className={styles.tabContainer}>
                 <TabList
                     selectedValue={selectedTab}
                     onTabSelect={handleTabSelect}
@@ -392,7 +411,7 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                     </div>
                 ) : null}
             </div>
-
+            </div>
             <div className={styles.actionsRow}>
                 <Button
                     appearance="primary"
