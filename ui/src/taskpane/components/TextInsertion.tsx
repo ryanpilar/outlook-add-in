@@ -209,9 +209,7 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                         disabled={!emailResponse}
                         onClick={handleCopyResponse}
                         className={styles.responseButtons}
-                    >
-                        {/*Copy*/}
-                    </Button>
+                    />
                     <Button
                         appearance="secondary"
                         size="small"
