@@ -13,6 +13,7 @@ import { resolveStorageKeyForCurrentItem } from "../helpers/mailboxItem";
 import { registerTaskpaneVisibilityHandler } from "../helpers/runtime";
 import {
   attachToSendOperation,
+  cancelSendOperation,
   clearSendOperation,
   MAX_SEND_OPERATION_RETRIES,
   scheduleSendOperationRetry,
@@ -24,6 +25,7 @@ export interface TaskPaneActions {
   updateOptionalPrompt: (value: string) => void;
   setOptionalPromptVisible: (visible: boolean) => void;
   sendCurrentEmail: () => Promise<void>;
+  cancelCurrentSend: () => Promise<void>;
 }
 
 export interface TaskPaneController {
@@ -72,6 +74,26 @@ const isRetryableNetworkError = (error: unknown): boolean => {
     message.includes("load failed") ||
     message.includes("connection was aborted")
   );
+};
+
+const isAbortError = (error: unknown): boolean => {
+  if (!error) {
+    return false;
+  }
+
+  const candidateName = (error as { name?: string } | null)?.name?.toLowerCase() ?? "";
+
+  if (candidateName.includes("abort")) {
+    return true;
+  }
+
+  const description = describeError(error).toLowerCase();
+
+  if (!description) {
+    return false;
+  }
+
+  return description.includes("abort") || description.includes("cancel");
 };
 
 const formatRetryStatusMessage = (attempt: number, delayMs: number): string => {
@@ -209,6 +231,28 @@ const usePersistedState = () => {
     async (itemKey: string, requestId: string, error: unknown) => {
       const errorMessage = describeError(error);
 
+      if (isAbortError(error)) {
+        console.info(`[Taskpane] Send operation ${requestId} was cancelled.`);
+
+        await applyStateForKey(itemKey, (currentState) => {
+          if (currentState.activeRequestId && currentState.activeRequestId !== requestId) {
+            return currentState;
+          }
+
+          return {
+            ...currentState,
+            statusMessage: "Send operation cancelled.",
+            isSending: false,
+            activeRequestId: null,
+            activeRequestPrompt: null,
+          };
+        });
+
+        detachOperationSubscription(requestId);
+        clearSendOperation(requestId);
+        return;
+      }
+
       if (isRetryableNetworkError(error)) {
         const retryPlan = scheduleSendOperationRetry(requestId);
 
@@ -275,7 +319,10 @@ const usePersistedState = () => {
 
       const subscription = attachToSendOperation(
         requestId,
-        () => sendText(sanitizedPrompt ? sanitizedPrompt : undefined),
+        (signal) =>
+          sendText(sanitizedPrompt ? sanitizedPrompt : undefined, {
+            signal,
+          }),
         {
           onSuccess: (response) => {
             void handleSendSuccess(itemKey, requestId, response);
@@ -462,14 +509,62 @@ const usePersistedState = () => {
     ensureSendLifecycle(targetKey, requestId, optionalPrompt || null);
   }, [applyStateForKey, ensureSendLifecycle]);
 
+  const cancelCurrentSend = React.useCallback(async () => {
+    const targetKey = currentItemKeyRef.current;
+    const activeRequestId = latestStateRef.current.activeRequestId;
+
+    if (!activeRequestId) {
+      console.info("[Taskpane] No active send operation to cancel.");
+      return;
+    }
+
+    console.info(`[Taskpane] Cancelling send operation ${activeRequestId}.`);
+    const cancelled = cancelSendOperation(activeRequestId);
+
+    if (!targetKey) {
+      console.warn(
+        "[Taskpane] Unable to determine a storage key while cancelling the current send."
+      );
+      return;
+    }
+
+    await applyStateForKey(targetKey, (previous) => {
+      if (previous.activeRequestId && previous.activeRequestId !== activeRequestId) {
+        return previous;
+      }
+
+      return {
+        ...previous,
+        statusMessage: cancelled
+          ? "Stopping the send operation..."
+          : "No send operation in progress.",
+        isSending: false,
+        activeRequestId: null,
+        activeRequestPrompt: null,
+      };
+    });
+
+    if (!cancelled) {
+      detachOperationSubscription(activeRequestId);
+      clearSendOperation(activeRequestId);
+    }
+  }, [applyStateForKey, cancelSendOperation, clearSendOperation, detachOperationSubscription]);
+
   const actions: TaskPaneActions = React.useMemo(
     () => ({
       refreshFromCurrentItem,
       updateOptionalPrompt,
       setOptionalPromptVisible,
       sendCurrentEmail,
+      cancelCurrentSend,
     }),
-    [refreshFromCurrentItem, sendCurrentEmail, setOptionalPromptVisible, updateOptionalPrompt]
+    [
+      cancelCurrentSend,
+      refreshFromCurrentItem,
+      sendCurrentEmail,
+      setOptionalPromptVisible,
+      updateOptionalPrompt,
+    ]
   );
 
   return { state, actions };

@@ -18,9 +18,11 @@ type OperationSubscriber = {
   onError?: (error: unknown) => void;
 };
 
+type OperationExecutor = (signal: AbortSignal) => Promise<PipelineResponse>;
+
 interface OperationRecord {
   requestId: string;
-  executor: () => Promise<PipelineResponse>;
+  executor: OperationExecutor;
   status: OperationStatus;
   promise: Promise<PipelineResponse>;
   result?: PipelineResponse;
@@ -28,6 +30,7 @@ interface OperationRecord {
   subscribers: Set<OperationSubscriber>;
   retryCount: number;
   retryTimer: ReturnType<typeof setTimeout> | null;
+  abortController: AbortController | null;
 }
 
 interface RetryScheduleResult {
@@ -86,9 +89,10 @@ const runOperation = (record: OperationRecord) => {
   record.status = "pending";
   record.error = undefined;
   record.result = undefined;
+  record.abortController = new AbortController();
 
   record.promise = record
-    .executor()
+    .executor(record.abortController.signal)
     .then((response) => {
       record.status = "succeeded";
       record.result = response;
@@ -116,7 +120,7 @@ const runOperation = (record: OperationRecord) => {
 
 const createOperationRecord = (
   requestId: string,
-  executor: () => Promise<PipelineResponse>
+  executor: OperationExecutor
 ): OperationRecord => {
   const record: OperationRecord = {
     requestId,
@@ -126,6 +130,7 @@ const createOperationRecord = (
     subscribers: new Set(),
     retryCount: 0,
     retryTimer: null,
+    abortController: null,
   };
 
   runOperation(record);
@@ -136,7 +141,7 @@ const createOperationRecord = (
 
 const ensureOperationRecord = (
   requestId: string,
-  executor: () => Promise<PipelineResponse>
+  executor: OperationExecutor
 ): OperationRecord => {
   const registry = getRegistry();
   const existing = registry.get(requestId);
@@ -153,7 +158,7 @@ const ensureOperationRecord = (
 
 export const attachToSendOperation = (
   requestId: string,
-  executor: () => Promise<PipelineResponse>,
+  executor: OperationExecutor,
   subscriber: OperationSubscriber
 ) => {
   const record = ensureOperationRecord(requestId, executor);
@@ -212,9 +217,30 @@ export const clearSendOperation = (requestId: string): void => {
   }
 
   clearRetryTimer(record);
+  if (record.abortController) {
+    record.abortController.abort();
+  }
+
   registry.delete(requestId);
+};
+
+export const cancelSendOperation = (requestId: string): boolean => {
+  const registry = getRegistry();
+  const record = registry.get(requestId);
+
+  if (!record) {
+    return false;
+  }
+
+  clearRetryTimer(record);
+
+  if (record.abortController) {
+    record.abortController.abort();
+    return true;
+  }
+  return false;
 };
 
 export const MAX_SEND_OPERATION_RETRIES = MAX_RETRIES;
 
-export type { OperationRecord, OperationStatus };
+export type { OperationExecutor, OperationRecord, OperationStatus };
