@@ -39,6 +39,7 @@ const App: React.FC<AppProps> = ({ title }) => {
         onCancel={actions.cancelCurrentSend}
         onCopyResponse={actions.copyResponseToClipboard}
         onInjectResponse={actions.injectResponseIntoEmail}
+        onClear={actions.resetTaskPaneState}
       />
     </div>
   );

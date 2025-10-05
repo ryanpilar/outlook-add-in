@@ -23,6 +23,7 @@ interface TextInsertionProps {
     onCancel: () => Promise<void>;
     onCopyResponse: (response: string) => Promise<void>;
     onInjectResponse: (response: string) => Promise<void>;
+    onClear: () => Promise<void>;
 }
 
 const useStyles = makeStyles({
@@ -70,7 +71,7 @@ const useStyles = makeStyles({
         display: "flex",
         flexWrap: "wrap",
         gap: "4px",
-        justifyContent: "space-between",
+        justifyContent: "flex-start",
     },
     linksList: {
         margin: 0,
@@ -89,6 +90,9 @@ const useStyles = makeStyles({
         flexWrap: "wrap",
         gap: "12px",
         alignItems: "center",
+    },
+    primaryActionButton: {
+        width: "100%",
     },
 });
 
@@ -134,6 +138,14 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                 console.error(error);
             });
     }, [emailResponse, props]);
+
+    const handleClear = useCallback(() => {
+        void props
+            .onClear()
+            .catch((error) => {
+                console.error(error);
+            });
+    }, [props]);
 
     return (
         <div className={styles.textPromptAndInsertion}>
@@ -192,7 +204,7 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                         disabled={!emailResponse}
                         onClick={handleInjectResponse}
                     >
-                        Insert Into Reply
+                        Insert
                     </Button>
                     <Button
                         appearance="secondary"
@@ -202,6 +214,9 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                         onClick={handleCopyResponse}
                     >
                         Copy
+                    </Button>
+                    <Button appearance="secondary" size="medium" onClick={handleClear}>
+                        Clear
                     </Button>
                 </div>
             </Field>
@@ -223,8 +238,14 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                 </div>
             ) : null}
             <div className={styles.actionsRow}>
-                <Button appearance="primary" disabled={props.isSending} size="large" onClick={handleTextSend}>
-                    {props.isSending ? "Sending..." : "Generate response"}
+                <Button
+                    appearance="primary"
+                    disabled={props.isSending}
+                    size="large"
+                    onClick={handleTextSend}
+                    className={styles.primaryActionButton}
+                >
+                    {props.isSending ? "Sending..." : emailResponse ? "Generate new response" : "Generate response"}
                 </Button>
                 {props.isSending ? (
                     <Button appearance="secondary" size="large" onClick={handleCancel}>
