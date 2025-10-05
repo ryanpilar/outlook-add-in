@@ -18,6 +18,13 @@ const useStyles = makeStyles({
     display: "flex",
     flexDirection: "column",
   },
+  content: {
+    display: "flex",
+    flexDirection: "column",
+    flexGrow: 1,
+    minHeight: 0,
+    overflow: "hidden",
+  },
 });
 
 const App: React.FC<AppProps> = ({ title }) => {
@@ -27,20 +34,22 @@ const App: React.FC<AppProps> = ({ title }) => {
   return (
     <div className={styles.root}>
       <Header logo="assets/logo-filled.png" title={title} message="Welcome" />
-      <TextInsertion
-        optionalPrompt={state.optionalPrompt}
-        onOptionalPromptChange={actions.updateOptionalPrompt}
-        isOptionalPromptVisible={state.isOptionalPromptVisible}
-        onOptionalPromptVisibilityChange={actions.setOptionalPromptVisible}
-        statusMessage={state.statusMessage}
-        pipelineResponse={state.pipelineResponse}
-        onSend={actions.sendCurrentEmail}
-        isSending={state.isSending}
-        onCancel={actions.cancelCurrentSend}
-        onCopyResponse={actions.copyResponseToClipboard}
-        onInjectResponse={actions.injectResponseIntoEmail}
-        onClear={actions.resetTaskPaneState}
-      />
+      <div className={styles.content}>
+        <TextInsertion
+          optionalPrompt={state.optionalPrompt}
+          onOptionalPromptChange={actions.updateOptionalPrompt}
+          isOptionalPromptVisible={state.isOptionalPromptVisible}
+          onOptionalPromptVisibilityChange={actions.setOptionalPromptVisible}
+          statusMessage={state.statusMessage}
+          pipelineResponse={state.pipelineResponse}
+          onSend={actions.sendCurrentEmail}
+          isSending={state.isSending}
+          onCancel={actions.cancelCurrentSend}
+          onCopyResponse={actions.copyResponseToClipboard}
+          onInjectResponse={actions.injectResponseIntoEmail}
+          onClear={actions.resetTaskPaneState}
+        />
+      </div>
     </div>
   );
 };
