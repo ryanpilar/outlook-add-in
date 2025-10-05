@@ -125,9 +125,9 @@ const useStyles = makeStyles({
     },
     actionsRow: {
         display: "flex",
-        flexWrap: "wrap",
-        gap: "12px",
+        gap: "5px",
         alignItems: "center",
+        justifyContent: "space-between",
     },
     fullWidthButton: {
         width: "100%",
@@ -366,6 +366,77 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                     </div>
                 ) : null}
             </div>
+            {props.isOptionalPromptVisible ? (
+                <Field
+                    className={styles.optionalPromptField}
+                    label="Additional instructions"
+                    size="large"
+                    hint="Provide extra guidance for the assistant."
+                >
+                    <Textarea
+                        // className={styles.optionalPromptTextArea}
+                        value={props.optionalPrompt}
+                        onChange={(
+                            _event: React.ChangeEvent<HTMLTextAreaElement>,
+                            data: TextareaOnChangeData
+                        ) => props.onOptionalPromptChange(data.value)}
+                        placeholder="Add extra details or tone preferences for the generated response."
+                        resize="vertical"
+                        textarea={{className: styles.optionalPromptTextArea}}
+                    />
+                </Field>
+            ) : null}
+            <Field className={styles.responseField} label="Email response" size="large">
+                <Textarea
+                    // className={styles.responseTextArea}
+                    value={emailResponse}
+                    placeholder="The generated email response will appear here."
+                    readOnly
+                    resize="vertical"
+                    textarea={{className: styles.responseTextArea}}
+                />
+                <div className={styles.responseActions}>
+                    <Button
+                        appearance="secondary"
+                        icon={<Copy16Regular/>}
+                        size="small"
+                        disabled={!emailResponse}
+                        onClick={handleCopyResponse}
+                        className={styles.responseButtons}
+                    />
+                    <Button
+                        appearance="secondary"
+                        size="small"
+                        disabled={!emailResponse}
+                        onClick={handleInjectResponse}
+                        className={styles.responseButtons}
+                    >
+                        Insert
+                    </Button>
+                    <Button appearance="secondary" size="small" onClick={handleClear} className={styles.responseButtons} disabled={props.isSending}>
+                        Clear
+                    </Button>
+
+
+                </div>
+            </Field>
+            {props.pipelineResponse?.assistantResponse?.sourceCitations?.length ? (
+                <div className={styles.linksSection}>
+                    <Field className={styles.linksField} label="Links provided">
+                        <ul className={styles.linksList}>
+                            {props.pipelineResponse.assistantResponse.sourceCitations.map((citation, index) =>
+                                citation?.url ? (
+                                    <li key={`${citation.url}-${index}`}>
+                                        <a href={citation.url} target="_blank" rel="noreferrer">
+                                            {citation.title || citation.url}
+                                        </a>
+                                    </li>
+                                ) : null
+                            )}
+                        </ul>
+                    </Field>
+                </div>
+            ) : null}
             <div className={styles.actionsRow}>
                 <Button
                     appearance="primary"
@@ -374,7 +445,7 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                     onClick={handleTextSend}
                     className={styles.primaryActionButton}
                 >
-                    {props.isSending ? "Sending..." : emailResponse ? "Generate new response" : "Generate response"}
+                    {props.isSending ? "Sending..." : emailResponse ? "Get New Response" : "Generate response"}
                 </Button>
                 {props.isSending ? (
                     <Button
