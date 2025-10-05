@@ -77,12 +77,27 @@ const useStyles = makeStyles({
         flexDirection: "column",
         gap: "12px",
         minHeight: 0,
+        "& .fui-Field__control": {
+            display: "flex",
+            flexDirection: "column",
+            flexGrow: 1,
+            minHeight: 0,
+            width: "100%",
+        },
+    },
+    responseTextAreaRoot: {
+        display: "flex",
+        flexDirection: "column",
+        flexGrow: 1,
+        minHeight: 0,
+        width: "100%",
     },
     responseTextArea: {
         width: "100%",
         flexGrow: 1,
         minHeight: 0,
         height: "100%",
+        boxSizing: "border-box",
     },
     responseActions: {
         display: "flex",
@@ -133,6 +148,9 @@ const useStyles = makeStyles({
         flexGrow: 1,
         minHeight: 0,
         overflowY: "auto",
+    },
+    responseTabPanel: {
+        overflow: "hidden",
     },
     tabLabelWithBadge: {
         display: "inline-flex",
@@ -321,9 +339,14 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                     </Tab>
                 </TabList>
                 {selectedTab === "response" ? (
-                    <div className={styles.tabPanel}>
-                        <Field className={styles.responseField} label="Email response" size="large">
+                    <div className={`${styles.tabPanel} ${styles.responseTabPanel}`}>
+                        <Field
+                            className={styles.responseField}
+                            label="Email response"
+                            size="large"
+                        >
                             <Textarea
+                                className={styles.responseTextAreaRoot}
                                 value={emailResponse}
                                 placeholder="The generated email response will appear here."
                                 readOnly
