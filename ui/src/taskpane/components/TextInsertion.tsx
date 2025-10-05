@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import {
   Button,
   Field,
@@ -20,6 +20,8 @@ interface TextInsertionProps {
   onSend: () => Promise<void>;
   isSending: boolean;
   onCancel: () => Promise<void>;
+  onCopyResponse: (response: string) => Promise<void>;
+  onInjectResponse: (response: string) => Promise<void>;
 }
 
 const useStyles = makeStyles({
@@ -108,6 +110,22 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
     [props.pipelineResponse]
   );
 
+  const handleCopyResponse = useCallback(() => {
+    void props
+      .onCopyResponse(emailResponse)
+      .catch((error) => {
+        console.error(error);
+      });
+  }, [emailResponse, props]);
+
+  const handleInjectResponse = useCallback(() => {
+    void props
+      .onInjectResponse(emailResponse)
+      .catch((error) => {
+        console.error(error);
+      });
+  }, [emailResponse, props]);
+
   return (
     <div className={styles.textPromptAndInsertion}>
       <Field className={styles.instructions}>
@@ -179,6 +197,22 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
       <div className={styles.actionsRow}>
         <Button appearance="primary" disabled={props.isSending} size="large" onClick={handleTextSend}>
           {props.isSending ? "Sending..." : "Send email content"}
+        </Button>
+        <Button
+          appearance="secondary"
+          size="large"
+          disabled={!emailResponse}
+          onClick={handleCopyResponse}
+        >
+          Copy response
+        </Button>
+        <Button
+          appearance="secondary"
+          size="large"
+          disabled={!emailResponse}
+          onClick={handleInjectResponse}
+        >
+          Insert into email
         </Button>
         {props.isSending ? (
           <Button appearance="secondary" size="large" onClick={handleCancel}>
