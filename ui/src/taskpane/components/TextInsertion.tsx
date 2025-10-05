@@ -2,6 +2,7 @@ import * as React from "react";
 import {useMemo, useCallback, useEffect, useState} from "react";
 import {
     Button,
+    Badge,
     CounterBadge,
     Field,
     Textarea,
@@ -13,7 +14,7 @@ import {
     tokens,
     makeStyles,
 } from "@fluentui/react-components";
-import {Copy16Regular} from "@fluentui/react-icons";
+import {Copy16Regular, CheckmarkCircle16Filled, CircleSmall20Regular} from "@fluentui/react-icons";
 import {PipelineResponse} from "../taskpane";
 
 interface TextInsertionProps {
@@ -195,23 +196,25 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
             });
     }, [props]);
 
-    const [selectedTab, setSelectedTab] = useState<TabValue>(
-        props.isOptionalPromptVisible ? "instruct" : "response"
+    const hasResponse = emailResponse.length > 0;
+
+    const [selectedTab, setSelectedTab] = useState<TabValue>(() =>
+        hasResponse ? "response" : "instruct"
     );
 
     useEffect(() => {
         setSelectedTab((current) => {
-            if (props.isOptionalPromptVisible && current !== "instruct") {
-                return "instruct";
+            if (hasResponse) {
+                return "response";
             }
 
-            if (!props.isOptionalPromptVisible && current === "instruct") {
-                return "response";
+            if (current === "response") {
+                return "instruct";
             }
 
             return current;
         });
-    }, [props.isOptionalPromptVisible]);
+    }, [hasResponse]);
 
     useEffect(() => {
         const shouldShowOptionalPrompt = selectedTab === "instruct";
@@ -238,6 +241,12 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
 
     const linksCount = sourceCitations.length;
 
+    const responseBadge = hasResponse ? (
+        <Badge appearance="filled" color="success" icon={<CheckmarkCircle16Filled/>}/>
+    ) : (
+        <Badge appearance="outline" icon={<CircleSmall20Regular/>}/>
+    );
+
     return (
         <div className={styles.textPromptAndInsertion}>
             <Field className={styles.instructions}>
@@ -256,14 +265,19 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                     onTabSelect={handleTabSelect}
                     className={styles.tabList}
                 >
-                    <Tab value="response">Response</Tab>
+                    <Tab value="instruct">Instruct</Tab>
+                    <Tab value="response">
+                        <span className={styles.tabLabelWithBadge}>
+                            Response
+                            {responseBadge}
+                        </span>
+                    </Tab>
                     <Tab value="links">
                         <span className={styles.tabLabelWithBadge}>
                             Links
                             <CounterBadge count={linksCount} size="medium" appearance="filled"/>
                         </span>
                     </Tab>
-                    <Tab value="instruct">Instruct</Tab>
                 </TabList>
                 {selectedTab === "response" ? (
                     <div className={styles.tabPanel}>
@@ -299,7 +313,7 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                                     onClick={handleClear}
                                     className={styles.responseButtons}
                                 >
-                                    Clear
+                                    Clear all
                                 </Button>
                             </div>
                         </Field>
@@ -356,8 +370,6 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                     </div>
                 ) : null}
             </div>
-
-
 
             <div className={styles.actionsRow}>
                 <Button
