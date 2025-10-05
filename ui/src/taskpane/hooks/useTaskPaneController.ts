@@ -30,6 +30,7 @@ export interface TaskPaneActions {
   cancelCurrentSend: () => Promise<void>;
   copyResponseToClipboard: (response: string) => Promise<void>;
   injectResponseIntoEmail: (response: string) => Promise<void>;
+  resetTaskPaneState: () => Promise<void>;
 }
 
 export interface TaskPaneController {
@@ -607,6 +608,38 @@ const usePersistedState = () => {
     }
   }, [applyStateForKey, cancelSendOperation, clearSendOperation, detachOperationSubscription]);
 
+  const resetTaskPaneState = React.useCallback(async () => {
+    console.info("[Taskpane] Resetting task pane state to defaults.");
+    const activeRequestId = latestStateRef.current.activeRequestId;
+
+    if (activeRequestId) {
+      try {
+        cancelSendOperation(activeRequestId);
+      } catch (error) {
+        console.warn(
+          `[Taskpane] Failed to cancel send operation ${activeRequestId} while resetting the task pane.`,
+          error
+        );
+      }
+    }
+
+    operationSubscriptionsRef.current.forEach((detach, requestId) => {
+      try {
+        detach();
+      } catch (error) {
+        console.warn(
+          `[Taskpane] Failed to detach send operation ${requestId} while resetting the task pane.`,
+          error
+        );
+      }
+
+      clearSendOperation(requestId);
+    });
+    operationSubscriptionsRef.current.clear();
+
+    mergeState(() => createEmptyState());
+  }, [cancelSendOperation, clearSendOperation, mergeState]);
+
   const actions: TaskPaneActions = React.useMemo(
     () => ({
       refreshFromCurrentItem,
@@ -616,10 +649,12 @@ const usePersistedState = () => {
       cancelCurrentSend,
       copyResponseToClipboard,
       injectResponseIntoEmail,
+      resetTaskPaneState,
     }),
     [
       cancelCurrentSend,
       copyResponseToClipboard,
+      resetTaskPaneState,
       injectResponseIntoEmail,
       refreshFromCurrentItem,
       sendCurrentEmail,
