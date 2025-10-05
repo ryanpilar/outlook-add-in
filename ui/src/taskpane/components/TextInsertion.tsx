@@ -19,6 +19,7 @@ interface TextInsertionProps {
   pipelineResponse: PipelineResponse | null;
   onSend: () => Promise<void>;
   isSending: boolean;
+  onCancel: () => Promise<void>;
 }
 
 const useStyles = makeStyles({
@@ -95,6 +96,13 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
   };
 
   const styles = useStyles();
+  const handleCancel = () => {
+    props
+      .onCancel()
+      .catch((error) => {
+        console.error(error);
+      });
+  };
   const emailResponse = useMemo(
     () => props.pipelineResponse?.assistantResponse?.emailResponse?.trim() ?? "",
     [props.pipelineResponse]
@@ -168,9 +176,16 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
           </Field>
         </div>
       ) : null}
-      <Button appearance="primary" disabled={props.isSending} size="large" onClick={handleTextSend}>
-        {props.isSending ? "Sending..." : "Send email content"}
-      </Button>
+      <div className={styles.actionsRow}>
+        <Button appearance="primary" disabled={props.isSending} size="large" onClick={handleTextSend}>
+          {props.isSending ? "Sending..." : "Send email content"}
+        </Button>
+        {props.isSending ? (
+          <Button appearance="secondary" size="large" onClick={handleCancel}>
+            Stop
+          </Button>
+        ) : null}
+      </div>
     </div>
   );
 };
