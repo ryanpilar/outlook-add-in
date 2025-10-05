@@ -122,7 +122,7 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
           hint="Provide extra guidance for the assistant."
         >
           <Textarea
-            className={styles.optionalPromptTextArea}
+            // className={styles.optionalPromptTextArea}
             value={props.optionalPrompt}
             onChange={(
               _event: React.ChangeEvent<HTMLTextAreaElement>,
@@ -130,19 +130,25 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
             ) => props.onOptionalPromptChange(data.value)}
             placeholder="Add extra details or tone preferences for the generated response."
             resize="vertical"
+            textarea={{ className: styles.optionalPromptTextArea }}
           />
         </Field>
       ) : null}
       <Field className={styles.statusField} label="Status" size="large">
-        <Textarea className={styles.statusTextArea} value={props.statusMessage} readOnly />
+        <Textarea
+            value={props.statusMessage}
+            readOnly
+            textarea={{ className: styles.statusTextArea }}
+        />
       </Field>
       <Field className={styles.responseField} label="Email response" size="large">
         <Textarea
-          className={styles.responseTextArea}
+          // className={styles.responseTextArea}
           value={emailResponse}
           placeholder="The generated email response will appear here."
           readOnly
           resize="vertical"
+          textarea={{ className: styles.responseTextArea }}
         />
       </Field>
       {props.pipelineResponse?.assistantResponse?.sourceCitations?.length ? (
