@@ -83,6 +83,11 @@ const useStyles = makeStyles({
         flex: 1,
         minWidth: "50px",
     },
+    responseBadge: {
+        display: "flex",
+        maxWidth: "8px",
+        height: "18px",
+    },
     tabContainer: {
         display: "flex",
         flexDirection: "column",
@@ -242,7 +247,7 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
     const linksCount = sourceCitations.length;
 
     const responseBadge = hasResponse ? (
-        <Badge appearance="filled" shape="circular" color="success" icon={<Checkmark16Regular/>}/>
+        <Badge appearance="tint" shape="circular" color="success" className={styles.responseBadge} icon={<Checkmark16Regular/>}/>
     ) : null;
 
 
@@ -274,7 +279,7 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                     <Tab value="links">
                         <span className={styles.tabLabelWithBadge}>
                             Links
-                            <CounterBadge count={linksCount} size="medium" appearance="filled"/>
+                            <Badge appearance="tint" shape="circular">{linksCount}</Badge>
                         </span>
                     </Tab>
                 </TabList>
