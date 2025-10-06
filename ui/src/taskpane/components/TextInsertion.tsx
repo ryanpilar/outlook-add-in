@@ -18,6 +18,7 @@ import {
     Toast,
     ToastTitle,
     ToastBody, Spinner,
+    mergeClasses,
 } from "@fluentui/react-components";
 import {Copy16Regular, Checkmark16Regular, CheckmarkCircle20Regular, Dismiss20Regular} from "@fluentui/react-icons";
 import {PipelineResponse} from "../taskpane";
@@ -580,7 +581,7 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                         onTabSelect={handleTabSelect}
                         className={styles.tabList}
                     >
-                        <Tab value="instruct" className={`${styles.tab} ${styles.firstTab}`}>
+                        <Tab value="instruct" className={mergeClasses(styles.tab, styles.firstTab)}>
                             Instruct
                         </Tab>
                         <Tab value="response" className={styles.tab}>
@@ -599,7 +600,7 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                         </Tab>
                     </TabList>
                     {selectedTab === "response" ? (
-                        <div className={`${styles.tabPanel} ${styles.responseTabPanel}`}>
+                        <div className={mergeClasses(styles.tabPanel, styles.responseTabPanel)}>
                             <Field
                                 className={styles.responseField}
                             >
