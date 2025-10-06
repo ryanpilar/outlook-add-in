@@ -2,6 +2,7 @@ import * as React from "react";
 import {useMemo, useCallback, useEffect, useState} from "react";
 import {
     Button,
+    Checkbox,
     Badge,
     Field,
     Textarea,
@@ -195,10 +196,28 @@ const useStyles = makeStyles({
         alignItems: "center",
         gap: "4px",
     },
+    linksToolbar: {
+        display: "flex",
+        justifyContent: "flex-end",
+        alignItems: "center",
+        marginBottom: "8px",
+        gap: "8px",
+    },
     linksList: {
         margin: 0,
-        paddingLeft: "20px",
-        listStyleType: "decimal",
+        paddingLeft: "0px",
+        listStyleType: "none",
+        display: "flex",
+        flexDirection: "column",
+        gap: "8px",
+    },
+    linkListItem: {
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
+    },
+    linkAnchor: {
+        wordBreak: "break-word",
     },
     linksSection: {
         display: "flex",
@@ -207,11 +226,6 @@ const useStyles = makeStyles({
     },
     linksField: {
         width: "100%",
-    },
-    linksHeading: {
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "8px",
     },
     emptyLinksMessage: {
         color: tokens.colorNeutralForeground3,
@@ -243,6 +257,37 @@ const useStyles = makeStyles({
 });
 
 const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) => {
+    const styles = useStyles();
+    const { dispatchToast } = useToastController(TOASTER_ID);
+
+    const [selectedCitationIndexes, setSelectedCitationIndexes] = useState<number[]>([]);
+
+    const showSuccessToast = useCallback(
+        (title: string, subtitle?: string) => {
+            dispatchToast(
+                <Toast>
+                    <ToastTitle>{title}</ToastTitle>
+                    {subtitle ? <ToastBody>{subtitle}</ToastBody> : null}
+                </Toast>,
+                { intent: "success" }
+            );
+        },
+        [dispatchToast]
+    );
+
+    const showErrorToast = useCallback(
+        (title: string, subtitle?: string) => {
+            dispatchToast(
+                <Toast>
+                    <ToastTitle>{title}</ToastTitle>
+                    {subtitle ? <ToastBody>{subtitle}</ToastBody> : null}
+                </Toast>,
+                { intent: "error" }
+            );
+        },
+        [dispatchToast]
+    );
+
     const handleTextSend = async () => {
         // Bail out if a send is already underway so we don't queue duplicate requests.
         if (props.isSending) {
@@ -253,29 +298,21 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
             await props.onSend();
         } catch (error) {
             console.error(error);
+            showErrorToast(
+                "Unable to send request",
+                "Something went wrong while contacting the service. Please try again."
+            );
         }
     };
-
-    const styles = useStyles();
-    const { dispatchToast } = useToastController(TOASTER_ID);
-
-    const showSuccessToast = useCallback(
-        (title: string, subtitle?: string) => {
-            dispatchToast(
-                <Toast intent="success">
-                    <ToastTitle>{title}</ToastTitle>
-                    {subtitle ? <ToastBody>{subtitle}</ToastBody> : null}
-                </Toast>,
-                { intent: "success" }
-            );
-        },
-        [dispatchToast]
-    );
     const handleCancel = () => {
         props
             .onCancel()
             .catch((error) => {
                 console.error(error);
+                showErrorToast(
+                    "Unable to cancel request",
+                    "We couldn't stop the current request. Please try again."
+                );
             });
     };
     const emailResponse = useMemo(
@@ -291,8 +328,12 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
             })
             .catch((error) => {
                 console.error(error);
+                showErrorToast(
+                    "Unable to copy response",
+                    "Check your clipboard permissions and try again."
+                );
             });
-    }, [emailResponse, props, showSuccessToast]);
+    }, [emailResponse, props, showErrorToast, showSuccessToast]);
 
     const handleInjectResponse = useCallback(() => {
         void props
@@ -305,16 +346,24 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
             })
             .catch((error) => {
                 console.error(error);
+                showErrorToast(
+                    "Unable to insert response",
+                    "Please try again after confirming you have an email open."
+                );
             });
-    }, [emailResponse, props, showSuccessToast]);
+    }, [emailResponse, props, showErrorToast, showSuccessToast]);
 
     const handleClear = useCallback(() => {
         void props
             .onClear()
             .catch((error) => {
                 console.error(error);
+                showErrorToast(
+                    "Unable to reset",
+                    "Please try again to clear the current response."
+                );
             });
-    }, [props]);
+    }, [props, showErrorToast]);
 
     const hasResponse = emailResponse.length > 0;
 
@@ -360,6 +409,88 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
     );
 
     const linksCount = sourceCitations.length;
+
+    const selectedLinksCount = selectedCitationIndexes.length;
+
+    useEffect(() => {
+        setSelectedCitationIndexes((current) =>
+            current.filter((index) => index < sourceCitations.length)
+        );
+    }, [sourceCitations.length]);
+
+    useEffect(() => {
+        setSelectedCitationIndexes([]);
+    }, [props.pipelineResponse]);
+
+    const handleCitationSelectionChange = useCallback((index: number, isSelected: boolean) => {
+        setSelectedCitationIndexes((current) => {
+            if (isSelected) {
+                if (current.includes(index)) {
+                    return current;
+                }
+
+                return [...current, index].sort((a, b) => a - b);
+            }
+
+            return current.filter((value) => value !== index);
+        });
+    }, []);
+
+    const handleCopySelectedLinks = useCallback(async () => {
+        if (!selectedLinksCount) {
+            return;
+        }
+
+        const clipboard = typeof navigator === "undefined" ? undefined : navigator.clipboard;
+
+        if (!clipboard?.writeText) {
+            showErrorToast(
+                "Clipboard unavailable",
+                "Your browser doesn't allow copying right now."
+            );
+            return;
+        }
+
+        const selectedLinks = selectedCitationIndexes
+            .map((citationIndex) => sourceCitations[citationIndex])
+            .filter((citation) => Boolean(citation?.url));
+
+        if (!selectedLinks.length) {
+            showErrorToast("Nothing to copy", "Select at least one link first.");
+            return;
+        }
+
+        const textToCopy = selectedLinks
+            .map((citation) => {
+                const url = citation?.url ?? "";
+                const title = citation?.title?.trim();
+
+                if (title && title !== url) {
+                    return `${title} - ${url}`;
+                }
+
+                return url;
+            })
+            .join("\n");
+
+        try {
+            await clipboard.writeText(textToCopy);
+            showSuccessToast(
+                selectedLinks.length === 1
+                    ? "Link copied to clipboard"
+                    : "Links copied to clipboard",
+                selectedLinks.length === 1
+                    ? "The selected link is ready to paste."
+                    : `${selectedLinks.length} links are ready to paste.`
+            );
+        } catch (error) {
+            console.error(error);
+            showErrorToast(
+                "Unable to copy links",
+                "Check your clipboard permissions and try again."
+            );
+        }
+    }, [selectedCitationIndexes, selectedLinksCount, showErrorToast, showSuccessToast, sourceCitations]);
 
     const responseBadge = hasResponse ? (
         <Badge appearance="tint" shape="circular" color="success" className={styles.badge}
@@ -450,19 +581,49 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                                     className={styles.linksField}
                                 >
                                     {linksCount ? (
-                                        <ol className={styles.linksList}>
-                                            {sourceCitations.map((citation, index) => (
-                                                <li key={`${citation?.url ?? "missing-url"}-${index}`}>
-                                                    <a
-                                                        href={citation?.url ?? undefined}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                    >
-                                                        {citation?.title || citation?.url}
-                                                    </a>
-                                                </li>
-                                            ))}
-                                        </ol>
+                                        <div className={styles.linksSection}>
+                                            <div className={styles.linksToolbar}>
+                                                <Button
+                                                    appearance="secondary"
+                                                    icon={<Copy16Regular />}
+                                                    size="small"
+                                                    disabled={!selectedLinksCount}
+                                                    onClick={handleCopySelectedLinks}
+                                                >
+                                                    {`Copy (${selectedLinksCount})`}
+                                                </Button>
+                                            </div>
+                                            <ul className={styles.linksList}>
+                                                {sourceCitations.map((citation, index) => {
+                                                    const anchorId = `citation-link-${index}`;
+                                                    const isSelected = selectedCitationIndexes.includes(index);
+
+                                                    return (
+                                                        <li
+                                                            className={styles.linkListItem}
+                                                            key={`${citation?.url ?? "missing-url"}-${index}`}
+                                                        >
+                                                            <Checkbox
+                                                                checked={isSelected}
+                                                                onChange={(_event, data) =>
+                                                                    handleCitationSelectionChange(index, Boolean(data?.checked))
+                                                                }
+                                                                aria-labelledby={anchorId}
+                                                            />
+                                                            <a
+                                                                id={anchorId}
+                                                                className={styles.linkAnchor}
+                                                                href={citation?.url ?? undefined}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                            >
+                                                                {citation?.title || citation?.url}
+                                                            </a>
+                                                        </li>
+                                                    );
+                                                })}
+                                            </ul>
+                                        </div>
                                     ) : (
                                         <span className={styles.emptyLinksMessage}>
                                             No links available for this response yet.
