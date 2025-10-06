@@ -11,7 +11,12 @@ import {
     TabListProps,
     TabValue,
     tokens,
-    makeStyles, Divider,
+    makeStyles,
+    Toaster,
+    useToastController,
+    Toast,
+    ToastTitle,
+    ToastBody,
 } from "@fluentui/react-components";
 import {Copy16Regular, Checkmark16Regular} from "@fluentui/react-icons";
 import {PipelineResponse} from "../taskpane";
@@ -30,6 +35,8 @@ interface TextInsertionProps {
     onInjectResponse: (response: string) => Promise<void>;
     onClear: () => Promise<void>;
 }
+
+const TOASTER_ID = "text-insertion-toaster";
 
 const useStyles = makeStyles({
     textPromptAndInsertion: {
@@ -156,6 +163,10 @@ const useStyles = makeStyles({
         marginLeft: "0px",
         marginInlineStart: "0px",
     },
+    tab: {
+        paddingTop: tokens.spacingVerticalXXS,
+        paddingBottom: tokens.spacingVerticalXXS,
+    },
     firstTab: {
         paddingLeft: "0px",
         paddingInlineStart: "0px",
@@ -213,6 +224,7 @@ const useStyles = makeStyles({
         justifyContent: "flex-end",
         marginTop: "auto",
         paddingTop: "8px",
+        paddingBottom: "4px",
         backgroundColor: tokens.colorNeutralBackground1,
     },
     stopButton: {
@@ -245,6 +257,20 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
     };
 
     const styles = useStyles();
+    const { dispatchToast } = useToastController(TOASTER_ID);
+
+    const showSuccessToast = useCallback(
+        (title: string, subtitle?: string) => {
+            dispatchToast(
+                <Toast intent="success">
+                    <ToastTitle>{title}</ToastTitle>
+                    {subtitle ? <ToastBody>{subtitle}</ToastBody> : null}
+                </Toast>,
+                { intent: "success" }
+            );
+        },
+        [dispatchToast]
+    );
     const handleCancel = () => {
         props
             .onCancel()
@@ -260,18 +286,27 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
     const handleCopyResponse = useCallback(() => {
         void props
             .onCopyResponse(emailResponse)
+            .then(() => {
+                showSuccessToast("Copied to clipboard", "The response is ready to paste anywhere.");
+            })
             .catch((error) => {
                 console.error(error);
             });
-    }, [emailResponse, props]);
+    }, [emailResponse, props, showSuccessToast]);
 
     const handleInjectResponse = useCallback(() => {
         void props
             .onInjectResponse(emailResponse)
+            .then(() => {
+                showSuccessToast(
+                    "Inserted into email",
+                    "Check your draft body for the newly added response."
+                );
+            })
             .catch((error) => {
                 console.error(error);
             });
-    }, [emailResponse, props]);
+    }, [emailResponse, props, showSuccessToast]);
 
     const handleClear = useCallback(() => {
         void props
@@ -334,6 +369,7 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
 
     return (
         <div className={styles.textPromptAndInsertion}>
+            <Toaster toasterId={TOASTER_ID} position="top-end" />
             <div className={styles.contentArea}>
 
                 {/*<Field className={styles.instructions}>*/}
@@ -353,16 +389,16 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                         onTabSelect={handleTabSelect}
                         className={styles.tabList}
                     >
-                        <Tab value="instruct" className={styles.firstTab}>
+                        <Tab value="instruct" className={`${styles.tab} ${styles.firstTab}`}>
                             Instruct
                         </Tab>
-                        <Tab value="response">
+                        <Tab value="response" className={styles.tab}>
                             <span className={styles.tabLabelWithBadge}>
                                 Response
                                 {responseBadge}
                             </span>
                         </Tab>
-                        <Tab value="links">
+                        <Tab value="links" className={styles.tab}>
                             <span className={styles.tabLabelWithBadge}>
                                 Links
                                 <Badge appearance="tint" shape="circular" className={styles.badge}>{linksCount}</Badge>
@@ -449,7 +485,7 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                                         _event: React.ChangeEvent<HTMLTextAreaElement>,
                                         data: TextareaOnChangeData
                                     ) => props.onOptionalPromptChange(data.value)}
-                                    placeholder="Add extra details or tone preferences for the generated response."
+                                    placeholder="When you press Generate, we'll send the email message you're viewing to get an answer. Add extra details or tone preferences for the generated response. It's hooked up to web search too!"
                                     resize="vertical"
                                     className={styles.optionalPromptTextAreaRoot}
 
