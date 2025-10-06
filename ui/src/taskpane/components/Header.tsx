@@ -12,8 +12,8 @@ const useStyles = makeStyles({
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    paddingBottom: "30px",
-    paddingTop: "100px",
+    paddingBottom: "8px",
+    paddingTop: "8px",
     backgroundColor: tokens.colorNeutralBackground3,
   },
   message: {
@@ -24,12 +24,11 @@ const useStyles = makeStyles({
 });
 
 const Header: React.FC<HeaderProps> = (props: HeaderProps) => {
-  const { title, logo, message } = props;
+  const { message } = props;
   const styles = useStyles();
 
   return (
     <section className={styles.welcome__header}>
-      <Image width="90" height="90" src={logo} alt={title} />
       <h1 className={styles.message}>{message}</h1>
     </section>
   );

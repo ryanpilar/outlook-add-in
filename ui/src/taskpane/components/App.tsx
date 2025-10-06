@@ -1,46 +1,54 @@
 import * as React from "react";
-import Header from "./Header";
-import HeroList, {HeroListItem} from "./HeroList";
+import { makeStyles } from "@fluentui/react-components";
 import TextInsertion from "./TextInsertion";
-import {makeStyles} from "@fluentui/react-components";
-import {Ribbon24Regular, LockOpen24Regular, DesignIdeas24Regular} from "@fluentui/react-icons";
-import {sendText} from "../taskpane";
+import { useTaskPaneController } from "../hooks/useTaskPaneController";
 
 interface AppProps {
-    title: string;
+  title: string;
 }
 
 const useStyles = makeStyles({
-    root: {
-        minHeight: "100vh",
-    },
+  root: {
+    height: "100vh",
+    width: "100%",
+    maxWidth: "100%",
+    display: "flex",
+    flexDirection: "column",
+  },
+  content: {
+    display: "flex",
+    flexDirection: "column",
+    flexGrow: 1,
+    minHeight: 0,
+    overflow: "hidden",
+  },
 });
 
-const App: React.FC<AppProps> = (props: AppProps) => {
-    const styles = useStyles();
-    // The list items are static and won't change at runtime,
-    // so this should be an ordinary const, not a part of state.
-    const listItems: HeroListItem[] = [
-        {
-            icon: <Ribbon24Regular/>,
-            primaryText: "Achieve more with Office integration",
-        },
-        {
-            icon: <LockOpen24Regular/>,
-            primaryText: "Unlock features and functionality",
-        },
-        {
-            icon: <DesignIdeas24Regular/>,
-            primaryText: "Create and visualize like a pro",
-        },
-    ];
+const App: React.FC<AppProps> = () => {
+  const styles = useStyles();
+  const { state, actions } = useTaskPaneController();
 
-    return (
-        <div className={styles.root}>
-            <Header logo="assets/logo-filled.png" title={props.title} message="Welcome"/>
-            <TextInsertion sendText={sendText}/>
-        </div>
-    );
+  return (
+    <div className={styles.root}>
+      {/*<Header logo="assets/logo-filled.png" title={title} message="Welcome" />*/}
+      <div className={styles.content}>
+        <TextInsertion
+          optionalPrompt={state.optionalPrompt}
+          onOptionalPromptChange={actions.updateOptionalPrompt}
+          isOptionalPromptVisible={state.isOptionalPromptVisible}
+          onOptionalPromptVisibilityChange={actions.setOptionalPromptVisible}
+          statusMessage={state.statusMessage}
+          pipelineResponse={state.pipelineResponse}
+          onSend={actions.sendCurrentEmail}
+          isSending={state.isSending}
+          onCancel={actions.cancelCurrentSend}
+          onCopyResponse={actions.copyResponseToClipboard}
+          onInjectResponse={actions.injectResponseIntoEmail}
+          onClear={actions.resetTaskPaneState}
+        />
+      </div>
+    </div>
+  );
 };
 
 export default App;

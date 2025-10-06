@@ -4,8 +4,8 @@
   <Version>1.0.0.0</Version>
   <ProviderName>Contoso</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
-  <DisplayName DefaultValue="ui"/>
-  <Description DefaultValue="A template to get started."/>
+  <DisplayName DefaultValue="PEKA Helper"/>
+  <Description DefaultValue="Generate email responses and source links directly from your Outlook mailbox."/>
   <!-- <IconUrl DefaultValue="https://outlook-add-in-ui.onrender.com/assets/icon-64.png"/> -->
   <IconUrl DefaultValue="https://localhost:3000/assets/icon-64.png"/>
   <!-- <HighResolutionIconUrl DefaultValue="https://outlook-add-in-ui.onrender.com/assets/icon-128.png"/> -->
@@ -47,7 +47,7 @@
       <Hosts>
         <Host xsi:type="MailHost">
           <DesktopFormFactor>
-            <FunctionFile resid="Commands.Url"/>
+            <FunctionFile resid="Taskpane.Url"/>
             <ExtensionPoint xsi:type="MessageComposeCommandSurface">
               <OfficeTab id="TabDefault">
                 <Group id="msgComposeGroup">
@@ -67,21 +67,6 @@
                       <SourceLocation resid="Taskpane.Url"/>
                     </Action>
                   </Control>
-                  <Control xsi:type="Button" id="ActionButton">
-                    <Label resid="ActionButton.Label"/>
-                    <Supertip>
-                      <Title resid="ActionButton.Label"/>
-                      <Description resid="ActionButton.Tooltip"/>
-                    </Supertip>
-                    <Icon>
-                      <bt:Image size="16" resid="Icon.16x16"/>
-                      <bt:Image size="32" resid="Icon.32x32"/>
-                      <bt:Image size="80" resid="Icon.80x80"/>
-                    </Icon>
-                    <Action xsi:type="ExecuteFunction">
-                      <FunctionName>action</FunctionName>
-                    </Action>
-                  </Control>
                 </Group>
               </OfficeTab>
             </ExtensionPoint>
@@ -98,19 +83,15 @@
           <bt:Image id="Icon.80x80" DefaultValue="https://localhost:3000/assets/icon-80.png"/>
         </bt:Images>
         <bt:Urls>
-          <!-- <bt:Url id="Commands.Url" DefaultValue="https://outlook-add-in-ui.onrender.com/commands.html"/> -->
-          <bt:Url id="Commands.Url" DefaultValue="https://localhost:3000/commands.html"/>
           <!-- <bt:Url id="Taskpane.Url" DefaultValue="https://outlook-add-in-ui.onrender.com/taskpane.html"/> -->
           <bt:Url id="Taskpane.Url" DefaultValue="https://localhost:3000/taskpane.html"/>
         </bt:Urls>
         <bt:ShortStrings>
           <bt:String id="GroupLabel" DefaultValue="Contoso Add-in"/>
           <bt:String id="TaskpaneButton.Label" DefaultValue="Show Task Pane"/>
-          <bt:String id="ActionButton.Label" DefaultValue="Perform an action"/>
         </bt:ShortStrings>
         <bt:LongStrings>
           <bt:String id="TaskpaneButton.Tooltip" DefaultValue="Opens a pane that enables users to insert text."/>
-          <bt:String id="ActionButton.Tooltip" DefaultValue="Perform an action when clicked."/>
         </bt:LongStrings>
       </Resources>
     </VersionOverrides>

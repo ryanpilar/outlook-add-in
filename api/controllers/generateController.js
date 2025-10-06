@@ -19,8 +19,23 @@
  *    observations needed for verification or UI display.
  */
 
+import { getQuestionResponsePlan } from '../services/questionResponseService.js';
+
 export const generateCandidateResponses = async (contextBundle) => {
+    const normalizedEmail = contextBundle?.sourceEmail;
+
+    // Derive the approved-question match and answer scaffolding. In the future this will
+    // feed into the response drafting prompts so each candidate stays anchored to policy.
+    const questionPlan = normalizedEmail
+        ? await getQuestionResponsePlan(normalizedEmail)
+        : null;
+
+    // Stub response payload keeps the pipeline predictable while we implement the remaining
+    // retrieval + drafting work. Downstream stages can already log, assert, or display the
+    // Responses API plan (including resource links) because it mirrors the production shape.
+
     return {
+        questionPlan,
         candidates: [],
         generationNotes: [
             'Craft three differentiated prompt paths grounded in retrieved context.',

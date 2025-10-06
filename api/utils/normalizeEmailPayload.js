@@ -58,6 +58,7 @@ const normalizeBodyText = (text) => {
 
 const normalizeEmailPayload = (payload = {}) => {
     const { text, metadata } = payload;
+    const optionalPrompt = sanitizeString(payload?.optionalPrompt);
 
     // Clean up the body so that downstream retrieval / generation services see a
     // consistent shape regardless of the odd characters Outlook occasionally emits.
@@ -83,6 +84,7 @@ const normalizeEmailPayload = (payload = {}) => {
     return {
         body: normalizedBody,
         metadata: normalizedMetadata,
+        optionalPrompt,
     };
 };
 
