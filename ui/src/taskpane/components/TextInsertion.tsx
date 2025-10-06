@@ -17,9 +17,9 @@ import {
     useToastController,
     Toast,
     ToastTitle,
-    ToastBody,
+    ToastBody, Spinner,
 } from "@fluentui/react-components";
-import {Copy16Regular, Checkmark16Regular} from "@fluentui/react-icons";
+import {Copy16Regular, Checkmark16Regular, CheckmarkCircle20Regular, Dismiss20Regular} from "@fluentui/react-icons";
 import {PipelineResponse} from "../taskpane";
 import {copyTextToClipboard} from "../helpers/clipboard";
 
@@ -160,13 +160,14 @@ const useStyles = makeStyles({
     responseButtons: {
         flex: 1,
         minWidth: "50px",
+        fontWeight: 'normal'
     },
     responseIcon: {
         width: "13px",
     },
     badge: {
         display: "flex",
-        width: "6px",
+        width: "1px",
     },
     tabContainer: {
         display: "flex",
@@ -185,7 +186,7 @@ const useStyles = makeStyles({
     },
     tab: {
         paddingTop: tokens.spacingVerticalXXS,
-        paddingBottom: tokens.spacingVerticalXXS,
+        paddingBottom: tokens.spacingVerticalS,
     },
     firstTab: {
         paddingLeft: "0px",
@@ -217,10 +218,10 @@ const useStyles = makeStyles({
     },
     linksToolbar: {
         display: "flex",
-        justifyContent: "flex-end",
         alignItems: "center",
         marginBottom: "8px",
         gap: "8px",
+        justifyContent: "end"
     },
     linksList: {
         margin: 0,
@@ -246,6 +247,11 @@ const useStyles = makeStyles({
     linksField: {
         width: "100%",
     },
+    linksCopyButton: {
+        fontWeight: 'normal',
+        minWidth: "50%",
+        fontSize: "small"
+    },
     emptyLinksMessage: {
         color: tokens.colorNeutralForeground3,
         fontStyle: "italic",
@@ -269,6 +275,14 @@ const useStyles = makeStyles({
     },
     primaryActionButton: {
         flexGrow: 1,
+        // background: '#2A2A2A',
+    },
+    primaryButtonContent: {
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: tokens.spacingHorizontalSNudge,
+        width: "100%",
     },
     clearButton: {
         whiteSpace: "nowrap",
@@ -277,21 +291,45 @@ const useStyles = makeStyles({
 
 const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) => {
     const styles = useStyles();
-    const { dispatchToast } = useToastController(TOASTER_ID);
+    const {dispatchToast, dismissToast} = useToastController(TOASTER_ID);
 
     const [selectedCitationIndexes, setSelectedCitationIndexes] = useState<number[]>([]);
 
     const showSuccessToast = useCallback(
         (title: string, subtitle?: string) => {
+            // unique ID so you can dismiss it manually
+            const toastId = crypto.randomUUID();
+
             dispatchToast(
-                <Toast>
-                    <ToastTitle>{title}</ToastTitle>
+                <Toast
+                    appearance="inverted"
+                    style={{position: "relative"}}
+                >
+                    <ToastTitle
+                        media={<CheckmarkCircle20Regular/>}
+                        action={
+                            <Button
+                                icon={<Dismiss20Regular/>}
+                                appearance="transparent"
+                                size="small"
+                                aria-label="Close"
+                                onClick={() => dismissToast(toastId)}
+                            />
+                        }
+                    >
+                        {title}
+                    </ToastTitle>
+
                     {subtitle ? <ToastBody>{subtitle}</ToastBody> : null}
                 </Toast>,
-                { intent: "success" }
+                {
+                    toastId,
+                    intent: "success",
+                    timeout: 3500,
+                }
             );
         },
-        [dispatchToast]
+        [dispatchToast, dismissToast]
     );
 
     const showErrorToast = useCallback(
@@ -301,7 +339,7 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                     <ToastTitle>{title}</ToastTitle>
                     {subtitle ? <ToastBody>{subtitle}</ToastBody> : null}
                 </Toast>,
-                { intent: "error" }
+                {intent: "error"}
             );
         },
         [dispatchToast]
@@ -522,7 +560,7 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
 
     return (
         <div className={styles.textPromptAndInsertion}>
-            <Toaster toasterId={TOASTER_ID} position="top-end" />
+            <Toaster toasterId={TOASTER_ID} position="bottom-end"/>
             <div className={styles.contentArea}>
 
                 {/*<Field className={styles.instructions}>*/}
@@ -554,7 +592,9 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                         <Tab value="links" className={styles.tab}>
                             <span className={styles.tabLabelWithBadge}>
                                 Links
-                                <Badge appearance="tint" shape="circular" className={styles.badge}>{linksCount}</Badge>
+                                <Badge shape="circular" className={styles.badge}>
+                                    {linksCount}
+                                </Badge>
                             </span>
                         </Tab>
                     </TabList>
@@ -567,12 +607,12 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
 
                                     <Button
                                         appearance="secondary"
-                                        size="small"
+                                        size="medium"
                                         disabled={!emailResponse}
                                         onClick={handleInjectResponse}
                                         className={styles.responseButtons}
                                     >
-                                        Insert Into Email
+                                        Insert
                                     </Button>
                                     <Button
                                         appearance="secondary"
@@ -581,7 +621,9 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                                         disabled={!emailResponse}
                                         onClick={handleCopyResponse}
                                         className={styles.responseButtons}
-                                    />
+                                    >
+                                        Copy
+                                    </Button>
 
                                 </div>
                                 <Textarea
@@ -607,10 +649,13 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                                             <div className={styles.linksToolbar}>
                                                 <Button
                                                     appearance="secondary"
-                                                    icon={<Copy16Regular />}
-                                                    size="small"
-                                                    disabled={!selectedLinksCount}
-                                                    onClick={handleCopySelectedLinks}
+                                                    icon={<Copy16Regular/>}
+                                                    size="medium"
+                                                    onClick={() => {
+                                                        if (!selectedLinksCount) return
+                                                        handleCopySelectedLinks()
+                                                    }}
+                                                    className={styles.linksCopyButton}
                                                 >
                                                     {`Copy (${selectedLinksCount})`}
                                                 </Button>
@@ -668,7 +713,10 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                                         _event: React.ChangeEvent<HTMLTextAreaElement>,
                                         data: TextareaOnChangeData
                                     ) => props.onOptionalPromptChange(data.value)}
-                                    placeholder="When you press Generate, we'll send the email message you're viewing to get an answer. Add extra details or tone preferences for the generated response. It's hooked up to web search too!"
+                                    placeholder={
+                                        "If you need to add any extra details or tone preferences, do so in this space right here!\n\nWhen you press 'Generate', we'll use the email you're viewing to draft a relevant reply with source links.\n\nIt's connected to the web, too!"
+                                    }
+
                                     resize="vertical"
                                     className={styles.optionalPromptTextAreaRoot}
 
@@ -687,7 +735,14 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                     onClick={handleTextSend}
                     className={styles.primaryActionButton}
                 >
-                    {props.isSending ? "Sending..." : emailResponse ? "Regenerate" : "Generate"}
+                    {props.isSending ? (
+                        <span className={styles.primaryButtonContent}>
+                            <Spinner size="extra-tiny"/>
+                            Sending...
+                        </span>
+                    ) : (
+                        emailResponse ? "Try Again" : "Generate"
+                    )}
                 </Button>
                 {props.isSending ? (
                     <Button

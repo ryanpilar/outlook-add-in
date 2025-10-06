@@ -108,6 +108,9 @@ export const getQuestionResponsePlan = async (normalizedEmail) => {
             text: {
                 format: textFormat,
             },
+            // reasoning: {
+            //     effort: 'medium'
+            // }
             // temperature: 0.2,
         };
 
