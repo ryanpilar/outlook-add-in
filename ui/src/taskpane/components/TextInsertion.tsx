@@ -44,7 +44,8 @@ const useStyles = makeStyles({
         flexDirection: "column",
         alignItems: "stretch",
         gap: "16px",
-        padding: "24px",
+        paddingLeft: "12px",
+        paddingRight: "12px",
         width: "100%",
         boxSizing: "border-box",
         height: "100%",
@@ -60,6 +61,8 @@ const useStyles = makeStyles({
     },
     instructions: {
         fontWeight: tokens.fontWeightSemibold,
+        paddingLeft: "4px",
+        paddingRight: "4px"
     },
     optionalPromptField: {
         width: "100%",
@@ -368,16 +371,18 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
         <div className={styles.textPromptAndInsertion}>
             <Toaster toasterId={TOASTER_ID} position="top-end" />
             <div className={styles.contentArea}>
-                <Field className={styles.instructions}>
-                    Press the button to send the body of the email you're viewing to the server.
-                </Field>
-                <Field className={styles.statusField} label="Status" size="large">
-                    <Textarea
-                        value={props.statusMessage}
-                        readOnly
-                        textarea={{className: styles.statusTextArea}}
-                    />
-                </Field>
+
+                {/*<Field className={styles.instructions}>*/}
+                {/*    Press the button to send the body of the email you're viewing to the server.*/}
+                {/*</Field>*/}
+                {/*<Field className={styles.statusField} label="Status" size="large">*/}
+                {/*    <Textarea*/}
+                {/*        value={props.statusMessage}*/}
+                {/*        readOnly*/}
+                {/*        textarea={{className: styles.statusTextArea}}*/}
+                {/*    />*/}
+                {/*</Field>*/}
+
                 <div className={styles.tabContainer}>
                     <TabList
                         selectedValue={selectedTab}
