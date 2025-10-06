@@ -185,6 +185,7 @@ const useStyles = makeStyles({
     linksList: {
         margin: 0,
         paddingLeft: "20px",
+        listStyleType: "decimal",
     },
     linksSection: {
         display: "flex",
@@ -205,15 +206,12 @@ const useStyles = makeStyles({
     },
     actionsRow: {
         display: "flex",
-        gap: "5px",
+        gap: "8px",
         alignItems: "center",
-        justifyContent: "space-between",
+        justifyContent: "flex-end",
         marginTop: "auto",
         paddingTop: "8px",
         backgroundColor: tokens.colorNeutralBackground1,
-    },
-    fullWidthButton: {
-        width: "100%",
     },
     stopButton: {
         display: "flex",
@@ -223,7 +221,10 @@ const useStyles = makeStyles({
         gap: "8px",
     },
     primaryActionButton: {
-        width: "100%",
+        flexGrow: 1,
+    },
+    clearButton: {
+        whiteSpace: "nowrap",
     },
 });
 
@@ -397,14 +398,6 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                                 >
                                     Insert
                                 </Button>
-                                <Button
-                                    appearance="secondary"
-                                    size="small"
-                                    onClick={handleClear}
-                                    className={styles.responseButtons}
-                                >
-                                    Clear all
-                                </Button>
                             </div>
                         </Field>
                     </div>
@@ -416,7 +409,7 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                                 className={styles.linksField}
                             >
                                 {linksCount ? (
-                                    <ul className={styles.linksList}>
+                                    <ol className={styles.linksList}>
                                         {sourceCitations.map((citation, index) => (
                                             <li key={`${citation?.url ?? "missing-url"}-${index}`}>
                                                 <a
@@ -428,7 +421,7 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                                                 </a>
                                             </li>
                                         ))}
-                                    </ul>
+                                    </ol>
                                 ) : (
                                     <span className={styles.emptyLinksMessage}>
                                         No links available for this response yet.
@@ -481,7 +474,16 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                     >
                         Stop
                     </Button>
-                ) : null}
+                ) : (
+                    <Button
+                        appearance="secondary"
+                        size="large"
+                        onClick={handleClear}
+                        className={styles.clearButton}
+                    >
+                        Clear all
+                    </Button>
+                )}
             </div>
         </div>
     );
