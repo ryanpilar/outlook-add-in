@@ -57,17 +57,38 @@ const useStyles = makeStyles({
     },
     optionalPromptField: {
         width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        flexGrow: 1,
+        minHeight: 0,
+        "& .fui-Field__control": {
+            display: "flex",
+            flexDirection: "column",
+            flexGrow: 1,
+            minHeight: 0,
+            width: "100%",
+        },
+    },
+    optionalPromptTextAreaRoot: {
+        display: "flex",
+        flexDirection: "column",
+        flexGrow: 1,
+        minHeight: 0,
+        width: "100%",
     },
     optionalPromptTextArea: {
         width: "100%",
-        minHeight: "140px",
+        minHeight: "100%",
+        flexGrow: 1,
+        height: "100%",
+        boxSizing: "border-box",
     },
     statusField: {
         width: "100%",
     },
     statusTextArea: {
         width: "100%",
-        minHeight: "56px",
+        minHeight: "50px",
         resize: "none",
     },
     responseField: {
@@ -109,10 +130,12 @@ const useStyles = makeStyles({
         flex: 1,
         minWidth: "50px",
     },
-    responseBadge: {
+    responseIcon: {
+        width: "13px",
+    },
+    badge: {
         display: "flex",
-        maxWidth: "8px",
-        height: "18px",
+        width: "6px",
     },
     tabContainer: {
         display: "flex",
@@ -299,7 +322,8 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
     const linksCount = sourceCitations.length;
 
     const responseBadge = hasResponse ? (
-        <Badge appearance="tint" shape="circular" color="success" className={styles.responseBadge} icon={<Checkmark16Regular/>}/>
+        <Badge appearance="tint" shape="circular" color="success" className={styles.badge}
+               icon={<Checkmark16Regular className={styles.responseIcon}/>}/>
     ) : null;
 
 
@@ -334,7 +358,7 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                     <Tab value="links">
                         <span className={styles.tabLabelWithBadge}>
                             Links
-                            <Badge appearance="tint" shape="circular">{linksCount}</Badge>
+                            <Badge appearance="tint" shape="circular" className={styles.badge}>{linksCount}</Badge>
                         </span>
                     </Tab>
                 </TabList>
@@ -416,7 +440,6 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                     <div className={styles.tabPanel}>
                         <Field
                             className={styles.optionalPromptField}
-                            label="Additional instructions"
                             size="large"
                             hint="Provide extra guidance for the assistant."
                         >
@@ -428,6 +451,8 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                                 ) => props.onOptionalPromptChange(data.value)}
                                 placeholder="Add extra details or tone preferences for the generated response."
                                 resize="vertical"
+                                className={styles.optionalPromptTextAreaRoot}
+
                                 textarea={{className: styles.optionalPromptTextArea}}
                             />
                         </Field>
