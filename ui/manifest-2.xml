@@ -11,6 +11,7 @@
     <SupportUrl DefaultValue="https://www.contoso.com/help"/>
     <AppDomains>
         <AppDomain>https://outlook-add-in-ui.onrender.com</AppDomain>
+        <AppDomain>https://outlook-add-in-kdr8.onrender.com</AppDomain>
         <AppDomain>https://www.contoso.com</AppDomain>
     </AppDomains>
     <Hosts>
