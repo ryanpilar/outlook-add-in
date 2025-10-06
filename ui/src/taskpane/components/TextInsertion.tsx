@@ -119,6 +119,8 @@ const useStyles = makeStyles({
         minHeight: 0,
         height: "100%",
         boxSizing: "border-box",
+        maxHeight: "100%",
+
     },
     responseActions: {
         display: "flex",
