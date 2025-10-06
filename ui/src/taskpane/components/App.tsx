@@ -1,5 +1,3 @@
-/* global Office, console */
-
 import * as React from "react";
 import { makeStyles } from "@fluentui/react-components";
 import TextInsertion from "./TextInsertion";

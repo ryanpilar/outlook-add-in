@@ -8,8 +8,8 @@
       "full": "Contoso Task Pane Add-in"
     },
     "description": {
-      "short": "A template to get started.",
-      "full": "This is the template to get started."
+      "short": "Magic for your Outlook mailbox.",
+      "full": "Generate email responses and source links directly from your Outlook mailbox."
     },
     "developer": {
       "name": "Contoso",
