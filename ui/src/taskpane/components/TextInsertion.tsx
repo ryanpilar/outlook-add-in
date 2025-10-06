@@ -21,6 +21,7 @@ import {
 } from "@fluentui/react-components";
 import {Copy16Regular, Checkmark16Regular} from "@fluentui/react-icons";
 import {PipelineResponse} from "../taskpane";
+import {copyTextToClipboard} from "../helpers/clipboard";
 
 interface TextInsertionProps {
     optionalPrompt: string;
@@ -441,16 +442,6 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
             return;
         }
 
-        const clipboard = typeof navigator === "undefined" ? undefined : navigator.clipboard;
-
-        if (!clipboard?.writeText) {
-            showErrorToast(
-                "Clipboard unavailable",
-                "Your browser doesn't allow copying right now."
-            );
-            return;
-        }
-
         const selectedLinks = selectedCitationIndexes
             .map((citationIndex) => sourceCitations[citationIndex])
             .filter((citation) => Boolean(citation?.url));
@@ -474,7 +465,7 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
             .join("\n");
 
         try {
-            await clipboard.writeText(textToCopy);
+            await copyTextToClipboard(textToCopy);
             showSuccessToast(
                 selectedLinks.length === 1
                     ? "Link copied to clipboard"
