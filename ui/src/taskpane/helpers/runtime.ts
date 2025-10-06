@@ -16,38 +16,21 @@ export const enableSharedRuntimeFeatures = async (): Promise<void> => {
   }
 };
 
-type TaskpaneVisibilityHandlers = {
-  onTaskpaneVisible?: () => void | Promise<void>;
-  onTaskpaneHidden?: () => void | Promise<void>;
-};
-
 /**
- * Registers handlers that run whenever the task pane visibility changes.
+ * Registers a handler that runs whenever the task pane becomes visible again.
  * Returns a function that can be used to remove the handler.
  */
 export const registerTaskpaneVisibilityHandler = async (
-  handlers: TaskpaneVisibilityHandlers
+  onVisible: () => void | Promise<void>
 ): Promise<() => Promise<void>> => {
   if (!Office.addin || typeof Office.addin.onVisibilityModeChanged !== "function") {
     return async () => {};
   }
 
-  const { onTaskpaneVisible, onTaskpaneHidden } = handlers;
-
   try {
     const removeHandler = await Office.addin.onVisibilityModeChanged(async (args) => {
-      try {
-        if (args.visibilityMode === Office.VisibilityMode.taskpane) {
-          if (onTaskpaneVisible) {
-            await onTaskpaneVisible();
-          }
-        } else if (args.visibilityMode === Office.VisibilityMode.hidden) {
-          if (onTaskpaneHidden) {
-            await onTaskpaneHidden();
-          }
-        }
-      } catch (handlerError) {
-        console.warn("[Taskpane] Visibility handler threw an error.", handlerError);
+      if (args.visibilityMode === Office.VisibilityMode.taskpane) {
+        await onVisible();
       }
     });
 
@@ -61,17 +44,5 @@ export const registerTaskpaneVisibilityHandler = async (
   } catch (error) {
     console.warn("[Taskpane] Failed to register the visibility handler.", error);
     return async () => {};
-  }
-};
-
-export const showTaskpane = async (): Promise<void> => {
-  if (!Office.addin || typeof Office.addin.showAsTaskpane !== "function") {
-    return;
-  }
-
-  try {
-    await Office.addin.showAsTaskpane();
-  } catch (error) {
-    console.warn("[Taskpane] Failed to show the task pane programmatically.", error);
   }
 };
