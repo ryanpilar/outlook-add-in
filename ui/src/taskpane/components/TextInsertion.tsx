@@ -40,6 +40,24 @@ interface TextInsertionProps {
 
 const TOASTER_ID = "text-insertion-toaster";
 
+const escapeHtml = (value: string): string =>
+    value.replace(/[&<>"']/g, (match) => {
+        switch (match) {
+            case "&":
+                return "&amp;";
+            case "<":
+                return "&lt;";
+            case ">":
+                return "&gt;";
+            case '"':
+                return "&quot;";
+            case "'":
+                return "&#39;";
+            default:
+                return match;
+        }
+    });
+
 const useStyles = makeStyles({
     textPromptAndInsertion: {
         display: "flex",
@@ -464,8 +482,21 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
             })
             .join("\n");
 
+        const htmlToCopy = selectedLinks
+            .map((citation) => {
+                const url = citation?.url ?? "";
+                const title = citation?.title?.trim() || url;
+
+                if (!url) {
+                    return escapeHtml(title);
+                }
+
+                return `<a href="${escapeHtml(url)}">${escapeHtml(title)}</a>`;
+            })
+            .join("<br />");
+
         try {
-            await copyTextToClipboard(textToCopy);
+            await copyTextToClipboard(textToCopy, htmlToCopy);
             showSuccessToast(
                 selectedLinks.length === 1
                     ? "Link copied to clipboard"
