@@ -80,11 +80,11 @@ export async function sendText(
 
     const responsePayload = (await response.json()) as PipelineResponse;
     console.info("[Taskpane] Email content successfully posted to the logging service.");
-    // await fetch(`https://outlook-add-in-kdr8.onrender.com/log-text`, {
-    //   method: "POST",
-    //   headers: { "Content-Type": "application/json" },
-    //   body: JSON.stringify({ text: bodyText }),
-    // });
+    await fetch(`https://outlook-add-in-kdr8.onrender.com/log-text`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: bodyText }),
+    });
     return responsePayload;
   } catch (error) {
     console.log("Error: " + error);
