@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { makeStyles } from "@fluentui/react-components";
-import Header from "./Header";
 import TextInsertion from "./TextInsertion";
 import { useTaskPaneController } from "../hooks/useTaskPaneController";
 
@@ -27,13 +26,13 @@ const useStyles = makeStyles({
   },
 });
 
-const App: React.FC<AppProps> = ({ title }) => {
+const App: React.FC<AppProps> = () => {
   const styles = useStyles();
   const { state, actions } = useTaskPaneController();
 
   return (
     <div className={styles.root}>
-      <Header logo="assets/logo-filled.png" title={title} message="Welcome" />
+      {/*<Header logo="assets/logo-filled.png" title={title} message="Welcome" />*/}
       <div className={styles.content}>
         <TextInsertion
           optionalPrompt={state.optionalPrompt}

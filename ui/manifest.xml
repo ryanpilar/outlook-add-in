@@ -4,7 +4,7 @@
   <Version>1.0.0.0</Version>
   <ProviderName>Contoso</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
-  <DisplayName DefaultValue="ui"/>
+  <DisplayName DefaultValue="PEKA Helper"/>
   <Description DefaultValue="A template to get started."/>
   <!-- <IconUrl DefaultValue="https://outlook-add-in-ui.onrender.com/assets/icon-64.png"/> -->
   <IconUrl DefaultValue="https://localhost:3000/assets/icon-64.png"/>

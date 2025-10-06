@@ -3,7 +3,6 @@ import {useMemo, useCallback, useEffect, useState} from "react";
 import {
     Button,
     Badge,
-    CounterBadge,
     Field,
     Textarea,
     TextareaOnChangeData,
@@ -344,116 +343,117 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                     />
                 </Field>
                 <div className={styles.tabContainer}>
-                <TabList
-                    selectedValue={selectedTab}
-                    onTabSelect={handleTabSelect}
-                    className={styles.tabList}
-                >
-                    <Tab value="instruct" className={styles.firstTab}>
-                        Instruct
-                    </Tab>
-                    <Tab value="response">
-                        <span className={styles.tabLabelWithBadge}>
-                            Response
-                            {responseBadge}
-                        </span>
-                    </Tab>
-                    <Tab value="links">
-                        <span className={styles.tabLabelWithBadge}>
-                            Links
-                            <Badge appearance="tint" shape="circular" className={styles.badge}>{linksCount}</Badge>
-                        </span>
-                    </Tab>
-                </TabList>
-                {selectedTab === "response" ? (
-                    <div className={`${styles.tabPanel} ${styles.responseTabPanel}`}>
-                        <Field
-                            className={styles.responseField}
-                            label="Email response"
-                            size="large"
-                        >
-                            <Textarea
-                                className={styles.responseTextAreaRoot}
-                                value={emailResponse}
-                                placeholder="The generated email response will appear here."
-                                readOnly
-                                resize="vertical"
-                                textarea={{className: styles.responseTextArea}}
-                            />
-                            <div className={styles.responseActions}>
-                                <Button
-                                    appearance="secondary"
-                                    icon={<Copy16Regular/>}
-                                    size="small"
-                                    disabled={!emailResponse}
-                                    onClick={handleCopyResponse}
-                                    className={styles.responseButtons}
-                                />
-                                <Button
-                                    appearance="secondary"
-                                    size="small"
-                                    disabled={!emailResponse}
-                                    onClick={handleInjectResponse}
-                                    className={styles.responseButtons}
-                                >
-                                    Insert
-                                </Button>
-                            </div>
-                        </Field>
-                    </div>
-                ) : null}
-                {selectedTab === "links" ? (
-                    <div className={styles.tabPanel}>
-                        <div className={styles.linksSection}>
+                    <TabList
+                        selectedValue={selectedTab}
+                        onTabSelect={handleTabSelect}
+                        className={styles.tabList}
+                    >
+                        <Tab value="instruct" className={styles.firstTab}>
+                            Instruct
+                        </Tab>
+                        <Tab value="response">
+                            <span className={styles.tabLabelWithBadge}>
+                                Response
+                                {responseBadge}
+                            </span>
+                        </Tab>
+                        <Tab value="links">
+                            <span className={styles.tabLabelWithBadge}>
+                                Links
+                                <Badge appearance="tint" shape="circular" className={styles.badge}>{linksCount}</Badge>
+                            </span>
+                        </Tab>
+                    </TabList>
+                    {selectedTab === "response" ? (
+                        <div className={`${styles.tabPanel} ${styles.responseTabPanel}`}>
                             <Field
-                                className={styles.linksField}
+                                className={styles.responseField}
                             >
-                                {linksCount ? (
-                                    <ol className={styles.linksList}>
-                                        {sourceCitations.map((citation, index) => (
-                                            <li key={`${citation?.url ?? "missing-url"}-${index}`}>
-                                                <a
-                                                    href={citation?.url ?? undefined}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                >
-                                                    {citation?.title || citation?.url}
-                                                </a>
-                                            </li>
-                                        ))}
-                                    </ol>
-                                ) : (
-                                    <span className={styles.emptyLinksMessage}>
-                                        No links available for this response yet.
-                                    </span>
-                                )}
+                                <div className={styles.responseActions}>
+
+                                    <Button
+                                        appearance="secondary"
+                                        size="small"
+                                        disabled={!emailResponse}
+                                        onClick={handleInjectResponse}
+                                        className={styles.responseButtons}
+                                    >
+                                        Insert Into Email
+                                    </Button>
+                                    <Button
+                                        appearance="secondary"
+                                        icon={<Copy16Regular/>}
+                                        size="small"
+                                        disabled={!emailResponse}
+                                        onClick={handleCopyResponse}
+                                        className={styles.responseButtons}
+                                    />
+
+                                </div>
+                                <Textarea
+                                    className={styles.responseTextAreaRoot}
+                                    value={emailResponse}
+                                    placeholder="The generated email response will appear here."
+                                    readOnly
+                                    resize="vertical"
+                                    textarea={{className: styles.responseTextArea}}
+                                />
+
                             </Field>
                         </div>
-                    </div>
-                ) : null}
-                {selectedTab === "instruct" ? (
-                    <div className={styles.tabPanel}>
-                        <Field
-                            className={styles.optionalPromptField}
-                            size="large"
-                            hint="Provide extra guidance for the assistant."
-                        >
-                            <Textarea
-                                value={props.optionalPrompt}
-                                onChange={(
-                                    _event: React.ChangeEvent<HTMLTextAreaElement>,
-                                    data: TextareaOnChangeData
-                                ) => props.onOptionalPromptChange(data.value)}
-                                placeholder="Add extra details or tone preferences for the generated response."
-                                resize="vertical"
-                                className={styles.optionalPromptTextAreaRoot}
+                    ) : null}
+                    {selectedTab === "links" ? (
+                        <div className={styles.tabPanel}>
+                            <div className={styles.linksSection}>
+                                <Field
+                                    className={styles.linksField}
+                                >
+                                    {linksCount ? (
+                                        <ol className={styles.linksList}>
+                                            {sourceCitations.map((citation, index) => (
+                                                <li key={`${citation?.url ?? "missing-url"}-${index}`}>
+                                                    <a
+                                                        href={citation?.url ?? undefined}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                    >
+                                                        {citation?.title || citation?.url}
+                                                    </a>
+                                                </li>
+                                            ))}
+                                        </ol>
+                                    ) : (
+                                        <span className={styles.emptyLinksMessage}>
+                                            No links available for this response yet.
+                                        </span>
+                                    )}
+                                </Field>
+                            </div>
+                        </div>
+                    ) : null}
+                    {selectedTab === "instruct" ? (
+                        <div className={styles.tabPanel}>
+                            <Field
+                                className={styles.optionalPromptField}
+                                size="large"
+                                hint="Provide extra guidance for the assistant."
+                            >
+                                <Textarea
+                                    value={props.optionalPrompt}
+                                    onChange={(
+                                        _event: React.ChangeEvent<HTMLTextAreaElement>,
+                                        data: TextareaOnChangeData
+                                    ) => props.onOptionalPromptChange(data.value)}
+                                    placeholder="Add extra details or tone preferences for the generated response."
+                                    resize="vertical"
+                                    className={styles.optionalPromptTextAreaRoot}
 
-                                textarea={{className: styles.optionalPromptTextArea}}
-                            />
-                        </Field>
-                    </div>
-                ) : null}
-            </div>
+                                    textarea={{className: styles.optionalPromptTextArea}}
+                                />
+                            </Field>
+                        </div>
+                    ) : null}
+                </div>
             </div>
             <div className={styles.actionsRow}>
                 <Button
@@ -463,7 +463,7 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                     onClick={handleTextSend}
                     className={styles.primaryActionButton}
                 >
-                    {props.isSending ? "Sending..." : emailResponse ? "Get New Response" : "Generate response"}
+                    {props.isSending ? "Sending..." : emailResponse ? "Regenerate" : "Generate"}
                 </Button>
                 {props.isSending ? (
                     <Button
@@ -481,7 +481,7 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                         onClick={handleClear}
                         className={styles.clearButton}
                     >
-                        Clear all
+                        Reset
                     </Button>
                 )}
             </div>
