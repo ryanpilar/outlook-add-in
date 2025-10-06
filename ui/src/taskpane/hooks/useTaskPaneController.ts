@@ -10,7 +10,7 @@ import {
   updatePersistedState,
 } from "../helpers/persistence";
 import { resolveStorageKeyForCurrentItem } from "../helpers/mailboxItem";
-import { registerTaskpaneVisibilityHandler, showTaskpane } from "../helpers/runtime";
+import { registerTaskpaneVisibilityHandler } from "../helpers/runtime";
 import {
   attachToSendOperation,
   cancelSendOperation,
@@ -113,7 +113,6 @@ const usePersistedState = () => {
   const currentItemKeyRef = React.useRef<string | null>(null);
   const isMountedRef = React.useRef<boolean>(false);
   const visibilityCleanupRef = React.useRef<(() => Promise<void>) | null>(null);
-  const isTaskpaneVisibleRef = React.useRef<boolean>(true);
   const latestStateRef = React.useRef<PersistedTaskPaneState>(state);
   const operationSubscriptionsRef = React.useRef<Map<string, () => void>>(new Map());
 
@@ -174,7 +173,6 @@ const usePersistedState = () => {
           ...nextState,
           pipelineResponse: nextState.pipelineResponse ?? null,
           isSending: nextState.isSending ?? false,
-          isTaskPaneOpen: nextState.isTaskPaneOpen ?? false,
           activeRequestId: nextState.activeRequestId ?? null,
           activeRequestPrompt: nextState.activeRequestPrompt ?? null,
           lastUpdatedUtc: new Date().toISOString(),
@@ -401,14 +399,6 @@ const usePersistedState = () => {
       console.info(`[Taskpane] Persisted state loaded for key ${key}.`);
       resumePendingOperationIfNeeded(key, storedState);
       setState(storedState);
-
-      if (!isTaskpaneVisibleRef.current && storedState.isTaskPaneOpen) {
-        console.info(
-          `[Taskpane] Stored state indicates the task pane should be visible for key ${key}. Attempting to show it.`
-        );
-        await showTaskpane();
-        isTaskpaneVisibleRef.current = true;
-      }
     } catch (error) {
       console.warn(`[Taskpane] Failed to load persisted state for key ${key}.`, error);
 
@@ -421,23 +411,12 @@ const usePersistedState = () => {
 
   React.useEffect(() => {
     isMountedRef.current = true;
-    isTaskpaneVisibleRef.current = true;
     console.info("[Taskpane] Task pane mounted. Initializing lifecycle handlers.");
 
     const initialize = async () => {
       await refreshFromCurrentItem();
-      await applyStateForKey(currentItemKeyRef.current, { isTaskPaneOpen: true });
-      visibilityCleanupRef.current = await registerTaskpaneVisibilityHandler({
-        onTaskpaneVisible: async () => {
-          isTaskpaneVisibleRef.current = true;
-          await refreshFromCurrentItem();
-          await applyStateForKey(currentItemKeyRef.current, { isTaskPaneOpen: true });
-        },
-        onTaskpaneHidden: async () => {
-          isTaskpaneVisibleRef.current = false;
-          await applyStateForKey(currentItemKeyRef.current, { isTaskPaneOpen: false });
-        },
-      });
+      visibilityCleanupRef.current =
+        await registerTaskpaneVisibilityHandler(refreshFromCurrentItem);
     };
 
     void initialize();
@@ -477,7 +456,7 @@ const usePersistedState = () => {
         });
       }
     };
-  }, [applyStateForKey, refreshFromCurrentItem]);
+  }, [refreshFromCurrentItem]);
 
   const updateOptionalPrompt = React.useCallback(
     (value: string) => {
@@ -658,10 +637,7 @@ const usePersistedState = () => {
     });
     operationSubscriptionsRef.current.clear();
 
-    mergeState((previous) => ({
-      ...createEmptyState(),
-      isTaskPaneOpen: previous.isTaskPaneOpen,
-    }));
+    mergeState(() => createEmptyState());
   }, [cancelSendOperation, clearSendOperation, mergeState]);
 
   const actions: TaskPaneActions = React.useMemo(

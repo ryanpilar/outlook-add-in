@@ -8,7 +8,6 @@ export interface PersistedTaskPaneState {
   pipelineResponse: PipelineResponse | null;
   isOptionalPromptVisible: boolean;
   isSending: boolean;
-  isTaskPaneOpen: boolean;
   /**
    * Tracks the identifier of the in-flight request, if any, so the UI can resume
    * waiting when the task pane is reopened on another item.
@@ -74,7 +73,6 @@ const createDefaultState = (): PersistedTaskPaneState => ({
   pipelineResponse: null,
   isOptionalPromptVisible: false,
   isSending: false,
-  isTaskPaneOpen: false,
   activeRequestId: null,
   activeRequestPrompt: null,
 });
@@ -96,7 +94,6 @@ export const loadPersistedState = async (itemKey: string): Promise<PersistedTask
       ...parsed,
       pipelineResponse: parsed.pipelineResponse ?? null,
       isSending: parsed.isSending ?? false,
-      isTaskPaneOpen: parsed.isTaskPaneOpen ?? false,
       activeRequestId: parsed.activeRequestId ?? null,
       activeRequestPrompt: parsed.activeRequestPrompt ?? null,
     };
@@ -140,10 +137,6 @@ const mergeWithDefaults = (
         ? partial.pipelineResponse
         : (draft.pipelineResponse ?? null),
     isSending: partial.isSending !== undefined ? partial.isSending : (draft.isSending ?? false),
-    isTaskPaneOpen:
-      partial.isTaskPaneOpen !== undefined
-        ? partial.isTaskPaneOpen
-        : (draft.isTaskPaneOpen ?? false),
     activeRequestId:
       partial.activeRequestId !== undefined
         ? partial.activeRequestId
@@ -159,7 +152,6 @@ const normalizeUpdatedState = (candidate: PersistedTaskPaneState): PersistedTask
   ...candidate,
   pipelineResponse: candidate.pipelineResponse ?? null,
   isSending: candidate.isSending ?? false,
-  isTaskPaneOpen: candidate.isTaskPaneOpen ?? false,
   activeRequestId: candidate.activeRequestId ?? null,
   activeRequestPrompt: candidate.activeRequestPrompt ?? null,
   lastUpdatedUtc: new Date().toISOString(),
