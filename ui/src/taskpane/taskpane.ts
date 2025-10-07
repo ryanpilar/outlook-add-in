@@ -60,8 +60,11 @@ export async function sendText(
     // Post the email content to the local development server for logging.
     // The payload includes both the raw text and the metadata envelope so downstream
     // services have enough context to store, index, or reply to the message.
-    const response = await fetch(`https://outlook-add-in-kdr8.onrender.com/log-text`, {
-    // const response = await fetch(`http://localhost:4000/log-text`, {
+
+    // todo: eww!
+    const response = await fetch(`http://localhost:4000/log-text`, {
+
+      // const response = await fetch(`${process.env.API_BASE_URL}/log-text`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

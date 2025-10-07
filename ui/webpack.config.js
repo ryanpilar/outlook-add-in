@@ -5,8 +5,14 @@ const CopyWebpackPlugin = require("copy-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const webpack = require("webpack");
 
-const urlDev = "https://outlook-add-in-ui.onrender.com"
-// const urlDev = "https://localhost:3000"
+const isProd = process.env.NODE_ENV === "production";
+
+const UI_BASE_URL = isProd
+    ? process.env.UI_BASE_URL_PROD || "https://outlook-add-in-ui.onrender.com"
+    : process.env.UI_BASE_URL || "http://localhost:3000";
+
+
+const urlDev = UI_BASE_URL
 const urlProd = "https://www.contoso.com/"; // CHANGE THIS TO YOUR PRODUCTION DEPLOYMENT LOCATION
 
 async function getHttpsOptions() {
