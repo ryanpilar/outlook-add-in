@@ -36,11 +36,11 @@ export default {
     // @access     Public
     logText: asyncHandler(async (req, res) => {
         console.info('🚦  Pipeline stage: Ingest ➜ queued');
-        console.time('⏱️  Ingest stage duration');
-        console.info('⏳  Waiting for ingest service to normalize payload…');
+        console.time('⏲️  Ingest stage duration');
+        console.info('🫸  Waiting for ingest service to normalize payload…');
         const ingestResult = await ingestEmailSubmission(req.body);
-        console.timeEnd('⏱️  Ingest stage duration');
-        console.info('✅  Ingest stage complete. Transitioning to retrieval…');
+        console.timeEnd('⏲️  Ingest stage duration');
+        console.info('✔️  Ingest stage complete. Moving on to retrieval…');
 
         const {
             body: normalizedBody,
