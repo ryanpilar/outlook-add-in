@@ -27,6 +27,11 @@ import { ingestEmailSubmission } from './ingestController.js';
 import { retrieveContextForEmail } from './retrieveController.js';
 import { generateCandidateResponses } from './generateController.js';
 import { verifyCandidateResponses } from './verifyController.js';
+import { createPipelineLogger } from '../utils/pipelineLogger.js';
+
+const createPipelineId = () => `pipe_${Date.now().toString(36)}${Math.random()
+    .toString(36)
+    .slice(2, 8)}`;
 
 // ==============================|| Controller - Pipeline ||============================== //
 
@@ -35,12 +40,30 @@ export default {
     // @route      POST /log-text
     // @access     Public
     logText: asyncHandler(async (req, res) => {
-        console.info('🚦  Pipeline stage: Ingest ➜ queued');
-        console.time('⏲️  Ingest stage duration');
-        console.info('🫸  Waiting for ingest service to normalize payload…');
-        const ingestResult = await ingestEmailSubmission(req.body);
-        console.timeEnd('⏲️  Ingest stage duration');
-        console.info('✔️  Ingest stage complete. Moving on to retrieval…');
+        const pipelineLogger = createPipelineLogger({
+            pipelineId: createPipelineId(),
+            requestId: req.headers['x-request-id'] || req.body?.requestId || null,
+        });
+
+        pipelineLogger.info('Pipeline request received', {
+            route: req.originalUrl,
+            method: req.method,
+            ip: req.ip,
+            userAgent: req.get('user-agent') || null,
+        }, '👀');
+
+        const ingestStage = pipelineLogger.stage('Ingest');
+        ingestStage.queued();
+        const ingestResult = await ingestStage.run(
+            () => ingestEmailSubmission(req.body),
+            {
+                waitMessage: 'Waiting for ingest service to normalize payload…',
+                waitEmoji: '🫸',
+                successMessage: 'Ingest stage complete. Moving on to retrieval…',
+                successEmoji: '✔️',
+                timerEmoji: '⏲️',
+            },
+        );
 
         const {
             body: normalizedBody,
@@ -50,72 +73,60 @@ export default {
         const senderLabel = sender?.displayName || sender?.emailAddress || 'Unknown sender';
         const preview = normalizedBody.replace(/\s+/g, ' ').trim().slice(0, 200);
 
-        console.info('📬  Email submission received from Outlook add-in');
-        console.info(`     From   : ${senderLabel}`);
-        console.info(`     Subject: ${subject || '(no subject)'}`);
-        console.info(
-            `     Preview: ${preview}${normalizedBody.length > 200 ? '…' : ''}`
-        );
+        pipelineLogger.emailSummary({
+            from: senderLabel,
+            subject: subject || '(no subject)',
+            preview: `${preview}${normalizedBody.length > 200 ? '…' : ''}`,
+            totalCharacters: normalizedBody.length,
+        });
 
         if (ingestResult?.ingestTelemetry) {
-            console.info('🧾  Ingest telemetry snapshot:');
-            console.dir(ingestResult.ingestTelemetry, { depth: null });
+            pipelineLogger.telemetrySnapshot('Ingest telemetry snapshot', ingestResult.ingestTelemetry);
         }
 
         if (Array.isArray(ingestResult?.vectorStoreIndex)) {
-            console.info(
-                `📚  Indexed vector store handles: ${ingestResult.vectorStoreIndex.length}`
-            );
+            pipelineLogger.vectorStoreIndex(ingestResult.vectorStoreIndex);
         }
 
-        console.info('🚦  Pipeline stage: Retrieve ➜ queued');
-        console.time('⏱️  Retrieval stage duration');
-        console.info('⏳   Waiting on retrieval service to assemble context hints…');
-        const retrievalPlan = await retrieveContextForEmail(ingestResult.normalizedEmail);
-        console.timeEnd('⏱️  Retrieval stage duration');
-        console.info('✅   Retrieval stage complete. Now waiting on, generation…');
-
-        console.info('🧠  Retrieval plan hints:');
-        console.dir(
+        const retrievalStage = pipelineLogger.stage('Retrieve');
+        retrievalStage.queued();
+        const retrievalPlan = await retrievalStage.run(
+            () => retrieveContextForEmail(ingestResult.normalizedEmail),
             {
-                vectorStoreHandles: retrievalPlan?.vectorStoreHandles || [],
-                searchHints: retrievalPlan?.searchHints || {},
+                waitMessage: 'Waiting on retrieval service to assemble context hints…',
+                waitEmoji: '⏳',
+                successMessage: 'Retrieval stage complete. Now waiting on generation…',
             },
-            { depth: null }
         );
 
-        console.info('🚦  Pipeline stage: Generate ➜ queued');
-        console.time('⏱️  Generation stage duration');
-        console.info('⏳  Waiting for generation service to draft assistant plan…');
-        const generationPlan = await generateCandidateResponses(retrievalPlan);
-        console.timeEnd('⏱️  Generation stage duration');
-        console.info('✅  Generation stage complete. Transitioning to verification…');
+        pipelineLogger.retrievalHints({
+            vectorStoreHandles: retrievalPlan?.vectorStoreHandles || [],
+            searchHints: retrievalPlan?.searchHints || {},
+        });
 
-        if (generationPlan?.questionPlan) {
-            const { match, assistantPlan } = generationPlan.questionPlan;
-            console.info('🤖  Question classification result:');
-            console.dir(
-                {
-                    isApprovedQuestion: match?.isApprovedQuestion || false,
-                    questionId: match?.questionId || null,
-                    matchedQuestions: match?.matchedQuestions || [],
-                    confidence: match?.confidence || null,
-                    reasoning: match?.reasoning || null,
-                    emailReply: assistantPlan?.emailReply || null,
-                    sourceCitations: assistantPlan?.sourceCitations || [],
-                },
-                { depth: null }
-            );
-        } else {
-            console.info('🤖  Question classification result: unavailable');
-        }
+        const generationStage = pipelineLogger.stage('Generate');
+        generationStage.queued();
+        const generationPlan = await generationStage.run(
+            () => generateCandidateResponses(retrievalPlan),
+            {
+                waitMessage: 'Waiting for generation service to draft assistant plan…',
+                waitEmoji: '⏳',
+                successMessage: 'Generation stage complete. Transitioning to verification…',
+            },
+        );
 
-        console.info('🚦  Pipeline stage: Verify ➜ queued');
-        console.time('⏱️  Verification stage duration');
-        console.info('⏳  Waiting for verification service to review candidate plan…');
-        const verificationPlan = await verifyCandidateResponses(generationPlan);
-        console.timeEnd('⏱️  Verification stage duration');
-        console.info('✅  Verification stage complete. Preparing Outlook response payload…');
+        pipelineLogger.questionClassification(generationPlan?.questionPlan || null);
+
+        const verificationStage = pipelineLogger.stage('Verify');
+        verificationStage.queued();
+        const verificationPlan = await verificationStage.run(
+            () => verifyCandidateResponses(generationPlan),
+            {
+                waitMessage: 'Waiting for verification service to review candidate plan…',
+                waitEmoji: '⏳',
+                successMessage: 'Verification stage complete. Preparing Outlook response payload…',
+            },
+        );
 
         const questionPlan = verificationPlan?.questionPlan || null;
         const assistantPlan = questionPlan?.assistantPlan || null;
@@ -130,6 +141,8 @@ export default {
                   title: typeof citation.title === 'string' ? citation.title : null,
               }))
             : [];
+
+        pipelineLogger.responsePrepared({ emailResponse, sourceCitations });
 
         const responsePayload = {
             message: 'Pipeline scaffold executed',
