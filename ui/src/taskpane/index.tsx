@@ -4,8 +4,6 @@ import App from "./components/App";
 import { FluentProvider, webLightTheme } from "@fluentui/react-components";
 import { enableSharedRuntimeFeatures } from "./helpers/runtime";
 
-/* global document, Office, module, require, HTMLElement */
-
 const title = "Contoso Task Pane Add-in";
 
 const rootElement: HTMLElement | null = document.getElementById("container");

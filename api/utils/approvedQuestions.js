@@ -16,24 +16,44 @@ export const APPROVED_QUESTIONS = [
         title: 'How do I submit a rental application for tenancy?',
         canonicalQuestion: 'How do I submit a rental application for tenancy?',
         answerGuidance: [
-            // Keep guidance grounded in official, publicly visible resources.
-            'Direct residents to sign in to the PEKA Resident Portal for the most current rental application steps.',
-            'Encourage them to review the portal checklist so they gather every document the page requests before submission.',
-            'Remind them that the linked form itself sets out the specific documentation and signature requirements — your reply should acknowledge this without paraphrasing line-items.',
-            'Always include links to the PEKA Renter Portal for applications and for general information for inquiries.',
-            'Do not offer to personally check availability, follow up, or confirm receipt unless the resident directly requests it.',
+            'Start by directing residents to the Client Portal – Rental Tenants for current application steps and forms.',
+            'Include the three core links together: Client Portal – Rental Tenants, Canmore Long-Term Rentals (current listings), and Online Application for Tenancy.',
+            'State plainly that a completed rental application is required before consideration; do not use quotations.',
+            'Note that each adult (18+) applying to live together must submit an individual application (limit three adults).',
+            'Suggest preparing typical documents (employment/income details, landlord/employer references, government ID, and visa documentation if applicable) and defer specifics to the linked PDF.',
+            'Acknowledge that the official application form and PDF contain the exact documentation and signature requirements—do not restate line items.',
+            'If approved, explain that PEKA will arrange a viewing and provide the lease; defer deposit/insurance specifics to the official materials.',
+            'Do not solicit assistance or offer to confirm availability/receipt; only provide follow-up if explicitly requested and then point to the official channels on the linked pages.',
+            'Use PEKA’s published page titles and avoid invented labels or ambiguous parentheticals.',
+            'Keep guidance scoped to long-term tenancy unless short-term rentals are explicitly asked about.',
+            'Avoid phrasing that implies personal guidance or one-on-one assistance.'
         ],
         resourceHints: [
-            {
-                label: 'PEKA Resident Portal – Rental Applications',
-                url: 'https://peka.ab.ca/portal-renters',
-                usageNote:
-                    'Use this official portal page when referencing how to submit or track rental applications.',
-            },
+
             {
                 label: 'PEKA Home Page',
                 url: 'https://peka.ab.ca/',
-                usageNote: 'Share this for general PEKA contact information when portal support is unavailable.',
+                usageNote: 'Use this resource to find other PEKA related answers to your queries. You do not need to actually share this resource though.',
+            },
+            {
+                label: 'PEKA Resident Portal – Rental Applications',
+                url: 'https://peka.ab.ca/portal-renters',
+                usageNote: 'Share this for prospective or current tenants wanting to submit applications, file maintenance requests, edit contact details, apply for pet approval, or access tenant resources in the PEKA portal.',
+            },
+            {
+                label: 'Canmore Long Term Rentals',
+                url: 'https://peka.ab.ca/canmore-rentals',
+                usageNote: `Share this when applicants need clarity on the standard terms and conditions for PEKA long-term rentals, or when they want to view the current list of available units.`,
+            },
+            {
+                label: 'Learn About The Application Process',
+                url: 'https://peka.ab.ca/files/PDF/tenant/process.pdf?11',
+                usageNote: 'Share this when applicants want a step-by-step overview of the rental application process and required documentation.',
+            },
+            {
+                label: 'Online Application for Tenancy',
+                url: 'https://peka.ab.ca/online-application',
+                usageNote: 'Share this in conjunction with, or immediately after, explaining the application process when the applicant is ready to apply online.',
             },
         ],
     },
@@ -65,33 +85,53 @@ export const APPROVED_QUESTIONS = [
         title: 'Where can I find available Rentals?',
         canonicalQuestion: 'Where can I find available condo rentals in the community?',
         answerGuidance: [
-            'Point the renter to the PEKA renter portal for live availability and eligibility information.',
-            'Encourage them to follow the inquiry steps listed on the site for tours or additional questions.',
-            'Remind them that the official portal is the source of truth for schedule changes or new listings.',
+            'Identify which rental type the resident is asking about—residential long-term, residential short-term (nightly), or commercial space—before selecting resources.',
+            'If the request is general or unspecified, reference the Client Portal – PEKA Tenants and the Bow Valley Long Term Rentals page as the starting point.',
+            'For monthly or long-term residential rentals, direct residents to Bow Valley Long Term Rentals for current availability and eligibility notes.',
+            'For nightly or short-term stays, direct them to the Canmore Short-Term Rentals or Clone Canmore Short-Term Residential Rentals pages as applicable.',
+            'For office, retail, or commercial space inquiries, point to the Commercial Rentals page for listings and contact information.',
+            'Always refer to the live portal and listings pages as the authoritative sources for current availability and updates.',
+            'Do not restate property descriptions, pricing, or availability text—link only to the official listings pages.',
+            'Maintain a neutral, informative tone—no marketing, persuasion, or conversational commentary.',
+            'End after referencing the appropriate listing titles; do not include URLs in the body (titles only).',
+            'Do not invite further questions; if renters need follow-up, the portal pages list the official contact methods.',
+            // DO NOTs
+            'Keep replies concise.',
+            'Only reference the resource Titles, and do not list the links.',
+            'Do not describe line items, checkboxes, or field instructions found within the forms.',
+            'Avoid reciting or summarizing fees, rent obligations, cleaning clauses, or other details—refer to the form as the authoritative source.',
+            'Never generate a “Next steps” or numbered checklist section.',
         ],
         resourceHints: [
             {
-                label: 'PEKA Renter Portal',
+                label: 'Client Portal – PEKA Tenants',
                 url: 'https://peka.ab.ca/portal-renters',
                 usageNote:
-                    'Share this when directing prospects to browse listings or submit rental availability inquiries.',
+                    'Use this as the central entry point for all tenant resources, applications, and links to rental listings.',
             },
             {
                 label: 'Bow Valley Long Term Rentals',
                 url: 'https://peka.ab.ca/canmore-long-term-rentals',
                 usageNote:
-                    'Include this when renters want to see the full list of managed Bow Valley residential rentals.',
+                    'Use this page for monthly and long-term residential rental availability and eligibility details.',
             },
             {
-                label: 'Vue Canmore Online Application',
-                url: 'https://peka.ab.ca/client-portal-vue/online-application',
+                label: 'Canmore Short-Term Rentals',
+                url: 'https://peka.ab.ca/canmore-short-term-rentals',
                 usageNote:
-                    'Reference this link when the renter is specifically interested in Vue Canmore applications.',
+                    'Use this page for nightly or short-term residential rental listings and policies.',
             },
             {
-                label: 'PEKA Home Page',
-                url: 'https://peka.ab.ca/',
-                usageNote: 'Provide this link for main office contact information if urgent follow-up is required.',
+                label: 'Clone Canmore Short-Term Residential Rentals',
+                url: 'https://peka.ab.ca/clone-canmore-short-term-residential-rentals',
+                usageNote:
+                    'Use this alternate short-term listing page if referenced in inquiry or linked from PEKA site navigation.',
+            },
+            {
+                label: 'Commercial Rentals',
+                url: 'https://peka.ab.ca/commercial',
+                usageNote:
+                    'Use this page when the inquiry involves commercial, retail, or office space leasing.',
             },
         ],
     },
@@ -100,23 +140,46 @@ export const APPROVED_QUESTIONS = [
         title: 'How do I terminate my lease?',
         canonicalQuestion: 'How do I terminate my lease with the condo corporation?',
         answerGuidance: [
-            'Ask the resident to review the lease termination guidance posted in the renter portal before taking action.',
-            'Mention that move-out steps and notice expectations are documented in the same official resources.',
-            'Offer to connect them with PEKA support through the portal if they need assistance submitting notice.',
+            'Refer residents to the official lease termination resources in the client-portal before any action is taken.',
+            'Explain that notice periods and move-out expectations differ depending on lease type: non-furnished (periodic), furnished/partially furnished, or fixed-term (lease break). Each is outlined in a separate official form.',
+            'Direct residents to select and complete the correct form; do not summarize or restate content from the PDFs.',
+            'Note that PEKA’s instructions specify termination dates must fall on the last day of a month (not the first).',
+            'If the appropriate notice form is unclear, acknowledge that it depends on unit type and lease term, and direct residents to the Client Portal – Rental Tenants page to confirm which form applies.',
+            'Do not offer to review, verify, or submit notice on behalf of a tenant. Responses must remain informational and point to the published PEKA resources.',
+            'Maintain an institutional, factual tone; avoid self-references (“I reviewed,” “I can confirm,” “let me know”) or closing offers of further help.',
+            'End after factual guidance and resource links—do not include conversational sign-offs or solicit follow-up.',
+            'Acknowledge that the official lease termination forms and PDF contain the exact documentation, information and signature requirements—do not restate line items that can be found in the referenced document.',
+            'Do not solicit assistance or offer to confirm availability/receipt; only provide follow-up if explicitly requested and then point to the official channels on the linked pages.',
+            // DO NOTs
+            'Keep replies concise.',
+            'Only reference the resource Titles, and do not list the links.',
+            'Do not restate or quote text from the PEKA PDFs; reference them only by title.',
+            'Do not describe line items, checkboxes, or field instructions found within the forms.',
+            'Avoid reciting or summarizing fees, rent obligations, cleaning clauses, or other details—refer to the form as the authoritative source.',
+            'Never generate a “Next steps” or numbered checklist section.',
         ],
         resourceHints: [
             {
                 label: 'PEKA Renter Portal',
                 url: 'https://peka.ab.ca/portal-renters',
-                usageNote:
-                    'Use this link when discussing official notice-to-vacate instructions or move-out steps.',
+                usageNote: 'Use this page to locate the correct notice form, move-out steps, and submission instructions.',
             },
             {
-                label: 'PEKA Home Page',
-                url: 'https://peka.ab.ca/',
-                usageNote: 'Offer this page for primary office contact methods if further help is required.',
+                label: 'Notice to Terminate Lease – Non-Furnished Properties',
+                url: 'https://peka.ab.ca/files/PDF/tenant/Notice%20to%20Terminate%20Non-Furnished.pdf',
+                usageNote: 'Use this form to end an unfurnished/periodic tenancy.',
             },
-        ],
+            {
+                label: 'Notice to Terminate Lease – Fully/Partially Furnished Properties',
+                url: 'https://peka.ab.ca/files/PDF/tenant/Notice%20to%20Terminate%20FURNISHED.pdf',
+                usageNote: 'Use this form to end a furnished/part-furnished tenancy; plus furnished move-out standards.',
+            },
+            {
+                label: 'Notice to Terminate Lease – Lease Break (Fixed Term Tenancy)',
+                url: 'https://peka.ab.ca/files/PDF/tenant/NOTICE%20TO%20TERMINATE%20(LB)%20FIXED%20TERM%20TENANCY%20(Jun17).pdf',
+                usageNote: 'Use this form to end a fixed-term lease early.',
+            },
+        ]
     },
     {
         id: 'insurance-coverage',
@@ -138,6 +201,11 @@ export const APPROVED_QUESTIONS = [
             {
                 label: 'PEKA Condo Corp Portal',
                 url: 'https://peka.ab.ca/client-portal-condo',
+                usageNote: 'Use this resource when noting where condo corporation communications are posted.',
+            },
+            {
+                label: 'PEKA Condo Corp Portal',
+                url: 'https://peka.ab.ca/files/PDF/tenant/Insurance%20Notice.pdf?11',
                 usageNote: 'Use this resource when noting where condo corporation communications are posted.',
             },
         ],

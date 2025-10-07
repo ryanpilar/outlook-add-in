@@ -6,13 +6,10 @@
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="PEKA Helper"/>
   <Description DefaultValue="Generate email responses and source links directly from your Outlook mailbox."/>
-  <!-- <IconUrl DefaultValue="https://outlook-add-in-ui.onrender.com/assets/icon-64.png"/> -->
   <IconUrl DefaultValue="https://localhost:3000/assets/icon-64.png"/>
-  <!-- <HighResolutionIconUrl DefaultValue="https://outlook-add-in-ui.onrender.com/assets/icon-128.png"/> -->
   <HighResolutionIconUrl DefaultValue="https://localhost:3000/assets/icon-128.png"/>
   <SupportUrl DefaultValue="https://www.contoso.com/help"/>
   <AppDomains>
-    <!-- <AppDomain>https://outlook-add-in-ui.onrender.com</AppDomain> -->
     <AppDomain>https://localhost:3000</AppDomain>
     <AppDomain>https://www.contoso.com</AppDomain>
   </AppDomains>
@@ -27,7 +24,6 @@
   <FormSettings>
     <Form xsi:type="ItemRead">
       <DesktopSettings>
-        <!-- <SourceLocation DefaultValue="https://outlook-add-in-ui.onrender.com/taskpane.html"/> -->
         <SourceLocation DefaultValue="https://localhost:3000/taskpane.html"/>
         <RequestedHeight>250</RequestedHeight>
       </DesktopSettings>
@@ -75,15 +71,11 @@
       </Hosts>
       <Resources>
         <bt:Images>
-          <!-- <bt:Image id="Icon.16x16" DefaultValue="https://outlook-add-in-ui.onrender.com/assets/icon-16.png"/> -->
           <bt:Image id="Icon.16x16" DefaultValue="https://localhost:3000/assets/icon-16.png"/>
-          <!-- <bt:Image id="Icon.32x32" DefaultValue="https://outlook-add-in-ui.onrender.com/assets/icon-32.png"/> -->
           <bt:Image id="Icon.32x32" DefaultValue="https://localhost:3000/assets/icon-32.png"/>
-          <!-- <bt:Image id="Icon.80x80" DefaultValue="https://outlook-add-in-ui.onrender.com/assets/icon-80.png"/> -->
           <bt:Image id="Icon.80x80" DefaultValue="https://localhost:3000/assets/icon-80.png"/>
         </bt:Images>
         <bt:Urls>
-          <!-- <bt:Url id="Taskpane.Url" DefaultValue="https://outlook-add-in-ui.onrender.com/taskpane.html"/> -->
           <bt:Url id="Taskpane.Url" DefaultValue="https://localhost:3000/taskpane.html"/>
         </bt:Urls>
         <bt:ShortStrings>

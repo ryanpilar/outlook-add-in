@@ -454,9 +454,7 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
     const handleTabSelect = useCallback<NonNullable<TabListProps["onTabSelect"]>>(
         (_event, data) => {
             setSelectedTab(data.value);
-        },
-        []
-    );
+        }, []);
 
     const sourceCitations = useMemo(
         () =>
