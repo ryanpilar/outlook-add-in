@@ -14,15 +14,13 @@ import {
     tokens,
     makeStyles,
     Toaster,
-    useToastController,
-    Toast,
-    ToastTitle,
-    ToastBody, Spinner,
+    Spinner,
     mergeClasses,
 } from "@fluentui/react-components";
-import {Copy16Regular, Checkmark16Regular, CheckmarkCircle20Regular, Dismiss20Regular} from "@fluentui/react-icons";
+import {Copy16Regular, Checkmark16Regular} from "@fluentui/react-icons";
 import {PipelineResponse} from "../taskpane";
 import {copyTextToClipboard} from "../helpers/clipboard";
+import {useTextInsertionToasts} from "./TextInsertion/useTextInsertionToasts";
 
 interface TextInsertionProps {
     optionalPrompt: string;
@@ -292,59 +290,9 @@ const useStyles = makeStyles({
 
 const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) => {
     const styles = useStyles();
-    const {dispatchToast, dismissToast} = useToastController(TOASTER_ID);
+    const {showSuccessToast, showErrorToast} = useTextInsertionToasts(TOASTER_ID);
 
     const [selectedCitationIndexes, setSelectedCitationIndexes] = useState<number[]>([]);
-
-    const showSuccessToast = useCallback(
-        (title: string, subtitle?: string) => {
-            // unique ID so you can dismiss it manually
-            const toastId = crypto.randomUUID();
-
-            dispatchToast(
-                <Toast
-                    appearance="inverted"
-                    style={{position: "relative"}}
-                >
-                    <ToastTitle
-                        media={<CheckmarkCircle20Regular/>}
-                        action={
-                            <Button
-                                icon={<Dismiss20Regular/>}
-                                appearance="transparent"
-                                size="small"
-                                aria-label="Close"
-                                onClick={() => dismissToast(toastId)}
-                            />
-                        }
-                    >
-                        {title}
-                    </ToastTitle>
-
-                    {subtitle ? <ToastBody>{subtitle}</ToastBody> : null}
-                </Toast>,
-                {
-                    toastId,
-                    intent: "success",
-                    timeout: 3500,
-                }
-            );
-        },
-        [dispatchToast, dismissToast]
-    );
-
-    const showErrorToast = useCallback(
-        (title: string, subtitle?: string) => {
-            dispatchToast(
-                <Toast>
-                    <ToastTitle>{title}</ToastTitle>
-                    {subtitle ? <ToastBody>{subtitle}</ToastBody> : null}
-                </Toast>,
-                {intent: "error"}
-            );
-        },
-        [dispatchToast]
-    );
 
     const handleTextSend = async () => {
         // Bail out if a send is already underway so we don't queue duplicate requests.
