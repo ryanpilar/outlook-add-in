@@ -62,9 +62,9 @@ export async function sendText(
         // services have enough context to store, index, or reply to the message.
 
         // todo: eww!
-        // const response = await fetch(`http://localhost:4000/log-text`, {
+        const response = await fetch(`http://localhost:4000/log-text`, {
 
-        const response = await fetch(`https://outlook-add-in-kdr8.onrender.com/log-text`, {
+        // const response = await fetch(`https://outlook-add-in-kdr8.onrender.com/log-text`, {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({

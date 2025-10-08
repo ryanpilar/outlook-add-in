@@ -183,8 +183,7 @@ export const APPROVED_QUESTIONS = [
     },
     {
         id: 'insurance-coverage',
-        title:
-            'What type of insurance does the Condo Corporation carry and what insurance am I responsible for as an owner.',
+        title: 'What type of insurance does the Condo Corporation carry and what insurance am I responsible for as an owner.',
         canonicalQuestion: 'What insurance does the condo corporation carry and what coverage must owners maintain?',
         answerGuidance: [
             'Direct owners to the owner portal for the latest insurance summaries provided by PEKA.',

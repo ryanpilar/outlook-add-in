@@ -20,8 +20,8 @@ import {
 import {Copy16Regular, Checkmark16Regular} from "@fluentui/react-icons";
 import {PipelineResponse} from "../taskpane";
 import {copyTextToClipboard} from "../helpers/clipboard";
-import {useTextInsertionToasts} from "./TextInsertion/useTextInsertionToasts";
-import {ResponseTab} from "./TextInsertion/Tabs/ResponseTab";
+import {useTextInsertionToasts} from "../hooks/useTextInsertionToasts";
+import {ResponseTab} from "./ResponseTab";
 
 interface TextInsertionProps {
     optionalPrompt: string;
