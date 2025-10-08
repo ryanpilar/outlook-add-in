@@ -1,17 +1,14 @@
 import * as React from "react";
-import {useMemo, useCallback, useEffect, useState} from "react";
+import {useMemo} from "react";
 import {
     Badge,
     Tab,
     TabList,
-    TabListProps,
-    TabValue,
     tokens,
     makeStyles,
     Toaster,
     mergeClasses,
 } from "@fluentui/react-components";
-import {Checkmark16Regular} from "@fluentui/react-icons";
 import {PipelineResponse} from "../taskpane";
 import {useToasts} from "../hooks/useToasts";
 import {TabResponse} from "./TabResponse";
@@ -20,6 +17,7 @@ import {TabInstruct} from "./TabInstruct";
 import FooterActions from "./FooterActions";
 import {useCitationSelection} from "../hooks/useCitationSelection";
 import {useTextInsertionActions} from "../hooks/useTextInsertionActions";
+import {useTabs} from "../hooks/useTabs";
 
 interface TextInsertionProps {
     optionalPrompt: string;
@@ -267,37 +265,6 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
 
     const hasResponse = emailResponse.length > 0;
 
-    const [selectedTab, setSelectedTab] = useState<TabValue>(() =>
-        hasResponse ? "response" : "instruct"
-    );
-
-    useEffect(() => {
-        setSelectedTab((current) => {
-            if (hasResponse) {
-                return "response";
-            }
-
-            if (current === "response") {
-                return "instruct";
-            }
-
-            return current;
-        });
-    }, [hasResponse]);
-
-    useEffect(() => {
-        const shouldShowOptionalPrompt = selectedTab === "instruct";
-
-        if (props.isOptionalPromptVisible !== shouldShowOptionalPrompt) {
-            props.onOptionalPromptVisibilityChange(shouldShowOptionalPrompt);
-        }
-    }, [props.isOptionalPromptVisible, props.onOptionalPromptVisibilityChange, selectedTab]);
-
-    const handleTabSelect = useCallback<NonNullable<TabListProps["onTabSelect"]>>(
-        (_event, data) => {
-            setSelectedTab(data.value);
-        }, []);
-
     const sourceCitations = useMemo(
         () =>
             props.pipelineResponse?.assistantResponse?.sourceCitations?.filter(
@@ -320,10 +287,15 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
         showSuccessToast,
     });
 
-    const responseBadge = hasResponse ? (
-        <Badge appearance="tint" shape="circular" color="success" className={styles.badge}
-               icon={<Checkmark16Regular className={styles.responseIcon}/>}/>
-    ) : null;
+    const {selectedTab, handleTabSelect, responseBadge} = useTabs({
+        hasResponse,
+        isOptionalPromptVisible: props.isOptionalPromptVisible,
+        onOptionalPromptVisibilityChange: props.onOptionalPromptVisibilityChange,
+        responseBadgeClassName: styles.badge,
+        responseIconClassName: styles.responseIcon,
+    });
+
+    const shouldShowOptionalPrompt = selectedTab === "instruct";
 
 
     return (
@@ -393,7 +365,7 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                             emptyMessageClassName={styles.emptyLinksMessage}
                         />
                     ) : null}
-                    {selectedTab === "instruct" ? (
+                    {shouldShowOptionalPrompt ? (
                         <TabInstruct
                             optionalPrompt={props.optionalPrompt}
                             onOptionalPromptChange={props.onOptionalPromptChange}
