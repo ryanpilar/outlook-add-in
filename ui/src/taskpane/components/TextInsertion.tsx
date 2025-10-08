@@ -19,6 +19,7 @@ import {TabLinks} from "./TabLinks";
 import {TabInstruct} from "./TabInstruct";
 import FooterActions from "./FooterActions";
 import {useCitationSelection} from "../hooks/useCitationSelection";
+import {useTextInsertionActions} from "../hooks/useTextInsertionActions";
 
 interface TextInsertionProps {
     optionalPrompt: string;
@@ -241,82 +242,28 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
     const styles = useStyles();
     const {showSuccessToast, showErrorToast} = useToasts(TOASTER_ID);
 
-    const handleTextSend = async () => {
-        // Bail out if a send is already underway so we don't queue duplicate requests.
-        if (props.isSending) {
-            return;
-        }
-
-        try {
-            await props.onSend();
-        } catch (error) {
-            console.error(error);
-            showErrorToast(
-                "Unable to send request",
-                "Something went wrong while contacting the service. Please try again."
-            );
-        }
-    };
-    const handleCancel = () => {
-        props
-            .onCancel()
-            .catch((error) => {
-                console.error(error);
-                showErrorToast(
-                    "Unable to cancel request",
-                    "We couldn't stop the current request. Please try again."
-                );
-            });
-    };
     const emailResponse = useMemo(
         () => props.pipelineResponse?.assistantResponse?.emailResponse?.trim() ?? "",
         [props.pipelineResponse]
     );
 
-    const handleCopyResponse = useCallback(() => {
-        void props
-            .onCopyResponse(emailResponse)
-            .then(() => {
-                showSuccessToast("Copied to clipboard", "The response is ready to paste anywhere.");
-            })
-            .catch((error) => {
-                console.error(error);
-                showErrorToast(
-                    "Unable to copy response",
-                    "Check your clipboard permissions and try again."
-                );
-            });
-    }, [emailResponse, props, showErrorToast, showSuccessToast]);
-
-    const handleInjectResponse = useCallback(() => {
-        void props
-            .onInjectResponse(emailResponse)
-            .then(() => {
-                showSuccessToast(
-                    "Inserted into email",
-                    "Check your draft body for the newly added response."
-                );
-            })
-            .catch((error) => {
-                console.error(error);
-                showErrorToast(
-                    "Unable to insert response",
-                    "Please try again after confirming you have an email open."
-                );
-            });
-    }, [emailResponse, props, showErrorToast, showSuccessToast]);
-
-    const handleClear = useCallback(() => {
-        void props
-            .onClear()
-            .catch((error) => {
-                console.error(error);
-                showErrorToast(
-                    "Unable to reset",
-                    "Please try again to clear the current response."
-                );
-            });
-    }, [props, showErrorToast]);
+    const {
+        handleTextSend,
+        handleCancel,
+        handleCopyResponse,
+        handleInjectResponse,
+        handleClear,
+    } = useTextInsertionActions({
+        emailResponse,
+        isSending: props.isSending,
+        onSend: props.onSend,
+        onCancel: props.onCancel,
+        onCopyResponse: props.onCopyResponse,
+        onInjectResponse: props.onInjectResponse,
+        onClear: props.onClear,
+        showSuccessToast,
+        showErrorToast,
+    });
 
     const hasResponse = emailResponse.length > 0;
 
