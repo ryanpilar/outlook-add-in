@@ -12,7 +12,7 @@ import {
   formatRetryStatusMessage,
   isAbortError,
   isRetryableNetworkError,
-} from "../utils/outlook-errorHandling";
+} from "../helpers/outlook-errorHandling";
 import { TaskPaneStatePersistence } from "./useTaskPaneStatePersistence";
 
 export interface SendLifecycleHandlerOptions {

@@ -1,280 +1,269 @@
-
 import * as React from "react";
 import {
-  createEmptyState,
-  loadPersistedState,
-  PersistedTaskPaneState,
+    createEmptyState,
+    loadPersistedState,
+    PersistedTaskPaneState,
 } from "../helpers/outlook-persistence";
-import { resolveStorageKeyForCurrentItem } from "../helpers/outlook-mailboxItem";
-import { cancelSendOperation, clearSendOperation } from "../helpers/outlook-runtimeLogic";
-import { useTaskPaneStatePersistence } from "./useTaskPaneStatePersistence";
-import { useSendLifecycleHandler } from "./useSendLifecycleHandler";
-import { useMailboxLifecycleHandler } from "./useMailboxLifecycleHandler";
+import {resolveStorageKeyForCurrentItem} from "../helpers/outlook-mailboxItem";
+import {cancelSendOperation, clearSendOperation} from "../helpers/outlook-runtimeLogic";
+import {useTaskPaneStatePersistence} from "./useTaskPaneStatePersistence";
+import {useSendLifecycleHandler} from "./useSendLifecycleHandler";
+import {useMailboxLifecycleHandler} from "./useMailboxLifecycleHandler";
 import {
-  attemptToCopyResponse,
-  attemptToInsertResponse,
+    attemptToCopyResponse,
+    attemptToInsertResponse,
 } from "../helpers/responseActions";
 
 export interface TaskPaneActions {
-  refreshFromCurrentItem: () => Promise<void>;
-  updateOptionalPrompt: (value: string) => void;
-  setOptionalPromptVisible: (visible: boolean) => void;
-  sendCurrentEmail: () => Promise<void>;
-  cancelCurrentSend: () => Promise<void>;
-  copyResponseToClipboard: (response: string) => Promise<void>;
-  injectResponseIntoEmail: (response: string) => Promise<void>;
-  resetTaskPaneState: () => Promise<void>;
+    refreshFromCurrentItem: () => Promise<void>;
+    updateOptionalPrompt: (value: string) => void;
+    setOptionalPromptVisible: (visible: boolean) => void;
+    sendCurrentEmail: () => Promise<void>;
+    cancelCurrentSend: () => Promise<void>;
+    copyResponseToClipboard: (response: string) => Promise<void>;
+    injectResponseIntoEmail: (response: string) => Promise<void>;
+    resetTaskPaneState: () => Promise<void>;
 }
 
 export interface TaskPaneController {
-  state: PersistedTaskPaneState;
-  actions: TaskPaneActions;
+    state: PersistedTaskPaneState;
+    actions: TaskPaneActions;
 }
 
 export const useTaskPaneController = (): TaskPaneController => {
-  const {
-    state,
-    setState,
-    currentItemKeyRef,
-    isMountedRef,
-    visibilityCleanupRef,
-    latestStateRef,
-    operationSubscriptionsRef,
-    mergeState,
-    applyStateForKey,
-    detachOperationSubscription,
-  } = useTaskPaneStatePersistence();
 
-  const { handleSendSuccess, handleSendFailure, ensureSendLifecycle, resumePendingOperationIfNeeded } =
-    useSendLifecycleHandler({
-      applyStateForKey,
-      detachOperationSubscription,
-      operationSubscriptionsRef,
-    });
+    const {
+        state,
+        setState,
+        currentItemKeyRef,
+        isMountedRef,
+        visibilityCleanupRef,
+        latestStateRef,
+        operationSubscriptionsRef,
+        mergeState,
+        applyStateForKey,
+        detachOperationSubscription,
+    } = useTaskPaneStatePersistence();
 
-  const refreshFromCurrentItem = React.useCallback(async () => {
-    console.info("[Taskpane] Refreshing task pane state for the current mailbox item.");
-    const { key } = await resolveStorageKeyForCurrentItem();
+    const {handleSendSuccess, handleSendFailure, ensureSendLifecycle, resumePendingOperationIfNeeded} =
+        useSendLifecycleHandler({
+            applyStateForKey,
+            detachOperationSubscription,
+            operationSubscriptionsRef,
+        });
 
-    if (!isMountedRef.current) {
-      console.debug("[Taskpane] Component is not mounted. Aborting refresh.");
-      return;
-    }
+    const refreshFromCurrentItem = React.useCallback(async () => {
+        console.info("[Taskpane] Refreshing task pane state for the current mailbox item.");
+        const {key} = await resolveStorageKeyForCurrentItem();
 
-    if (key === null) {
-      console.info("[Taskpane] No mailbox item detected. Resetting state to defaults.");
-      currentItemKeyRef.current = null;
-      setState(createEmptyState());
-      return;
-    }
+        if (!isMountedRef.current) {
+            console.debug("[Taskpane] Component is not mounted. Aborting refresh.");
+            return;
+        }
 
-    const hasChanged = currentItemKeyRef.current !== key;
-    currentItemKeyRef.current = key;
+        if (key === null) {
+            console.info("[Taskpane] No mailbox item detected. Resetting state to defaults.");
+            currentItemKeyRef.current = null;
+            setState(createEmptyState());
+            return;
+        }
 
-    if (hasChanged) {
-      console.info(`[Taskpane] Mailbox item changed. Loading persisted state for key ${key}.`);
-      setState(createEmptyState());
-    } else {
-      console.debug(`[Taskpane] Mailbox item key ${key} unchanged. Using existing state.`);
-    }
+        const hasChanged = currentItemKeyRef.current !== key;
+        currentItemKeyRef.current = key;
 
-    try {
-      const storedState = await loadPersistedState(key);
+        if (hasChanged) {
+            console.info(`[Taskpane] Mailbox item changed. Loading persisted state for key ${key}.`);
+            setState(createEmptyState());
+        } else {
+            console.debug(`[Taskpane] Mailbox item key ${key} unchanged. Using existing state.`);
+        }
 
-      if (!isMountedRef.current || currentItemKeyRef.current !== key) {
-        console.debug("[Taskpane] Component unmounted or item changed before state load finished.");
-        return;
-      }
+        try {
+            const storedState = await loadPersistedState(key);
 
-      console.info(`[Taskpane] Persisted state loaded for key ${key}.`);
-      resumePendingOperationIfNeeded(key, storedState);
-      setState(storedState);
-    } catch (error) {
-      console.warn(`[Taskpane] Failed to load persisted state for key ${key}.`, error);
+            if (!isMountedRef.current || currentItemKeyRef.current !== key) {
+                console.debug("[Taskpane] Component unmounted or item changed before state load finished.");
+                return;
+            }
 
-      if (isMountedRef.current && currentItemKeyRef.current === key) {
-        console.info("[Taskpane] Falling back to empty state after load failure.");
-        setState(createEmptyState());
-      }
-    }
-  }, [resumePendingOperationIfNeeded]);
+            console.info(`[Taskpane] Persisted state loaded for key ${key}.`);
+            resumePendingOperationIfNeeded(key, storedState);
+            setState(storedState);
+        } catch (error) {
+            console.warn(`[Taskpane] Failed to load persisted state for key ${key}.`, error);
 
-  useMailboxLifecycleHandler({ refreshFromCurrentItem, isMountedRef, visibilityCleanupRef });
+            if (isMountedRef.current && currentItemKeyRef.current === key) {
+                console.info("[Taskpane] Falling back to empty state after load failure.");
+                setState(createEmptyState());
+            }
+        }
+    }, [resumePendingOperationIfNeeded]);
 
-  const setStatusMessage = React.useCallback(
-    (statusMessage: string) => {
-      mergeState({ statusMessage });
-    },
-    [mergeState]
-  );
+    useMailboxLifecycleHandler({refreshFromCurrentItem, isMountedRef, visibilityCleanupRef});
 
-  const updateOptionalPrompt = React.useCallback(
-    (value: string) => {
-      console.debug("[Taskpane] Updating optional prompt.");
-      mergeState({ optionalPrompt: value });
-    },
-    [mergeState]
-  );
+    const setStatusMessage = React.useCallback((statusMessage: string) => {
+            mergeState({statusMessage})
+        },
+        [mergeState]
+    );
 
-  const setOptionalPromptVisible = React.useCallback(
-    (visible: boolean) => {
-      console.debug(`[Taskpane] Setting optional prompt visibility to ${visible}.`);
-      mergeState({ isOptionalPromptVisible: visible });
-    },
-    [mergeState]
-  );
+    const updateOptionalPrompt = React.useCallback((value: string) => {
+            mergeState({optionalPrompt: value});
+        },
+        [mergeState]
+    );
 
-  const copyResponseToClipboard = React.useCallback(
-    async (response: string) => {
-      const result = await attemptToCopyResponse(response);
-      setStatusMessage(result.statusMessage);
-    },
-    [setStatusMessage]
-  );
+    const setOptionalPromptVisible = React.useCallback((visible: boolean) => {
+            mergeState({isOptionalPromptVisible: visible});
+        },
+        [mergeState]
+    );
 
-  const injectResponseIntoEmail = React.useCallback(
-    async (response: string) => {
-      const result = await attemptToInsertResponse(response);
-      setStatusMessage(result.statusMessage);
-    },
-    [setStatusMessage]
-  );
+    const copyResponseToClipboard = React.useCallback(async (response: string) => {
+            const result = await attemptToCopyResponse(response);
+            setStatusMessage(result.statusMessage);
+        },
+        [setStatusMessage]
+    );
 
-  const sendCurrentEmail = React.useCallback(async () => {
-    console.info("[Taskpane] Initiating send workflow for current email content.");
-    const targetKey = currentItemKeyRef.current;
+    const injectResponseIntoEmail = React.useCallback(async (response: string) => {
+            const result = await attemptToInsertResponse(response);
+            setStatusMessage(result.statusMessage);
+        },
+        [setStatusMessage]
+    );
 
-    if (latestStateRef.current.isSending) {
-      // When a request is already running we simply ignore additional presses so the
-      // background workflow is not duplicated.
-      console.info(
-        "[Taskpane] A send operation is already in progress. Ignoring duplicate request."
-      );
-      return;
-    }
+    const sendCurrentEmail = React.useCallback(async () => {
+        console.info("[Taskpane] Initiating send workflow for current email content.");
+        const targetKey = currentItemKeyRef.current;
 
-    if (!targetKey) {
-      console.warn(
-        "[Taskpane] Unable to determine a storage key for the current item. Aborting send."
-      );
-      return;
-    }
+        if (latestStateRef.current.isSending) {
+            // When a request is already running we simply ignore additional presses so the
+            // background workflow is not duplicated.
+            console.info("[Taskpane] A send operation is already in progress. Ignoring duplicate request.");
+            return;
+        }
 
-    // Generate a lightweight identifier so we can correlate the response with the request
-    // when it completes, even if the user navigates away from the original email.
-    const requestId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    const optionalPrompt = latestStateRef.current.optionalPrompt.trim();
+        if (!targetKey) {
+            console.warn("[Taskpane] Unable to determine a storage key for the current item. Aborting send.");
+            return;
+        }
 
-    // Persist the "sending" flag against the originating item key so the UI can resume the
-    // pending state after navigation. This runs through `applyStateForKey` so we reuse the same
-    // code path regardless of whether the item is currently displayed or only updated in storage.
-    await applyStateForKey(targetKey, (previous) => ({
-      ...previous,
-      statusMessage: "Sending the current email content...",
-      pipelineResponse: null,
-      isSending: true,
-      activeRequestId: requestId,
-      activeRequestPrompt: optionalPrompt || null,
-    }));
+        // Generate a lightweight identifier so we can correlate the response with the request
+        // when it completes, even if the user navigates away from the original email.
+        const requestId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        const optionalPrompt = latestStateRef.current.optionalPrompt.trim();
 
-    ensureSendLifecycle(targetKey, requestId, optionalPrompt || null);
-  }, [applyStateForKey, ensureSendLifecycle]);
+        // Persist the "sending" flag against the originating item key so the UI can resume the
+        // pending state after navigation. This runs through `applyStateForKey` so we reuse the same
+        // code path regardless of whether the item is currently displayed or only updated in storage.
+        await applyStateForKey(targetKey, (previous) => ({
+            ...previous,
+            statusMessage: "Sending the current email content...",
+            pipelineResponse: null,
+            isSending: true,
+            activeRequestId: requestId,
+            activeRequestPrompt: optionalPrompt || null,
+        }));
 
-  const cancelCurrentSend = React.useCallback(async () => {
-    const targetKey = currentItemKeyRef.current;
-    const activeRequestId = latestStateRef.current.activeRequestId;
+        ensureSendLifecycle(targetKey, requestId, optionalPrompt || null);
+    }, [applyStateForKey, ensureSendLifecycle]);
 
-    if (!activeRequestId) {
-      console.info("[Taskpane] No active send operation to cancel.");
-      return;
-    }
+    const cancelCurrentSend = React.useCallback(async () => {
+        const targetKey = currentItemKeyRef.current;
+        const activeRequestId = latestStateRef.current.activeRequestId;
 
-    console.info(`[Taskpane] Cancelling send operation ${activeRequestId}.`);
-    const cancelled = cancelSendOperation(activeRequestId);
+        if (!activeRequestId) {
+            console.info("[Taskpane] No active send operation to cancel.");
+            return;
+        }
 
-    if (!targetKey) {
-      console.warn(
-        "[Taskpane] Unable to determine a storage key while cancelling the current send."
-      );
-      return;
-    }
+        console.info(`[Taskpane] Cancelling send operation ${activeRequestId}.`);
+        const cancelled = cancelSendOperation(activeRequestId);
 
-    await applyStateForKey(targetKey, (previous) => {
-      if (previous.activeRequestId && previous.activeRequestId !== activeRequestId) {
-        return previous;
-      }
+        if (!targetKey) {
+            console.warn(
+                "[Taskpane] Unable to determine a storage key while cancelling the current send."
+            );
+            return;
+        }
 
-      return {
-        ...previous,
-        statusMessage: cancelled
-          ? "Stopping the send operation..."
-          : "No send operation in progress.",
-        isSending: false,
-        activeRequestId: null,
-        activeRequestPrompt: null,
-      };
-    });
+        await applyStateForKey(targetKey, (previous) => {
+            if (previous.activeRequestId && previous.activeRequestId !== activeRequestId) {
+                return previous;
+            }
 
-    if (!cancelled) {
-      detachOperationSubscription(activeRequestId);
-      clearSendOperation(activeRequestId);
-    }
-  }, [applyStateForKey, cancelSendOperation, clearSendOperation, detachOperationSubscription]);
+            return {
+                ...previous,
+                statusMessage: cancelled
+                    ? "Stopping the send operation..."
+                    : "No send operation in progress.",
+                isSending: false,
+                activeRequestId: null,
+                activeRequestPrompt: null,
+            };
+        });
 
-  const resetTaskPaneState = React.useCallback(async () => {
-    console.info("[Taskpane] Resetting task pane state to defaults.");
-    const activeRequestId = latestStateRef.current.activeRequestId;
+        if (!cancelled) {
+            detachOperationSubscription(activeRequestId);
+            clearSendOperation(activeRequestId);
+        }
+    }, [applyStateForKey, cancelSendOperation, clearSendOperation, detachOperationSubscription]);
 
-    if (activeRequestId) {
-      try {
-        cancelSendOperation(activeRequestId);
-      } catch (error) {
-        console.warn(
-          `[Taskpane] Failed to cancel send operation ${activeRequestId} while resetting the task pane.`,
-          error
-        );
-      }
-    }
+    const resetTaskPaneState = React.useCallback(async () => {
+        console.info("[Taskpane] Resetting task pane state to defaults.");
+        const activeRequestId = latestStateRef.current.activeRequestId;
 
-    operationSubscriptionsRef.current.forEach((detach, requestId) => {
-      try {
-        detach();
-      } catch (error) {
-        console.warn(
-          `[Taskpane] Failed to detach send operation ${requestId} while resetting the task pane.`,
-          error
-        );
-      }
+        if (activeRequestId) {
+            try {
+                cancelSendOperation(activeRequestId);
+            } catch (error) {
+                console.warn(
+                    `[Taskpane] Failed to cancel send operation ${activeRequestId} while resetting the task pane.`,
+                    error
+                );
+            }
+        }
 
-      clearSendOperation(requestId);
-    });
-    operationSubscriptionsRef.current.clear();
+        operationSubscriptionsRef.current.forEach((detach, requestId) => {
+            try {
+                detach();
+            } catch (error) {
+                console.warn(
+                    `[Taskpane] Failed to detach send operation ${requestId} while resetting the task pane.`,
+                    error
+                );
+            }
 
-    mergeState(() => createEmptyState());
-  }, [cancelSendOperation, clearSendOperation, mergeState]);
+            clearSendOperation(requestId);
+        });
+        operationSubscriptionsRef.current.clear();
 
-  const actions: TaskPaneActions = React.useMemo(
-    () => ({
-      refreshFromCurrentItem,
-      updateOptionalPrompt,
-      setOptionalPromptVisible,
-      sendCurrentEmail,
-      cancelCurrentSend,
-      copyResponseToClipboard,
-      injectResponseIntoEmail,
-      resetTaskPaneState,
-    }),
-    [
-      cancelCurrentSend,
-      copyResponseToClipboard,
-      resetTaskPaneState,
-      injectResponseIntoEmail,
-      refreshFromCurrentItem,
-      sendCurrentEmail,
-      setOptionalPromptVisible,
-      updateOptionalPrompt,
-    ]
-  );
+        mergeState(() => createEmptyState());
+    }, [cancelSendOperation, clearSendOperation, mergeState]);
 
-  return { state, actions };
+    const actions: TaskPaneActions = React.useMemo(
+        () => ({
+            refreshFromCurrentItem,
+            updateOptionalPrompt,
+            setOptionalPromptVisible,
+            sendCurrentEmail,
+            cancelCurrentSend,
+            copyResponseToClipboard,
+            injectResponseIntoEmail,
+            resetTaskPaneState,
+        }),
+        [
+            cancelCurrentSend,
+            copyResponseToClipboard,
+            resetTaskPaneState,
+            injectResponseIntoEmail,
+            refreshFromCurrentItem,
+            sendCurrentEmail,
+            setOptionalPromptVisible,
+            updateOptionalPrompt,
+        ]
+    );
+
+    return {state, actions};
 };

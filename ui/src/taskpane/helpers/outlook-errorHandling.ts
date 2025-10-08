@@ -1,4 +1,4 @@
-import { MAX_SEND_OPERATION_RETRIES } from "../helpers/outlook-runtimeLogic";
+import { MAX_SEND_OPERATION_RETRIES } from "./outlook-runtimeLogic";
 
 export const describeError = (error: unknown): string => {
   if (!error) {

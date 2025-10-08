@@ -1,6 +1,6 @@
 import { copyTextToClipboard } from "./clipboard";
 import { insertResponseIntoBody } from "./emailBodyInsertion";
-import { describeError } from "../utils/outlook-errorHandling";
+import {describeError} from "./outlook-errorHandling";
 
 export interface StatusResult {
   statusMessage: string;
