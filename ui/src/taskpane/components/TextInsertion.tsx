@@ -13,12 +13,12 @@ import {
 } from "@fluentui/react-components";
 import {Checkmark16Regular} from "@fluentui/react-icons";
 import {PipelineResponse} from "../taskpane";
-import {copyTextToClipboard} from "../helpers/clipboard";
 import {useTextInsertionToasts} from "../hooks/useTextInsertionToasts";
 import {ResponseTab} from "./ResponseTab";
 import {LinksTab} from "./LinksTab";
 import {InstructTab} from "./InstructTab";
 import FooterActions from "./FooterActions";
+import {useCitationSelection} from "./TextInsertion/hooks/useCitationSelection";
 
 interface TextInsertionProps {
     optionalPrompt: string;
@@ -36,24 +36,6 @@ interface TextInsertionProps {
 }
 
 const TOASTER_ID = "text-insertion-toaster";
-
-const escapeHtml = (value: string): string =>
-    value.replace(/[&<>"']/g, (match) => {
-        switch (match) {
-            case "&":
-                return "&amp;";
-            case "<":
-                return "&lt;";
-            case ">":
-                return "&gt;";
-            case '"':
-                return "&quot;";
-            case "'":
-                return "&#39;";
-            default:
-                return match;
-        }
-    });
 
 const useStyles = makeStyles({
     textPromptAndInsertion: {
@@ -259,8 +241,6 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
     const styles = useStyles();
     const {showSuccessToast, showErrorToast} = useTextInsertionToasts(TOASTER_ID);
 
-    const [selectedCitationIndexes, setSelectedCitationIndexes] = useState<number[]>([]);
-
     const handleTextSend = async () => {
         // Bail out if a send is already underway so we don't queue duplicate requests.
         if (props.isSending) {
@@ -381,90 +361,17 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
 
     const linksCount = sourceCitations.length;
 
-    const selectedLinksCount = selectedCitationIndexes.length;
-
-    useEffect(() => {
-        setSelectedCitationIndexes((current) =>
-            current.filter((index) => index < sourceCitations.length)
-        );
-    }, [sourceCitations.length]);
-
-    useEffect(() => {
-        setSelectedCitationIndexes([]);
-    }, [props.pipelineResponse]);
-
-    const handleCitationSelectionChange = useCallback((index: number, isSelected: boolean) => {
-        setSelectedCitationIndexes((current) => {
-            if (isSelected) {
-                if (current.includes(index)) {
-                    return current;
-                }
-
-                return [...current, index].sort((a, b) => a - b);
-            }
-
-            return current.filter((value) => value !== index);
-        });
-    }, []);
-
-    const handleCopySelectedLinks = useCallback(async () => {
-        if (!selectedLinksCount) {
-            return;
-        }
-
-        const selectedLinks = selectedCitationIndexes
-            .map((citationIndex) => sourceCitations[citationIndex])
-            .filter((citation) => Boolean(citation?.url));
-
-        if (!selectedLinks.length) {
-            showErrorToast("Nothing to copy", "Select at least one link first.");
-            return;
-        }
-
-        const textToCopy = selectedLinks
-            .map((citation) => {
-                const url = citation?.url ?? "";
-                const title = citation?.title?.trim();
-
-                if (title && title !== url) {
-                    return `${title} - ${url}`;
-                }
-
-                return url;
-            })
-            .join("\n");
-
-        const htmlToCopy = selectedLinks
-            .map((citation) => {
-                const url = citation?.url ?? "";
-                const title = citation?.title?.trim() || url;
-
-                if (!url) {
-                    return escapeHtml(title);
-                }
-
-                return `<a href="${escapeHtml(url)}">${escapeHtml(title)}</a>`;
-            })
-            .join("<br />");
-
-        try {
-            await copyTextToClipboard(textToCopy, htmlToCopy);
-            showSuccessToast(
-                selectedLinks.length === 1
-                    ? "Link copied to clipboard"
-                    : "Links copied to clipboard",
-                selectedLinks.length === 1
-                    ? "The selected link is ready to paste."
-                    : `${selectedLinks.length} links are ready to paste.`
-            );
-        } catch (error) {
-            console.error(error);
-            showErrorToast(
-                "Unable to copy links",
-                "Check your clipboard permissions and try again."
-            );
-        }
-    }, [selectedCitationIndexes, selectedLinksCount, showErrorToast, showSuccessToast, sourceCitations]);
+    const {
+        selectedCitationIndexes,
+        selectedLinksCount,
+        handleCitationSelectionChange,
+        handleCopySelectedLinks,
+    } = useCitationSelection({
+        pipelineResponse: props.pipelineResponse,
+        sourceCitations,
+        showErrorToast,
+        showSuccessToast,
+    });
 
     const responseBadge = hasResponse ? (
         <Badge appearance="tint" shape="circular" color="success" className={styles.badge}
