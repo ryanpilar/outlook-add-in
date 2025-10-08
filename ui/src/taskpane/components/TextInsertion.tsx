@@ -1,7 +1,6 @@
 import * as React from "react";
 import {useMemo, useCallback, useEffect, useState} from "react";
 import {
-    Button,
     Badge,
     Tab,
     TabList,
@@ -10,7 +9,6 @@ import {
     tokens,
     makeStyles,
     Toaster,
-    Spinner,
     mergeClasses,
 } from "@fluentui/react-components";
 import {Checkmark16Regular} from "@fluentui/react-icons";
@@ -20,6 +18,7 @@ import {useTextInsertionToasts} from "../hooks/useTextInsertionToasts";
 import {ResponseTab} from "./ResponseTab";
 import {LinksTab} from "./LinksTab";
 import {InstructTab} from "./InstructTab";
+import FooterActions from "./FooterActions";
 
 interface TextInsertionProps {
     optionalPrompt: string;
@@ -253,37 +252,6 @@ const useStyles = makeStyles({
     emptyLinksMessage: {
         color: tokens.colorNeutralForeground3,
         fontStyle: "italic",
-    },
-    actionsRow: {
-        display: "flex",
-        gap: "8px",
-        alignItems: "center",
-        justifyContent: "flex-end",
-        marginTop: "auto",
-        paddingTop: "8px",
-        paddingBottom: "4px",
-        backgroundColor: tokens.colorNeutralBackground1,
-    },
-    stopButton: {
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "8px",
-    },
-    primaryActionButton: {
-        flexGrow: 1,
-        // background: '#2A2A2A',
-    },
-    primaryButtonContent: {
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: tokens.spacingHorizontalSNudge,
-        width: "100%",
-    },
-    clearButton: {
-        whiteSpace: "nowrap",
     },
 });
 
@@ -587,43 +555,13 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                     ) : null}
                 </div>
             </div>
-            <div className={styles.actionsRow}>
-                <Button
-                    appearance="primary"
-                    disabled={props.isSending}
-                    size="large"
-                    onClick={handleTextSend}
-                    className={styles.primaryActionButton}
-                >
-                    {props.isSending ? (
-                        <span className={styles.primaryButtonContent}>
-                            <Spinner size="extra-tiny"/>
-                            Sending...
-                        </span>
-                    ) : (
-                        emailResponse ? "Try Again" : "Generate"
-                    )}
-                </Button>
-                {props.isSending ? (
-                    <Button
-                        appearance="secondary"
-                        size="large"
-                        onClick={handleCancel}
-                        className={styles.stopButton}
-                    >
-                        Stop
-                    </Button>
-                ) : (
-                    <Button
-                        appearance="secondary"
-                        size="large"
-                        onClick={handleClear}
-                        className={styles.clearButton}
-                    >
-                        Reset
-                    </Button>
-                )}
-            </div>
+            <FooterActions
+                isSending={props.isSending}
+                emailResponse={emailResponse}
+                onSend={handleTextSend}
+                onCancel={handleCancel}
+                onClear={handleClear}
+            />
         </div>
     );
 };
