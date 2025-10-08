@@ -6,6 +6,7 @@ import morgan from 'morgan';
 import {fileURLToPath} from 'url';
 import router from './routes/index.js';
 import {notFound, errorHandler} from './middleware/errorMiddleware.js';
+import {checkCorsOrigin} from './config/corsPolicy.js';
 
 dotenv.config();
 
@@ -13,26 +14,6 @@ const app = express();
 
 // -------------------- CORS POLICY --------------------- //
 
-const allowedOrigins = [
-    'https://outlook-add-in-ui.onrender.com',
-    'https://outlook-add-in-kdr8.onrender.com',
-    'http://localhost:5173',
-    'https://localhost:5173',
-    'http://localhost:3000',
-    'https://localhost:3000',
-    'http://localhost:4000'
-]
-
-const checkCorsOrigin = function (req, callback) {
-    const origin = req.header('Origin');
-    let corsOptions;
-    if (allowedOrigins.includes(origin)) {
-        corsOptions = {origin: true};  // Allow
-    } else {
-        corsOptions = {origin: false}; // Decline
-    }
-    callback(null, corsOptions);
-};
 app.use(cors(checkCorsOrigin));
 
 // --------------- BODY PARSER MIDDLEWARE ---------------- //
