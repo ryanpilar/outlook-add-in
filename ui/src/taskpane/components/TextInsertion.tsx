@@ -2,7 +2,6 @@ import * as React from "react";
 import {useMemo, useCallback, useEffect, useState} from "react";
 import {
     Button,
-    Checkbox,
     Badge,
     Field,
     Textarea,
@@ -17,11 +16,12 @@ import {
     Spinner,
     mergeClasses,
 } from "@fluentui/react-components";
-import {Copy16Regular, Checkmark16Regular} from "@fluentui/react-icons";
+import {Checkmark16Regular} from "@fluentui/react-icons";
 import {PipelineResponse} from "../taskpane";
 import {copyTextToClipboard} from "../helpers/clipboard";
 import {useTextInsertionToasts} from "../hooks/useTextInsertionToasts";
 import {ResponseTab} from "./ResponseTab";
+import {LinksTab} from "./TextInsertion/Tabs/LinksTab";
 
 interface TextInsertionProps {
     optionalPrompt: string;
@@ -560,66 +560,22 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                         />
                     ) : null}
                     {selectedTab === "links" ? (
-                        <div className={styles.tabPanel}>
-                            <div className={styles.linksSection}>
-                                <Field
-                                    className={styles.linksField}
-                                >
-                                    {linksCount ? (
-                                        <div className={styles.linksSection}>
-                                            <div className={styles.linksToolbar}>
-                                                <Button
-                                                    appearance="secondary"
-                                                    icon={<Copy16Regular/>}
-                                                    size="medium"
-                                                    onClick={() => {
-                                                        if (!selectedLinksCount) return
-                                                        handleCopySelectedLinks()
-                                                    }}
-                                                    className={styles.linksCopyButton}
-                                                >
-                                                    {`Copy (${selectedLinksCount})`}
-                                                </Button>
-                                            </div>
-                                            <ul className={styles.linksList}>
-                                                {sourceCitations.map((citation, index) => {
-                                                    const anchorId = `citation-link-${index}`;
-                                                    const isSelected = selectedCitationIndexes.includes(index);
-
-                                                    return (
-                                                        <li
-                                                            className={styles.linkListItem}
-                                                            key={`${citation?.url ?? "missing-url"}-${index}`}
-                                                        >
-                                                            <Checkbox
-                                                                checked={isSelected}
-                                                                onChange={(_event, data) =>
-                                                                    handleCitationSelectionChange(index, Boolean(data?.checked))
-                                                                }
-                                                                aria-labelledby={anchorId}
-                                                            />
-                                                            <a
-                                                                id={anchorId}
-                                                                className={styles.linkAnchor}
-                                                                href={citation?.url ?? undefined}
-                                                                target="_blank"
-                                                                rel="noreferrer"
-                                                            >
-                                                                {citation?.title || citation?.url}
-                                                            </a>
-                                                        </li>
-                                                    );
-                                                })}
-                                            </ul>
-                                        </div>
-                                    ) : (
-                                        <span className={styles.emptyLinksMessage}>
-                                            No links available for this response yet.
-                                        </span>
-                                    )}
-                                </Field>
-                            </div>
-                        </div>
+                        <LinksTab
+                            sourceCitations={sourceCitations}
+                            selectedCitationIndexes={selectedCitationIndexes}
+                            selectedLinksCount={selectedLinksCount}
+                            onCitationSelectionChange={handleCitationSelectionChange}
+                            onCopySelectedLinks={handleCopySelectedLinks}
+                            containerClassName={styles.tabPanel}
+                            sectionClassName={styles.linksSection}
+                            fieldClassName={styles.linksField}
+                            toolbarClassName={styles.linksToolbar}
+                            copyButtonClassName={styles.linksCopyButton}
+                            listClassName={styles.linksList}
+                            listItemClassName={styles.linkListItem}
+                            anchorClassName={styles.linkAnchor}
+                            emptyMessageClassName={styles.emptyLinksMessage}
+                        />
                     ) : null}
                     {selectedTab === "instruct" ? (
                         <div className={styles.tabPanel}>
