@@ -3,7 +3,7 @@ import {memo} from "react";
 import {Button, Checkbox, Field} from "@fluentui/react-components";
 import {Copy16Regular} from "@fluentui/react-icons";
 
-import type {PipelineResponse} from "../../../taskpane";
+import type {PipelineResponse} from "../taskpane";
 
 export interface LinksTabProps {
     sourceCitations: PipelineResponse["assistantResponse"]["sourceCitations"];

@@ -21,7 +21,7 @@ import {PipelineResponse} from "../taskpane";
 import {copyTextToClipboard} from "../helpers/clipboard";
 import {useTextInsertionToasts} from "../hooks/useTextInsertionToasts";
 import {ResponseTab} from "./ResponseTab";
-import {LinksTab} from "./TextInsertion/Tabs/LinksTab";
+import {LinksTab} from "./LinksTab";
 
 interface TextInsertionProps {
     optionalPrompt: string;
