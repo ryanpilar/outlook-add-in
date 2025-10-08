@@ -2,26 +2,9 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { copyTextToClipboard } from "../../../helpers/clipboard";
+import { escapeHtml } from "../../../helpers/htmlFormatting";
 import { UseTextInsertionToastsReturn } from "../../../hooks/useTextInsertionToasts";
 import { PipelineResponse } from "../../../taskpane";
-
-const escapeHtml = (value: string): string =>
-  value.replace(/[&<>"']/g, (match) => {
-    switch (match) {
-      case "&":
-        return "&amp;";
-      case "<":
-        return "&lt;";
-      case ">":
-        return "&gt;";
-      case '"':
-        return "&quot;";
-      case "'":
-        return "&#39;";
-      default:
-        return match;
-    }
-  });
 
 interface UseCitationSelectionOptions {
   pipelineResponse: PipelineResponse | null;
