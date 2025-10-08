@@ -61,6 +61,6 @@ const ResponseTabComponent: React.FC<ResponseTabProps> = ({
     </div>
 );
 
-export const ResponseTab = memo(ResponseTabComponent);
+export const TabResponse = memo(ResponseTabComponent);
 
-export default ResponseTab;
+export default TabResponse;

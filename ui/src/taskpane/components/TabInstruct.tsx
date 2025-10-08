@@ -42,6 +42,6 @@ const InstructTabComponent: React.FC<InstructTabProps> = ({
     </div>
 );
 
-export const InstructTab = memo(InstructTabComponent);
+export const TabInstruct = memo(InstructTabComponent);
 
-export default InstructTab;
+export default TabInstruct;

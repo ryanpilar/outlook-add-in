@@ -1,10 +1,10 @@
 /* global console */
 import { useCallback, useEffect, useState } from "react";
 
-import { copyTextToClipboard } from "../../../helpers/clipboard";
-import { escapeHtml } from "../../../helpers/htmlFormatting";
-import { UseTextInsertionToastsReturn } from "../../../hooks/useTextInsertionToasts";
-import { PipelineResponse } from "../../../taskpane";
+import { copyTextToClipboard } from "../helpers/clipboard";
+import { escapeHtml } from "../helpers/htmlFormatting";
+import { UseTextInsertionToastsReturn } from "./useToasts";
+import { PipelineResponse } from "../taskpane";
 
 interface UseCitationSelectionOptions {
   pipelineResponse: PipelineResponse | null;

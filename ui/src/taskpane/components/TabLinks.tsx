@@ -98,6 +98,6 @@ const LinksTabComponent: React.FC<LinksTabProps> = ({
     </div>
 );
 
-export const LinksTab = memo(LinksTabComponent);
+export const TabLinks = memo(LinksTabComponent);
 
-export default LinksTab;
+export default TabLinks;

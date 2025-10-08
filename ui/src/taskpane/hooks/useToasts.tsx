@@ -3,7 +3,7 @@ import {useCallback} from "react";
 import {Button, Toast, ToastBody, ToastTitle, useToastController} from "@fluentui/react-components";
 import {CheckmarkCircle20Regular, Dismiss20Regular} from "@fluentui/react-icons";
 
-export const useTextInsertionToasts = (toasterId: string) => {
+export const useToasts = (toasterId: string) => {
     const {dispatchToast, dismissToast} = useToastController(toasterId);
 
     const showSuccessToast = useCallback(
@@ -59,4 +59,4 @@ export const useTextInsertionToasts = (toasterId: string) => {
     return {showSuccessToast, showErrorToast};
 };
 
-export type UseTextInsertionToastsReturn = ReturnType<typeof useTextInsertionToasts>;
+export type UseTextInsertionToastsReturn = ReturnType<typeof useToasts>;

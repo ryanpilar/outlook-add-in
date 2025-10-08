@@ -13,12 +13,12 @@ import {
 } from "@fluentui/react-components";
 import {Checkmark16Regular} from "@fluentui/react-icons";
 import {PipelineResponse} from "../taskpane";
-import {useTextInsertionToasts} from "../hooks/useTextInsertionToasts";
-import {ResponseTab} from "./ResponseTab";
-import {LinksTab} from "./LinksTab";
-import {InstructTab} from "./InstructTab";
+import {useToasts} from "../hooks/useToasts";
+import {TabResponse} from "./TabResponse";
+import {TabLinks} from "./TabLinks";
+import {TabInstruct} from "./TabInstruct";
 import FooterActions from "./FooterActions";
-import {useCitationSelection} from "./TextInsertion/hooks/useCitationSelection";
+import {useCitationSelection} from "../hooks/useCitationSelection";
 
 interface TextInsertionProps {
     optionalPrompt: string;
@@ -239,7 +239,7 @@ const useStyles = makeStyles({
 
 const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) => {
     const styles = useStyles();
-    const {showSuccessToast, showErrorToast} = useTextInsertionToasts(TOASTER_ID);
+    const {showSuccessToast, showErrorToast} = useToasts(TOASTER_ID);
 
     const handleTextSend = async () => {
         // Bail out if a send is already underway so we don't queue duplicate requests.
@@ -396,11 +396,7 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                 {/*</Field>*/}
 
                 <div className={styles.tabContainer}>
-                    <TabList
-                        selectedValue={selectedTab}
-                        onTabSelect={handleTabSelect}
-                        className={styles.tabList}
-                    >
+                    <TabList selectedValue={selectedTab} onTabSelect={handleTabSelect} className={styles.tabList}>
                         <Tab value="instruct" className={mergeClasses(styles.tab, styles.firstTab)}>
                             Instruct
                         </Tab>
@@ -420,7 +416,7 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                         </Tab>
                     </TabList>
                     {selectedTab === "response" ? (
-                        <ResponseTab
+                        <TabResponse
                             emailResponse={emailResponse}
                             onInjectResponse={handleInjectResponse}
                             onCopyResponse={handleCopyResponse}
@@ -433,7 +429,7 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                         />
                     ) : null}
                     {selectedTab === "links" ? (
-                        <LinksTab
+                        <TabLinks
                             sourceCitations={sourceCitations}
                             selectedCitationIndexes={selectedCitationIndexes}
                             selectedLinksCount={selectedLinksCount}
@@ -451,7 +447,7 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                         />
                     ) : null}
                     {selectedTab === "instruct" ? (
-                        <InstructTab
+                        <TabInstruct
                             optionalPrompt={props.optionalPrompt}
                             onOptionalPromptChange={props.onOptionalPromptChange}
                             containerClassName={styles.tabPanel}
