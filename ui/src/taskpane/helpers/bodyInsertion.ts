@@ -1,13 +1,6 @@
 /* global Office */
 
-const encodeHtml = (value: string): string =>
-  value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-
-const convertPlainTextToHtml = (text: string): string => {
-  const escaped = encodeHtml(text);
-  const withBreaks = escaped.replace(/\r\n|\r|\n/g, "<br />");
-  return `<div>${withBreaks}</div>`;
-};
+import { convertPlainTextToHtml } from "./htmlFormatting";
 
 export const insertResponseIntoBody = async (response: string): Promise<void> => {
   if (!response) {
