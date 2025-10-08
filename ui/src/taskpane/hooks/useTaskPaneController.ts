@@ -1,4 +1,3 @@
-/* global Office, console */
 
 import * as React from "react";
 import {
@@ -8,19 +7,19 @@ import {
   PersistedTaskPaneState,
   savePersistedState,
   updatePersistedState,
-} from "../helpers/persistence";
-import { resolveStorageKeyForCurrentItem } from "../helpers/mailboxItem";
-import { registerTaskpaneVisibilityHandler } from "../helpers/runtime";
+} from "../helpers/outlook-persistence";
+import { resolveStorageKeyForCurrentItem } from "../helpers/outlook-mailboxItem";
+import { registerTaskpaneVisibilityHandler } from "../helpers/outlook-runtime";
 import {
   attachToSendOperation,
   cancelSendOperation,
   clearSendOperation,
   MAX_SEND_OPERATION_RETRIES,
   scheduleSendOperationRetry,
-} from "../helpers/sendOperations";
+} from "../helpers/outlook-runtimeLogic";
 import { sendText } from "../taskpane";
 import { copyTextToClipboard } from "../helpers/clipboard";
-import { insertResponseIntoBody } from "../helpers/bodyInsertion";
+import { insertResponseIntoBody } from "../helpers/emailBodyInsertion";
 
 export interface TaskPaneActions {
   refreshFromCurrentItem: () => Promise<void>;

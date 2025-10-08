@@ -1,4 +1,4 @@
-/* global console */
+
 import { useCallback, useEffect, useState } from "react";
 
 import { copyTextToClipboard } from "../helpers/clipboard";
