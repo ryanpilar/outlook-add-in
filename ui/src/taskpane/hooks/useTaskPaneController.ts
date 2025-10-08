@@ -7,12 +7,13 @@ import {
 } from "../helpers/outlook-persistence";
 import { resolveStorageKeyForCurrentItem } from "../helpers/outlook-mailboxItem";
 import { cancelSendOperation, clearSendOperation } from "../helpers/outlook-runtimeLogic";
-import { copyTextToClipboard } from "../helpers/clipboard";
-import { insertResponseIntoBody } from "../helpers/emailBodyInsertion";
 import { useTaskPaneStatePersistence } from "./useTaskPaneStatePersistence";
 import { useSendLifecycleHandler } from "./useSendLifecycleHandler";
 import { useMailboxLifecycleHandler } from "./useMailboxLifecycleHandler";
-import { describeError } from "../utils/outlook-errorHandling";
+import {
+  attemptToCopyResponse,
+  attemptToInsertResponse,
+} from "../helpers/responseActions";
 
 export interface TaskPaneActions {
   refreshFromCurrentItem: () => Promise<void>;
@@ -100,6 +101,13 @@ export const useTaskPaneController = (): TaskPaneController => {
 
   useMailboxLifecycleHandler({ refreshFromCurrentItem, isMountedRef, visibilityCleanupRef });
 
+  const setStatusMessage = React.useCallback(
+    (statusMessage: string) => {
+      mergeState({ statusMessage });
+    },
+    [mergeState]
+  );
+
   const updateOptionalPrompt = React.useCallback(
     (value: string) => {
       console.debug("[Taskpane] Updating optional prompt.");
@@ -118,55 +126,18 @@ export const useTaskPaneController = (): TaskPaneController => {
 
   const copyResponseToClipboard = React.useCallback(
     async (response: string) => {
-      const sanitized = response.trim();
-
-      if (!sanitized) {
-        mergeState({ statusMessage: "There isn't an email response to copy yet." });
-        return;
-      }
-
-      try {
-        await copyTextToClipboard(sanitized);
-        mergeState({ statusMessage: "Email response copied to the clipboard." });
-      } catch (error) {
-        console.error("[Taskpane] Failed to copy the email response.", error);
-        const description = describeError(error);
-        mergeState({
-          statusMessage: description
-            ? `We couldn't copy the email response automatically. Reason: ${description}`
-            : "We couldn't copy the email response automatically. Please copy it manually.",
-        });
-      }
+      const result = await attemptToCopyResponse(response);
+      setStatusMessage(result.statusMessage);
     },
-    [mergeState]
+    [setStatusMessage]
   );
 
   const injectResponseIntoEmail = React.useCallback(
     async (response: string) => {
-      const sanitized = response.trim();
-
-      if (!sanitized) {
-        mergeState({ statusMessage: "There isn't an email response to insert yet." });
-        return;
-      }
-
-      try {
-        await insertResponseIntoBody(sanitized);
-        mergeState({ statusMessage: "Email response inserted into your draft." });
-      } catch (error) {
-        console.error(
-          "[Taskpane] Failed to insert the email response into the compose body.",
-          error
-        );
-        const description = describeError(error);
-        mergeState({
-          statusMessage: description
-            ? `We couldn't insert the email response. Reason: ${description}`
-            : "We couldn't insert the email response. Please paste it manually.",
-        });
-      }
+      const result = await attemptToInsertResponse(response);
+      setStatusMessage(result.statusMessage);
     },
-    [mergeState]
+    [setStatusMessage]
   );
 
   const sendCurrentEmail = React.useCallback(async () => {
