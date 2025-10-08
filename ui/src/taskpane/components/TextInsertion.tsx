@@ -265,24 +265,15 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
 
     const hasResponse = emailResponse.length > 0;
 
-    const sourceCitations = useMemo(
-        () =>
-            props.pipelineResponse?.assistantResponse?.sourceCitations?.filter(
-                (citation) => Boolean(citation?.url)
-            ) ?? [],
-        [props.pipelineResponse]
-    );
-
-    const linksCount = sourceCitations.length;
-
     const {
+        sourceCitations,
+        linksCount,
         selectedCitationIndexes,
         selectedLinksCount,
         handleCitationSelectionChange,
         handleCopySelectedLinks,
     } = useCitationSelection({
         pipelineResponse: props.pipelineResponse,
-        sourceCitations,
         showErrorToast,
         showSuccessToast,
     });
