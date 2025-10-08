@@ -16,10 +16,6 @@ interface UseTextInsertionActionsParams extends TextInsertionActionCallbacks {
     showErrorToast: UseTextInsertionToastsReturn["showErrorToast"];
 }
 
-// The handlers in this hook intentionally mirror the inline implementations that
-// previously lived inside the TextInsertion component. Keeping the logic
-// unchanged provides confidence that we're only relocating orchestration code
-// rather than rewriting how the actions behave.
 export const useTextInsertionActions = ({
     emailResponse,
     isSending,
