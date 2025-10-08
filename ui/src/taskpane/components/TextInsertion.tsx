@@ -21,6 +21,7 @@ import {Copy16Regular, Checkmark16Regular} from "@fluentui/react-icons";
 import {PipelineResponse} from "../taskpane";
 import {copyTextToClipboard} from "../helpers/clipboard";
 import {useTextInsertionToasts} from "./TextInsertion/useTextInsertionToasts";
+import {ResponseTab} from "./TextInsertion/Tabs/ResponseTab";
 
 interface TextInsertionProps {
     optionalPrompt: string;
@@ -546,44 +547,17 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                         </Tab>
                     </TabList>
                     {selectedTab === "response" ? (
-                        <div className={mergeClasses(styles.tabPanel, styles.responseTabPanel)}>
-                            <Field
-                                className={styles.responseField}
-                            >
-                                <div className={styles.responseActions}>
-
-                                    <Button
-                                        appearance="secondary"
-                                        size="medium"
-                                        disabled={!emailResponse}
-                                        onClick={handleInjectResponse}
-                                        className={styles.responseButtons}
-                                    >
-                                        Insert
-                                    </Button>
-                                    <Button
-                                        appearance="secondary"
-                                        icon={<Copy16Regular/>}
-                                        size="small"
-                                        disabled={!emailResponse}
-                                        onClick={handleCopyResponse}
-                                        className={styles.responseButtons}
-                                    >
-                                        Copy
-                                    </Button>
-
-                                </div>
-                                <Textarea
-                                    className={styles.responseTextAreaRoot}
-                                    value={emailResponse}
-                                    placeholder="The generated email response will appear here."
-                                    readOnly
-                                    resize="vertical"
-                                    textarea={{className: styles.responseTextArea}}
-                                />
-
-                            </Field>
-                        </div>
+                        <ResponseTab
+                            emailResponse={emailResponse}
+                            onInjectResponse={handleInjectResponse}
+                            onCopyResponse={handleCopyResponse}
+                            containerClassName={mergeClasses(styles.tabPanel, styles.responseTabPanel)}
+                            fieldClassName={styles.responseField}
+                            actionsClassName={styles.responseActions}
+                            buttonClassName={styles.responseButtons}
+                            textAreaRootClassName={styles.responseTextAreaRoot}
+                            textAreaClassName={styles.responseTextArea}
+                        />
                     ) : null}
                     {selectedTab === "links" ? (
                         <div className={styles.tabPanel}>
