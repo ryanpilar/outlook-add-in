@@ -29,6 +29,7 @@ export const useSendLifecycleActions = ({
     detachOperationSubscription,
     ensureSendLifecycle,
 }: SendLifecycleActionsOptions): SendLifecycleActions => {
+
     const sendCurrentEmail = React.useCallback(async () => {
         console.info("[Taskpane] Initiating send workflow for current email content.");
         const targetKey = currentItemKeyRef.current;

@@ -30,8 +30,26 @@ export interface TaskPaneController {
     actions: TaskPaneActions;
 }
 
+/**
+ * useTaskPaneController
+ * -----------------------------------------------------------------------------
+ * A central hook that wires together the individual lifecycle and persistence
+ * helpers used throughout the task pane.
+ *
+ * The pieces plug together like this:
+ *      useTaskPaneStatePersistence  →  owns the persisted state + refs shared below
+ *      useSendLifecycleHandler      →  attaches listeners for background send flows
+ *      useSendLifecycleActions      →  triggers/cancels send operations and updates
+ *      useMailboxLifecycleHandler   →  responds to Office item + visibility changes
+ *
+ * The exported controller exposes the latest persisted state along with the
+ * actions derived from these hooks so components can render UI and dispatch
+ * user intent without needing to understand the plumbing behind the scenes.
+ */
+
 export const useTaskPaneController = (): TaskPaneController => {
 
+    // Persist and synchronize the task pane state across mailbox items.
     const {
         state,
         setState,
@@ -45,12 +63,14 @@ export const useTaskPaneController = (): TaskPaneController => {
         detachOperationSubscription,
     } = useTaskPaneStatePersistence();
 
+    // Listen for send lifecycle changes initiated outside the task pane UI.
     const {ensureSendLifecycle, resumePendingOperationIfNeeded} = useSendLifecycleHandler({
         applyStateForKey,
         detachOperationSubscription,
         operationSubscriptionsRef,
     });
 
+    // Provide actions that drive the send lifecycle from the UI.
     const {sendCurrentEmail, cancelCurrentSend, resetTaskPaneState} = useSendLifecycleActions({
         applyStateForKey,
         mergeState,
@@ -61,6 +81,8 @@ export const useTaskPaneController = (): TaskPaneController => {
         ensureSendLifecycle,
     });
 
+    // Re-evaluate the currently active mailbox item, load its persisted state if available,
+    // and reconnect to any pending send operations that were in progress before navigation.
     const refreshFromCurrentItem = React.useCallback(async () => {
         console.info("[Taskpane] Refreshing task pane state for the current mailbox item.");
         const {key} = await resolveStorageKeyForCurrentItem();
@@ -69,7 +91,6 @@ export const useTaskPaneController = (): TaskPaneController => {
             console.debug("[Taskpane] Component is not mounted. Aborting refresh.");
             return;
         }
-
         if (key === null) {
             console.info("[Taskpane] No mailbox item detected. Resetting state to defaults.");
             currentItemKeyRef.current = null;
@@ -108,26 +129,31 @@ export const useTaskPaneController = (): TaskPaneController => {
         }
     }, [resumePendingOperationIfNeeded]);
 
+    // React to mailbox and visibility changes to refresh controller state.
     useMailboxLifecycleHandler({refreshFromCurrentItem, isMountedRef, visibilityCleanupRef});
 
+    // Update the status message shown in the task pane footer or console output.
     const setStatusMessage = React.useCallback((statusMessage: string) => {
             mergeState({statusMessage})
         },
         [mergeState]
     );
 
+    // Persist user input in the optional prompt textarea so it survives navigation.
     const updateOptionalPrompt = React.useCallback((value: string) => {
             mergeState({optionalPrompt: value});
         },
         [mergeState]
     );
 
+    // Toggle visibility of the optional prompt field based on tab or user interaction.
     const setOptionalPromptVisible = React.useCallback((visible: boolean) => {
             mergeState({isOptionalPromptVisible: visible});
         },
         [mergeState]
     );
 
+    // Attempt to copy the generated response to the user’s clipboard
     const copyResponseToClipboard = React.useCallback(async (response: string) => {
             const result = await attemptToCopyResponse(response);
             setStatusMessage(result.statusMessage);
@@ -135,6 +161,7 @@ export const useTaskPaneController = (): TaskPaneController => {
         [setStatusMessage]
     );
 
+    // Attempt to inject the generated response into the current Outlook draft body
     const injectResponseIntoEmail = React.useCallback(async (response: string) => {
             const result = await attemptToInsertResponse(response);
             setStatusMessage(result.statusMessage);
@@ -142,6 +169,7 @@ export const useTaskPaneController = (): TaskPaneController => {
         [setStatusMessage]
     );
 
+    // Bundle all user-facing actions into a stable object that can be passed to UI components
     const actions: TaskPaneActions = React.useMemo(
         () => ({
             refreshFromCurrentItem,
