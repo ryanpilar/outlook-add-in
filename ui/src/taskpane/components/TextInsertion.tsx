@@ -3,9 +3,6 @@ import {useMemo, useCallback, useEffect, useState} from "react";
 import {
     Button,
     Badge,
-    Field,
-    Textarea,
-    TextareaOnChangeData,
     Tab,
     TabList,
     TabListProps,
@@ -22,6 +19,7 @@ import {copyTextToClipboard} from "../helpers/clipboard";
 import {useTextInsertionToasts} from "../hooks/useTextInsertionToasts";
 import {ResponseTab} from "./ResponseTab";
 import {LinksTab} from "./LinksTab";
+import {InstructTab} from "./InstructTab";
 
 interface TextInsertionProps {
     optionalPrompt: string;
@@ -578,29 +576,14 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                         />
                     ) : null}
                     {selectedTab === "instruct" ? (
-                        <div className={styles.tabPanel}>
-                            <Field
-                                className={styles.optionalPromptField}
-                                size="large"
-                                hint="Provide extra guidance for the assistant."
-                            >
-                                <Textarea
-                                    value={props.optionalPrompt}
-                                    onChange={(
-                                        _event: React.ChangeEvent<HTMLTextAreaElement>,
-                                        data: TextareaOnChangeData
-                                    ) => props.onOptionalPromptChange(data.value)}
-                                    placeholder={
-                                        "If you need to add any extra details or tone preferences, do so in this space right here!\n\nWhen you press 'Generate', we'll use the email you're viewing to draft a relevant reply with source links.\n\nIt's connected to the web, too!"
-                                    }
-
-                                    resize="vertical"
-                                    className={styles.optionalPromptTextAreaRoot}
-
-                                    textarea={{className: styles.optionalPromptTextArea}}
-                                />
-                            </Field>
-                        </div>
+                        <InstructTab
+                            optionalPrompt={props.optionalPrompt}
+                            onOptionalPromptChange={props.onOptionalPromptChange}
+                            containerClassName={styles.tabPanel}
+                            fieldClassName={styles.optionalPromptField}
+                            textAreaRootClassName={styles.optionalPromptTextAreaRoot}
+                            textAreaClassName={styles.optionalPromptTextArea}
+                        />
                     ) : null}
                 </div>
             </div>
