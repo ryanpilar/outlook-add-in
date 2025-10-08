@@ -1,5 +1,5 @@
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { copyTextToClipboard } from "../helpers/clipboard";
 import { escapeHtml } from "../helpers/htmlFormatting";
@@ -8,20 +8,27 @@ import { PipelineResponse } from "../taskpane";
 
 interface UseCitationSelectionOptions {
   pipelineResponse: PipelineResponse | null;
-  sourceCitations: PipelineResponse["assistantResponse"]["sourceCitations"];
   showErrorToast: UseTextInsertionToastsReturn["showErrorToast"];
   showSuccessToast: UseTextInsertionToastsReturn["showSuccessToast"];
 }
 
 export const useCitationSelection = ({
   pipelineResponse,
-  sourceCitations,
   showErrorToast,
   showSuccessToast,
 }: UseCitationSelectionOptions) => {
+  const sourceCitations = useMemo(
+    () =>
+      pipelineResponse?.assistantResponse?.sourceCitations?.filter(
+        (citation) => Boolean(citation?.url)
+      ) ?? [],
+    [pipelineResponse]
+  );
+
   const [selectedCitationIndexes, setSelectedCitationIndexes] = useState<number[]>([]);
 
   const selectedLinksCount = selectedCitationIndexes.length;
+  const linksCount = sourceCitations.length;
 
   useEffect(() => {
     setSelectedCitationIndexes((current) =>
@@ -108,6 +115,8 @@ export const useCitationSelection = ({
   ]);
 
   return {
+    sourceCitations,
+    linksCount,
     selectedCitationIndexes,
     selectedLinksCount,
     handleCitationSelectionChange,
