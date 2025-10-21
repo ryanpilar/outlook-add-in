@@ -1,5 +1,5 @@
 /**
- * Verify Controller
+ * Pipeline Stage: Verify
  * ---------------------------------------------------------------------------
  * Verification is the last safety gate before anything is shown to the user.
  * Here we confirm that the Responses API output is structurally valid, grounded
