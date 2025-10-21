@@ -3,7 +3,7 @@
  * ---------------------------------------------------------------------------
  */
 import asyncHandler from '../middleware/asyncHandler.js';
-import ApiError from '../utils/ApiError.js';
+import ApiError from '../errors/ApiError.js';
 
 // ==============================|| Controller - Example ||============================== //
 

@@ -1,28 +1,23 @@
 import * as React from "react";
-import {useMemo, useCallback, useEffect, useState} from "react";
+import {useMemo} from "react";
 import {
-    Button,
-    Checkbox,
     Badge,
-    Field,
-    Textarea,
-    TextareaOnChangeData,
     Tab,
     TabList,
-    TabListProps,
-    TabValue,
     tokens,
     makeStyles,
     Toaster,
-    useToastController,
-    Toast,
-    ToastTitle,
-    ToastBody, Spinner,
     mergeClasses,
 } from "@fluentui/react-components";
-import {Copy16Regular, Checkmark16Regular, CheckmarkCircle20Regular, Dismiss20Regular} from "@fluentui/react-icons";
 import {PipelineResponse} from "../taskpane";
-import {copyTextToClipboard} from "../helpers/clipboard";
+import {useToasts} from "../hooks/useToasts";
+import {TabResponse} from "./TabResponse";
+import {TabLinks} from "./TabLinks";
+import {TabInstruct} from "./TabInstruct";
+import FooterActions from "./FooterActions";
+import {useCitationSelection} from "../hooks/useCitationSelection";
+import {useTextInsertionActions} from "../hooks/useTextInsertionActions";
+import {useTabs} from "../hooks/useTabs";
 
 interface TextInsertionProps {
     optionalPrompt: string;
@@ -40,24 +35,6 @@ interface TextInsertionProps {
 }
 
 const TOASTER_ID = "text-insertion-toaster";
-
-const escapeHtml = (value: string): string =>
-    value.replace(/[&<>"']/g, (match) => {
-        switch (match) {
-            case "&":
-                return "&amp;";
-            case "<":
-                return "&lt;";
-            case ">":
-                return "&gt;";
-            case '"':
-                return "&quot;";
-            case "'":
-                return "&#39;";
-            default:
-                return match;
-        }
-    });
 
 const useStyles = makeStyles({
     textPromptAndInsertion: {
@@ -257,304 +234,59 @@ const useStyles = makeStyles({
         color: tokens.colorNeutralForeground3,
         fontStyle: "italic",
     },
-    actionsRow: {
-        display: "flex",
-        gap: "8px",
-        alignItems: "center",
-        justifyContent: "flex-end",
-        marginTop: "auto",
-        paddingTop: "8px",
-        paddingBottom: "4px",
-        backgroundColor: tokens.colorNeutralBackground1,
-    },
-    stopButton: {
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "8px",
-    },
-    primaryActionButton: {
-        flexGrow: 1,
-        // background: '#2A2A2A',
-    },
-    primaryButtonContent: {
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: tokens.spacingHorizontalSNudge,
-        width: "100%",
-    },
-    clearButton: {
-        whiteSpace: "nowrap",
-    },
 });
 
 const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) => {
     const styles = useStyles();
-    const {dispatchToast, dismissToast} = useToastController(TOASTER_ID);
+    const {showSuccessToast, showErrorToast} = useToasts(TOASTER_ID);
 
-    const [selectedCitationIndexes, setSelectedCitationIndexes] = useState<number[]>([]);
-
-    const showSuccessToast = useCallback(
-        (title: string, subtitle?: string) => {
-            // unique ID so you can dismiss it manually
-            const toastId = crypto.randomUUID();
-
-            dispatchToast(
-                <Toast
-                    appearance="inverted"
-                    style={{position: "relative"}}
-                >
-                    <ToastTitle
-                        media={<CheckmarkCircle20Regular/>}
-                        action={
-                            <Button
-                                icon={<Dismiss20Regular/>}
-                                appearance="transparent"
-                                size="small"
-                                aria-label="Close"
-                                onClick={() => dismissToast(toastId)}
-                            />
-                        }
-                    >
-                        {title}
-                    </ToastTitle>
-
-                    {subtitle ? <ToastBody>{subtitle}</ToastBody> : null}
-                </Toast>,
-                {
-                    toastId,
-                    intent: "success",
-                    timeout: 3500,
-                }
-            );
-        },
-        [dispatchToast, dismissToast]
-    );
-
-    const showErrorToast = useCallback(
-        (title: string, subtitle?: string) => {
-            dispatchToast(
-                <Toast>
-                    <ToastTitle>{title}</ToastTitle>
-                    {subtitle ? <ToastBody>{subtitle}</ToastBody> : null}
-                </Toast>,
-                {intent: "error"}
-            );
-        },
-        [dispatchToast]
-    );
-
-    const handleTextSend = async () => {
-        // Bail out if a send is already underway so we don't queue duplicate requests.
-        if (props.isSending) {
-            return;
-        }
-
-        try {
-            await props.onSend();
-        } catch (error) {
-            console.error(error);
-            showErrorToast(
-                "Unable to send request",
-                "Something went wrong while contacting the service. Please try again."
-            );
-        }
-    };
-    const handleCancel = () => {
-        props
-            .onCancel()
-            .catch((error) => {
-                console.error(error);
-                showErrorToast(
-                    "Unable to cancel request",
-                    "We couldn't stop the current request. Please try again."
-                );
-            });
-    };
     const emailResponse = useMemo(
         () => props.pipelineResponse?.assistantResponse?.emailResponse?.trim() ?? "",
         [props.pipelineResponse]
     );
 
-    const handleCopyResponse = useCallback(() => {
-        void props
-            .onCopyResponse(emailResponse)
-            .then(() => {
-                showSuccessToast("Copied to clipboard", "The response is ready to paste anywhere.");
-            })
-            .catch((error) => {
-                console.error(error);
-                showErrorToast(
-                    "Unable to copy response",
-                    "Check your clipboard permissions and try again."
-                );
-            });
-    }, [emailResponse, props, showErrorToast, showSuccessToast]);
-
-    const handleInjectResponse = useCallback(() => {
-        void props
-            .onInjectResponse(emailResponse)
-            .then(() => {
-                showSuccessToast(
-                    "Inserted into email",
-                    "Check your draft body for the newly added response."
-                );
-            })
-            .catch((error) => {
-                console.error(error);
-                showErrorToast(
-                    "Unable to insert response",
-                    "Please try again after confirming you have an email open."
-                );
-            });
-    }, [emailResponse, props, showErrorToast, showSuccessToast]);
-
-    const handleClear = useCallback(() => {
-        void props
-            .onClear()
-            .catch((error) => {
-                console.error(error);
-                showErrorToast(
-                    "Unable to reset",
-                    "Please try again to clear the current response."
-                );
-            });
-    }, [props, showErrorToast]);
+    const {
+        handleTextSend,
+        handleCancel,
+        handleCopyResponse,
+        handleInjectResponse,
+        handleClear,
+    } = useTextInsertionActions({
+        emailResponse,
+        isSending: props.isSending,
+        onSend: props.onSend,
+        onCancel: props.onCancel,
+        onCopyResponse: props.onCopyResponse,
+        onInjectResponse: props.onInjectResponse,
+        onClear: props.onClear,
+        showSuccessToast,
+        showErrorToast,
+    });
 
     const hasResponse = emailResponse.length > 0;
 
-    const [selectedTab, setSelectedTab] = useState<TabValue>(() =>
-        hasResponse ? "response" : "instruct"
-    );
+    const {
+        sourceCitations,
+        linksCount,
+        selectedCitationIndexes,
+        selectedLinksCount,
+        handleCitationSelectionChange,
+        handleCopySelectedLinks,
+    } = useCitationSelection({
+        pipelineResponse: props.pipelineResponse,
+        showErrorToast,
+        showSuccessToast,
+    });
 
-    useEffect(() => {
-        setSelectedTab((current) => {
-            if (hasResponse) {
-                return "response";
-            }
+    const {selectedTab, handleTabSelect, responseBadge} = useTabs({
+        hasResponse,
+        isOptionalPromptVisible: props.isOptionalPromptVisible,
+        onOptionalPromptVisibilityChange: props.onOptionalPromptVisibilityChange,
+        responseBadgeClassName: styles.badge,
+        responseIconClassName: styles.responseIcon,
+    });
 
-            if (current === "response") {
-                return "instruct";
-            }
-
-            return current;
-        });
-    }, [hasResponse]);
-
-    useEffect(() => {
-        const shouldShowOptionalPrompt = selectedTab === "instruct";
-
-        if (props.isOptionalPromptVisible !== shouldShowOptionalPrompt) {
-            props.onOptionalPromptVisibilityChange(shouldShowOptionalPrompt);
-        }
-    }, [props.isOptionalPromptVisible, props.onOptionalPromptVisibilityChange, selectedTab]);
-
-    const handleTabSelect = useCallback<NonNullable<TabListProps["onTabSelect"]>>(
-        (_event, data) => {
-            setSelectedTab(data.value);
-        }, []);
-
-    const sourceCitations = useMemo(
-        () =>
-            props.pipelineResponse?.assistantResponse?.sourceCitations?.filter(
-                (citation) => Boolean(citation?.url)
-            ) ?? [],
-        [props.pipelineResponse]
-    );
-
-    const linksCount = sourceCitations.length;
-
-    const selectedLinksCount = selectedCitationIndexes.length;
-
-    useEffect(() => {
-        setSelectedCitationIndexes((current) =>
-            current.filter((index) => index < sourceCitations.length)
-        );
-    }, [sourceCitations.length]);
-
-    useEffect(() => {
-        setSelectedCitationIndexes([]);
-    }, [props.pipelineResponse]);
-
-    const handleCitationSelectionChange = useCallback((index: number, isSelected: boolean) => {
-        setSelectedCitationIndexes((current) => {
-            if (isSelected) {
-                if (current.includes(index)) {
-                    return current;
-                }
-
-                return [...current, index].sort((a, b) => a - b);
-            }
-
-            return current.filter((value) => value !== index);
-        });
-    }, []);
-
-    const handleCopySelectedLinks = useCallback(async () => {
-        if (!selectedLinksCount) {
-            return;
-        }
-
-        const selectedLinks = selectedCitationIndexes
-            .map((citationIndex) => sourceCitations[citationIndex])
-            .filter((citation) => Boolean(citation?.url));
-
-        if (!selectedLinks.length) {
-            showErrorToast("Nothing to copy", "Select at least one link first.");
-            return;
-        }
-
-        const textToCopy = selectedLinks
-            .map((citation) => {
-                const url = citation?.url ?? "";
-                const title = citation?.title?.trim();
-
-                if (title && title !== url) {
-                    return `${title} - ${url}`;
-                }
-
-                return url;
-            })
-            .join("\n");
-
-        const htmlToCopy = selectedLinks
-            .map((citation) => {
-                const url = citation?.url ?? "";
-                const title = citation?.title?.trim() || url;
-
-                if (!url) {
-                    return escapeHtml(title);
-                }
-
-                return `<a href="${escapeHtml(url)}">${escapeHtml(title)}</a>`;
-            })
-            .join("<br />");
-
-        try {
-            await copyTextToClipboard(textToCopy, htmlToCopy);
-            showSuccessToast(
-                selectedLinks.length === 1
-                    ? "Link copied to clipboard"
-                    : "Links copied to clipboard",
-                selectedLinks.length === 1
-                    ? "The selected link is ready to paste."
-                    : `${selectedLinks.length} links are ready to paste.`
-            );
-        } catch (error) {
-            console.error(error);
-            showErrorToast(
-                "Unable to copy links",
-                "Check your clipboard permissions and try again."
-            );
-        }
-    }, [selectedCitationIndexes, selectedLinksCount, showErrorToast, showSuccessToast, sourceCitations]);
-
-    const responseBadge = hasResponse ? (
-        <Badge appearance="tint" shape="circular" color="success" className={styles.badge}
-               icon={<Checkmark16Regular className={styles.responseIcon}/>}/>
-    ) : null;
+    const shouldShowOptionalPrompt = selectedTab === "instruct";
 
 
     return (
@@ -574,11 +306,7 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                 {/*</Field>*/}
 
                 <div className={styles.tabContainer}>
-                    <TabList
-                        selectedValue={selectedTab}
-                        onTabSelect={handleTabSelect}
-                        className={styles.tabList}
-                    >
+                    <TabList selectedValue={selectedTab} onTabSelect={handleTabSelect} className={styles.tabList}>
                         <Tab value="instruct" className={mergeClasses(styles.tab, styles.firstTab)}>
                             Instruct
                         </Tab>
@@ -598,171 +326,55 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                         </Tab>
                     </TabList>
                     {selectedTab === "response" ? (
-                        <div className={mergeClasses(styles.tabPanel, styles.responseTabPanel)}>
-                            <Field
-                                className={styles.responseField}
-                            >
-                                <div className={styles.responseActions}>
-
-                                    <Button
-                                        appearance="secondary"
-                                        size="medium"
-                                        disabled={!emailResponse}
-                                        onClick={handleInjectResponse}
-                                        className={styles.responseButtons}
-                                    >
-                                        Insert
-                                    </Button>
-                                    <Button
-                                        appearance="secondary"
-                                        icon={<Copy16Regular/>}
-                                        size="small"
-                                        disabled={!emailResponse}
-                                        onClick={handleCopyResponse}
-                                        className={styles.responseButtons}
-                                    >
-                                        Copy
-                                    </Button>
-
-                                </div>
-                                <Textarea
-                                    className={styles.responseTextAreaRoot}
-                                    value={emailResponse}
-                                    placeholder="The generated email response will appear here."
-                                    readOnly
-                                    resize="vertical"
-                                    textarea={{className: styles.responseTextArea}}
-                                />
-
-                            </Field>
-                        </div>
+                        <TabResponse
+                            emailResponse={emailResponse}
+                            onInjectResponse={handleInjectResponse}
+                            onCopyResponse={handleCopyResponse}
+                            containerClassName={mergeClasses(styles.tabPanel, styles.responseTabPanel)}
+                            fieldClassName={styles.responseField}
+                            actionsClassName={styles.responseActions}
+                            buttonClassName={styles.responseButtons}
+                            textAreaRootClassName={styles.responseTextAreaRoot}
+                            textAreaClassName={styles.responseTextArea}
+                        />
                     ) : null}
                     {selectedTab === "links" ? (
-                        <div className={styles.tabPanel}>
-                            <div className={styles.linksSection}>
-                                <Field
-                                    className={styles.linksField}
-                                >
-                                    {linksCount ? (
-                                        <div className={styles.linksSection}>
-                                            <div className={styles.linksToolbar}>
-                                                <Button
-                                                    appearance="secondary"
-                                                    icon={<Copy16Regular/>}
-                                                    size="medium"
-                                                    onClick={() => {
-                                                        if (!selectedLinksCount) return
-                                                        handleCopySelectedLinks()
-                                                    }}
-                                                    className={styles.linksCopyButton}
-                                                >
-                                                    {`Copy (${selectedLinksCount})`}
-                                                </Button>
-                                            </div>
-                                            <ul className={styles.linksList}>
-                                                {sourceCitations.map((citation, index) => {
-                                                    const anchorId = `citation-link-${index}`;
-                                                    const isSelected = selectedCitationIndexes.includes(index);
-
-                                                    return (
-                                                        <li
-                                                            className={styles.linkListItem}
-                                                            key={`${citation?.url ?? "missing-url"}-${index}`}
-                                                        >
-                                                            <Checkbox
-                                                                checked={isSelected}
-                                                                onChange={(_event, data) =>
-                                                                    handleCitationSelectionChange(index, Boolean(data?.checked))
-                                                                }
-                                                                aria-labelledby={anchorId}
-                                                            />
-                                                            <a
-                                                                id={anchorId}
-                                                                className={styles.linkAnchor}
-                                                                href={citation?.url ?? undefined}
-                                                                target="_blank"
-                                                                rel="noreferrer"
-                                                            >
-                                                                {citation?.title || citation?.url}
-                                                            </a>
-                                                        </li>
-                                                    );
-                                                })}
-                                            </ul>
-                                        </div>
-                                    ) : (
-                                        <span className={styles.emptyLinksMessage}>
-                                            No links available for this response yet.
-                                        </span>
-                                    )}
-                                </Field>
-                            </div>
-                        </div>
+                        <TabLinks
+                            sourceCitations={sourceCitations}
+                            selectedCitationIndexes={selectedCitationIndexes}
+                            selectedLinksCount={selectedLinksCount}
+                            onCitationSelectionChange={handleCitationSelectionChange}
+                            onCopySelectedLinks={handleCopySelectedLinks}
+                            containerClassName={styles.tabPanel}
+                            sectionClassName={styles.linksSection}
+                            fieldClassName={styles.linksField}
+                            toolbarClassName={styles.linksToolbar}
+                            copyButtonClassName={styles.linksCopyButton}
+                            listClassName={styles.linksList}
+                            listItemClassName={styles.linkListItem}
+                            anchorClassName={styles.linkAnchor}
+                            emptyMessageClassName={styles.emptyLinksMessage}
+                        />
                     ) : null}
-                    {selectedTab === "instruct" ? (
-                        <div className={styles.tabPanel}>
-                            <Field
-                                className={styles.optionalPromptField}
-                                size="large"
-                                hint="Provide extra guidance for the assistant."
-                            >
-                                <Textarea
-                                    value={props.optionalPrompt}
-                                    onChange={(
-                                        _event: React.ChangeEvent<HTMLTextAreaElement>,
-                                        data: TextareaOnChangeData
-                                    ) => props.onOptionalPromptChange(data.value)}
-                                    placeholder={
-                                        "If you need to add any extra details or tone preferences, do so in this space right here!\n\nWhen you press 'Generate', we'll use the email you're viewing to draft a relevant reply with source links.\n\nIt's connected to the web, too!"
-                                    }
-
-                                    resize="vertical"
-                                    className={styles.optionalPromptTextAreaRoot}
-
-                                    textarea={{className: styles.optionalPromptTextArea}}
-                                />
-                            </Field>
-                        </div>
+                    {shouldShowOptionalPrompt ? (
+                        <TabInstruct
+                            optionalPrompt={props.optionalPrompt}
+                            onOptionalPromptChange={props.onOptionalPromptChange}
+                            containerClassName={styles.tabPanel}
+                            fieldClassName={styles.optionalPromptField}
+                            textAreaRootClassName={styles.optionalPromptTextAreaRoot}
+                            textAreaClassName={styles.optionalPromptTextArea}
+                        />
                     ) : null}
                 </div>
             </div>
-            <div className={styles.actionsRow}>
-                <Button
-                    appearance="primary"
-                    disabled={props.isSending}
-                    size="large"
-                    onClick={handleTextSend}
-                    className={styles.primaryActionButton}
-                >
-                    {props.isSending ? (
-                        <span className={styles.primaryButtonContent}>
-                            <Spinner size="extra-tiny"/>
-                            Sending...
-                        </span>
-                    ) : (
-                        emailResponse ? "Try Again" : "Generate"
-                    )}
-                </Button>
-                {props.isSending ? (
-                    <Button
-                        appearance="secondary"
-                        size="large"
-                        onClick={handleCancel}
-                        className={styles.stopButton}
-                    >
-                        Stop
-                    </Button>
-                ) : (
-                    <Button
-                        appearance="secondary"
-                        size="large"
-                        onClick={handleClear}
-                        className={styles.clearButton}
-                    >
-                        Reset
-                    </Button>
-                )}
-            </div>
+            <FooterActions
+                isSending={props.isSending}
+                emailResponse={emailResponse}
+                onSend={handleTextSend}
+                onCancel={handleCancel}
+                onClear={handleClear}
+            />
         </div>
     );
 };

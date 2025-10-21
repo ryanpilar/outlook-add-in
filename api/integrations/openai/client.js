@@ -7,7 +7,7 @@
  */
 
 import OpenAI from 'openai';
-import ApiError from './ApiError.js';
+import ApiError from '../../http/errors/ApiError.js';
 
 let cachedInstance = null;
 

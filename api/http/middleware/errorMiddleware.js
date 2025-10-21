@@ -1,4 +1,4 @@
-import ApiError from '../utils/ApiError.js';
+import ApiError from '../errors/ApiError.js';
 
 // Catch unhandled routes and forward to the error handler
 export const notFound = (req, res, next) => {

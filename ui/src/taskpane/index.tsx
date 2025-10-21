@@ -2,7 +2,7 @@ import * as React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./components/App";
 import { FluentProvider, webLightTheme } from "@fluentui/react-components";
-import { enableSharedRuntimeFeatures } from "./helpers/runtime";
+import { enableSharedRuntimeFeatures } from "./helpers/outlook-runtime";
 
 const title = "Contoso Task Pane Add-in";
 

@@ -22,7 +22,7 @@
  *    supports auditing of which documents and tool calls produced a given reply.
  *          Rate limits / ops: https://platform.openai.com/docs/guides/rate-limits
  */
-import normalizeEmailPayload from '../../utils/normalizeEmailPayload.js';
+import normalizeEmailPayload from '../../domain/email/normalizeEmailPayload.js';
 
 export const ingestEmailSubmission = async (requestBody) => {
     const normalizedEmail = normalizeEmailPayload(requestBody);

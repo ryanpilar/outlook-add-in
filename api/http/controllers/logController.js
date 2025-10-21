@@ -8,7 +8,7 @@
  */
 
 import asyncHandler from '../middleware/asyncHandler.js';
-import { runPipeline } from '../pipeline/orchestrator.js';
+import { runPipeline } from '../../pipeline/orchestrator.js';
 
 // ==============================|| Controller - Pipeline ||============================== //
 
