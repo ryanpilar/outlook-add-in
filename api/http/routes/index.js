@@ -1,6 +1,6 @@
 import express from 'express';
-import exampleController from '../../controllers/exampleController.js';
-import logController from '../../controllers/logController.js';
+import exampleController from '../controllers/exampleController.js';
+import logController from '../controllers/logController.js';
 
 const router = express.Router();
 
