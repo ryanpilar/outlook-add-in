@@ -13,7 +13,7 @@
  *     deterministic response if the API is unavailable or returns malformed data.
  */
 
-import ApiError from '../../utils/ApiError.js';
+import ApiError from '../../http/errors/ApiError.js';
 import getResponsesClient from '../../integrations/openai/client.js';
 import { APPROVED_QUESTIONS } from './approvedQuestions.js';
 import {

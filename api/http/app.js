@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 
 import router from './routes/index.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
-import { checkCorsOrigin } from '../config/corsPolicy.js';
+import { checkCorsOrigin } from './config/corsPolicy.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
