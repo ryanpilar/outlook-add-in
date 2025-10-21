@@ -7,7 +7,7 @@
  * full Ingest ➜ Retrieve ➜ Generate ➜ Verify flow to clients.
  */
 
-import asyncHandler from '../middleware/asyncHandler.js';
+import asyncHandler from '../http/middleware/asyncHandler.js';
 import { runPipeline } from '../pipeline/orchestrator.js';
 
 // ==============================|| Controller - Pipeline ||============================== //

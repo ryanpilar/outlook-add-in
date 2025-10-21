@@ -2,7 +2,7 @@
  * Example Controller Title
  * ---------------------------------------------------------------------------
  */
-import asyncHandler from '../middleware/asyncHandler.js';
+import asyncHandler from '../http/middleware/asyncHandler.js';
 import ApiError from '../utils/ApiError.js';
 
 // ==============================|| Controller - Example ||============================== //
