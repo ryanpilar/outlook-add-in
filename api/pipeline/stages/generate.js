@@ -1,9 +1,9 @@
 /**
- * Generate Controller
+ * Pipeline Stage: Generate
  * ---------------------------------------------------------------------------
  * With OpenAI's Responses API doing both retrieval and drafting, generation is
  * the stage that turns our retrieval plan into three polished reply variants.
- * When fleshed out, this controller will:
+ * When fleshed out, this stage will:
  *
  * 1. Compose a shared system prompt and three differentiated user instructions
  *    (e.g., tone or framing variations) that enable File Search and constrain
@@ -19,7 +19,7 @@
  *    observations needed for verification or UI display.
  */
 
-import { getQuestionResponsePlan } from '../services/questionResponseService.js';
+import { getQuestionResponsePlan } from '../../services/questionResponseService.js';
 
 export const generateCandidateResponses = async (contextBundle) => {
     const normalizedEmail = contextBundle?.sourceEmail;

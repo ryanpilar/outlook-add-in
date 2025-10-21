@@ -1,5 +1,5 @@
 /**
- * Ingest Controller
+ * Pipeline Stage: Ingest
  * ---------------------------------------------------------------------------
  * "Ingest" is the preparation layer that happens before any live OpenAI calls.
  * It accepts raw submissions from the Outlook add-in, reshapes them into a
@@ -22,7 +22,7 @@
  *    supports auditing of which documents and tool calls produced a given reply.
  *          Rate limits / ops: https://platform.openai.com/docs/guides/rate-limits
  */
-import normalizeEmailPayload from '../utils/normalizeEmailPayload.js';
+import normalizeEmailPayload from '../../utils/normalizeEmailPayload.js';
 
 export const ingestEmailSubmission = async (requestBody) => {
     const normalizedEmail = normalizeEmailPayload(requestBody);
