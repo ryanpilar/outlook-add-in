@@ -1,9 +1,9 @@
 /**
- * Retrieve Controller
+ * Pipeline Stage: Retrieve
  * ---------------------------------------------------------------------------
  * Because OpenAI's Responses API can invoke File Search on our behalf, the
  * runtime "retrieve" stage is chiefly about assembling the inputs that make
- * that tool call effective. This controller will:
+ * that tool call effective. This stage will:
  *
  * 1. Select which vector stores (and therefore which uploaded files) should be
  *    exposed to the Responses API by consulting the mappings created during
