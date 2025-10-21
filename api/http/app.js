@@ -15,7 +15,7 @@ const publicAssetsPath = path.join(__dirname, '../public');
 export const createHttpApp = () => {
     const app = express();
 
-    // -------------------- CORS POLICY --------------------- //
+    // -------------------- CORS POLICY ---------------------- //
     app.use(cors(checkCorsOrigin));
 
     // --------------- BODY PARSER MIDDLEWARE ---------------- //
