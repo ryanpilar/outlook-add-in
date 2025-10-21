@@ -22,18 +22,27 @@ import {
 } from './promptWrappers.js';
 import { buildFallbackPayload } from './fallbackPlans.js';
 
-// Opt-in support for OpenAI's web_search tool. When the environment flag is
-// enabled we send the documented `tools` payload so the model can fetch fresh
-// context before responding. Keeping this logic isolated makes it obvious how
-// to wire additional tool configuration without touching the core prompt flow.
+// When enabled, we send the `tools` payload so the model can fetch fresh context before responding.
 const getWebSearchTools = () => {
     if (process.env.OPENAI_ENABLE_WEB_SEARCH !== 'true') {
         return undefined;
     }
-
     return [
         {
             type: 'web_search',
+        },
+    ];
+};
+
+// When enabled, we send the `file_search` payload so the model can access a vector store.
+const getFileSearchTools = (store) => {
+    if (process.env.OPENAI_ENABLE_FILE_SEARCH !== 'true') {
+        return undefined;
+    }
+    return [
+        {
+            type: 'file_search',
+            vector_store_ids: [store.id]
         },
     ];
 };
@@ -49,8 +58,6 @@ export const getQuestionResponsePlan = async (normalizedEmail) => {
         const client = getResponsesClient();
 
         // ================================|| Prompt Prep ||=============================== //
-        // Build the structured message array + JSON schema before hitting the wire. Keeping
-        // these helpers pure makes it trivial to unit test prompt changes in isolation.
         const inputMessages = buildQuestionResponsePrompt(normalizedEmail);
         // const { name: schemaName, strict, schema } = getQuestionResponseSchema();
         const textFormat = {
@@ -78,13 +85,28 @@ export const getQuestionResponsePlan = async (normalizedEmail) => {
             payload.tool_choice = 'auto';
         }
 
+        // ========================|| Initialize File Search ||======================== //
+
+        const FILES = [
+            {
+                name: 'condolawalberta.ca-CondoLawAlberta_1_.pdf',
+                id: 'file-DVJMyiSa2o6W1CNwG2RMPx'
+            }
+        ]
+
+        const vectorStore = await client.vectorStores.create({
+            name: "peka-master-store",
+            file_ids: FILES.map( file => file.id),
+        })
+
+        getFileSearchTools(vectorStore)
+
         // ============================|| API Invocation ||============================ //
         // Call the Responses API (SDK v5.23.2). When File Search or tool outputs are
         // enabled the SDK returns a content array, so always guard against mixed output
         // formats as documented at https://platform.openai.com/docs/api-reference/responses.
         const response = await client.responses.create(payload);
 
-        // Prefer the convenience helper, but defensively read the content array if needed.
         // Some SDK versions populate `output` with granular content blocks (future tool
         // outputs, multiple text segments, etc.), so we gather anything explicitly marked as
         // model text and stitch it back together.
@@ -104,8 +126,7 @@ export const getQuestionResponsePlan = async (normalizedEmail) => {
         }
 
         // ==============================|| Parse & Return ||============================== //
-        // The schema guarantees a consistent object shape. Attach the catalog for the UI so
-        // it can surface "other questions you can ask" without another import.
+
         const parsed = JSON.parse(outputText);
 
         const normalizedMatch = {
@@ -115,9 +136,7 @@ export const getQuestionResponsePlan = async (normalizedEmail) => {
                 : [],
         };
 
-        // Always echo the latest approved question metadata with the response to simplify
-        // front-end rendering and keep a single source of truth for the catalog.
-
+        // Always echo the latest approved question metadata with the response
         return {
             ...parsed,
             match: normalizedMatch,
