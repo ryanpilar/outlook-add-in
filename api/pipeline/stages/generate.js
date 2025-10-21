@@ -19,7 +19,7 @@
  *    observations needed for verification or UI display.
  */
 
-import { getQuestionResponsePlan } from '../../services/questionResponseService.js';
+import { getQuestionResponsePlan } from '../../domain/question-response/service.js';
 
 export const generateCandidateResponses = async (contextBundle) => {
     const normalizedEmail = contextBundle?.sourceEmail;
