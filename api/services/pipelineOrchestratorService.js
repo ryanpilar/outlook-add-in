@@ -7,10 +7,10 @@
  * isolation.
  */
 
-import { ingestEmailSubmission } from '../controllers/ingestController.js';
-import { retrieveContextForEmail } from '../controllers/retrieveController.js';
-import { generateCandidateResponses } from '../controllers/generateController.js';
-import { verifyCandidateResponses } from '../controllers/verifyController.js';
+import { ingestEmailSubmission } from '../http/controllers/ingestController.js';
+import { retrieveContextForEmail } from '../http/controllers/retrieveController.js';
+import { generateCandidateResponses } from '../http/controllers/generateController.js';
+import { verifyCandidateResponses } from '../http/controllers/verifyController.js';
 
 // NOTE: Implementation lifted verbatim from `logController.logText` prior to
 // extraction. The only behavior change is returning the response payload to the
