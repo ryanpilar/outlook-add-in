@@ -13,14 +13,14 @@
  *     deterministic response if the API is unavailable or returns malformed data.
  */
 
-import ApiError from '../utils/ApiError.js';
-import getResponsesClient from '../utils/responsesClient.js';
-import { APPROVED_QUESTIONS } from '../prompting/approvedQuestions.js';
+import ApiError from '../../utils/ApiError.js';
+import getResponsesClient from '../../utils/responsesClient.js';
+import { APPROVED_QUESTIONS } from './approvedQuestions.js';
 import {
     buildQuestionResponsePrompt,
     getQuestionResponseSchema,
-} from '../prompting/promptWrappers.js';
-import { buildFallbackPayload } from '../prompting/fallbackPlans.js';
+} from './promptWrappers.js';
+import { buildFallbackPayload } from './fallbackPlans.js';
 
 // Opt-in support for OpenAI's web_search tool. When the environment flag is
 // enabled we send the documented `tools` payload so the model can fetch fresh
