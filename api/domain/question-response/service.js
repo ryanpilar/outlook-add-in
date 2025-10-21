@@ -14,7 +14,7 @@
  */
 
 import ApiError from '../../utils/ApiError.js';
-import getResponsesClient from '../../utils/responsesClient.js';
+import getResponsesClient from '../../integrations/openai/client.js';
 import { APPROVED_QUESTIONS } from './approvedQuestions.js';
 import {
     buildQuestionResponsePrompt,
