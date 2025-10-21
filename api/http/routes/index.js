@@ -1,12 +1,13 @@
 import express from 'express';
-import exampleController from '../controllers/exampleController.js';
-import logController from '../controllers/logController.js';
+
+import pipelineRoutes from './pipeline.js';
+import exampleRoutes from './example.js';
 
 const router = express.Router();
 
 // ==============================|| Routes - Index ||============================== //
 
-router.get('/get-example', exampleController.getExample);
-router.post('/log-text', logController.logText);
+router.use('/', pipelineRoutes);
+router.use('/', exampleRoutes);
 
 export default router;
