@@ -13,19 +13,11 @@ import {
     buildResponsesRequestPayload,
     parseResponsesOutput,
     prepareRetrievalToolkit,
+    DEFAULT_RESPONSE_VERBOSITY,
+    DEFAULT_REASONING_EFFORT,
 } from './serviceHelpers.js';
 
 const DEFAULT_MODEL = 'gpt-5-mini';
-
-const normalizeModelName = (value, fallback = DEFAULT_MODEL) => {
-    if (typeof value !== 'string') {
-        return fallback;
-    }
-
-    const trimmed = value.trim();
-
-    return trimmed.length > 0 ? trimmed : fallback;
-};
 
 const buildVectorOnlyDraft = async ({
     client,
@@ -48,6 +40,10 @@ const buildVectorOnlyDraft = async ({
         model,
         promptOptions: {
             generationMode: 'vector-only',
+        },
+        responseTuning: {
+            verbosity: DEFAULT_RESPONSE_VERBOSITY,
+            reasoningEffort: DEFAULT_REASONING_EFFORT,
         },
     });
 
@@ -96,6 +92,10 @@ const buildResearchAugmentedPlan = async ({
             vectorAnswerMetadata: vectorOnlyPlan?.responseMetadata?.vectorAnswer,
             previousAssistantPlan: vectorOnlyPlan?.assistantPlan,
         },
+        responseTuning: {
+            verbosity: DEFAULT_RESPONSE_VERBOSITY,
+            reasoningEffort: DEFAULT_REASONING_EFFORT,
+        },
     });
 
     const response = await client.responses.create(payload);
@@ -131,8 +131,17 @@ export const runTwoPassQuestionPlan = async ({
     debugLogsEnabled,
     modelOptions = {},
 }) => {
-    const vectorPassModel = normalizeModelName(modelOptions.vectorPassModel, DEFAULT_MODEL);
-    const researchPassModel = normalizeModelName(modelOptions.researchPassModel, DEFAULT_MODEL);
+    const vectorPassModelCandidate =
+        typeof modelOptions.vectorPassModel === 'string'
+            ? modelOptions.vectorPassModel.trim()
+            : '';
+    const researchPassModelCandidate =
+        typeof modelOptions.researchPassModel === 'string'
+            ? modelOptions.researchPassModel.trim()
+            : '';
+
+    const vectorPassModel = vectorPassModelCandidate || DEFAULT_MODEL;
+    const researchPassModel = researchPassModelCandidate || DEFAULT_MODEL;
 
     const vectorDraft = await buildVectorOnlyDraft({
         client,

@@ -12,6 +12,9 @@ import { buildQuestionResponsePrompt, getQuestionResponseSchema } from './prompt
 
 const WEB_SEARCH_ENV_FLAG = 'true';
 
+export const DEFAULT_RESPONSE_VERBOSITY = 'medium';
+export const DEFAULT_REASONING_EFFORT = 'medium';
+
 export const WEB_SEARCH_MODES = {
     DISABLED: 'disabled',
     ENABLED: 'enabled',
@@ -262,6 +265,7 @@ export const buildResponsesRequestPayload = ({
     toolDefinitions = [],
     model,
     promptOptions,
+    responseTuning = {},
 }) => {
     const promptOptionsWithSummary = {
         ...(promptOptions || {}),
@@ -278,11 +282,21 @@ export const buildResponsesRequestPayload = ({
         ...getQuestionResponseSchema(),
     };
 
+    const verbosity = String(responseTuning?.verbosity || DEFAULT_RESPONSE_VERBOSITY).toLowerCase();
+
+    const reasoningEffort = String(
+        responseTuning?.reasoningEffort || DEFAULT_REASONING_EFFORT
+    ).toLowerCase();
+
     const payload = {
         model: typeof model === 'string' && model.trim().length > 0 ? model.trim() : 'gpt-5-mini',
         input: inputMessages,
         text: {
             format: textFormat,
+            verbosity,
+        },
+        reasoning: {
+            effort: reasoningEffort,
         },
     };
 
