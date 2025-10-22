@@ -16,38 +16,16 @@
 import ApiError from '../../http/errors/ApiError.js';
 import getResponsesClient from '../../integrations/openai/client.js';
 import { APPROVED_QUESTIONS } from './approvedQuestions.js';
-import {
-    buildQuestionResponsePrompt,
-    getQuestionResponseSchema,
-} from './promptWrappers.js';
 import { buildFallbackPayload } from './fallbackPlans.js';
+import {
+    buildResponsesRequestPayload,
+    parseResponsesOutput,
+    prepareRetrievalToolkit,
+} from './serviceHelpers.js';
 
-// When enabled, we send the `tools` payload so the model can fetch fresh context before responding.
-const getWebSearchTools = () => {
-    if (process.env.OPENAI_ENABLE_WEB_SEARCH !== 'true') {
-        return undefined;
-    }
-    return [
-        {
-            type: 'web_search',
-        },
-    ];
-};
+const DEBUG_LOGS_ENABLED = process.env.PIPELINE_DEBUG_LOGS === 'true';
 
-// When enabled, we send the `file_search` payload so the model can access a vector store.
-const getFileSearchTools = (store) => {
-    if (process.env.OPENAI_ENABLE_FILE_SEARCH !== 'true') {
-        return undefined;
-    }
-    return [
-        {
-            type: 'file_search',
-            vector_store_ids: [store.id]
-        },
-    ];
-};
-
-export const getQuestionResponsePlan = async (normalizedEmail) => {
+export const getQuestionResponsePlan = async (normalizedEmail, options = {}) => {
     if (!normalizedEmail || typeof normalizedEmail !== 'object') {
         throw new ApiError(400, 'Normalized email payload missing.');
     }
@@ -57,90 +35,43 @@ export const getQuestionResponsePlan = async (normalizedEmail) => {
         // Grab the singleton SDK client so each call reuses connection pooling + auth setup.
         const client = getResponsesClient();
 
+        // ==============================|| Retrieval Prep ||============================= //
+        // Lift the retrieval wiring into helpers so the service can read top-down while we still
+        // attach File Search handles and optional web search tools when the environment toggles demand it.
+        const retrievalPlan = options?.retrievalPlan || null;
+
+        const { toolDefinitions, retrievalSummary, toolDiagnostics } = await prepareRetrievalToolkit({
+            client,
+            retrievalPlan,
+            debugLogsEnabled: DEBUG_LOGS_ENABLED,
+        });
+
         // ================================|| Prompt Prep ||=============================== //
-        const inputMessages = buildQuestionResponsePrompt(normalizedEmail);
-        // const { name: schemaName, strict, schema } = getQuestionResponseSchema();
-        const textFormat = {
-            type: 'json_schema',
-            ...getQuestionResponseSchema(),
-
-        };
-
-        const payload = {
-            model: 'gpt-5-mini',
-            input: inputMessages,
-            text: {
-                format: textFormat,
-            },
-            // reasoning: {
-            //     effort: 'medium'
-            // }
-            // temperature: 0.2,
-        };
-
-        const webSearchTools = getWebSearchTools();
-
-        if (webSearchTools) {
-            payload.tools = webSearchTools;
-            payload.tool_choice = 'auto';
-        }
-
-        // ========================|| Initialize File Search ||======================== //
-
-        const FILES = [
-            {
-                name: 'condolawalberta.ca-CondoLawAlberta_1_.pdf',
-                id: 'file-DVJMyiSa2o6W1CNwG2RMPx'
-            }
-        ]
-
-        const vectorStore = await client.vectorStores.create({
-            name: "peka-master-store",
-            file_ids: FILES.map( file => file.id),
-        })
-
-        getFileSearchTools(vectorStore)
+        // Build the structured message array + JSON schema before hitting the wire. Keeping these
+        // helpers pure makes it trivial to unit test prompt changes in isolation.
+        const payload = buildResponsesRequestPayload({
+            normalizedEmail,
+            retrievalSummary,
+            toolDefinitions,
+        });
 
         // ============================|| API Invocation ||============================ //
-        // Call the Responses API (SDK v5.23.2). When File Search or tool outputs are
-        // enabled the SDK returns a content array, so always guard against mixed output
-        // formats as documented at https://platform.openai.com/docs/api-reference/responses.
+        // Call the Responses API (SDK v5.23.2). When File Search or tool outputs are enabled the SDK
+        // returns a content array, so always guard against mixed output formats as documented at
+        // https://platform.openai.com/docs/api-reference/responses.
         const response = await client.responses.create(payload);
 
-        // Some SDK versions populate `output` with granular content blocks (future tool
-        // outputs, multiple text segments, etc.), so we gather anything explicitly marked as
-        // model text and stitch it back together.
-        const fallbackSegments = Array.isArray(response?.output)
-            ? response.output.flatMap((item) =>
-                Array.isArray(item?.content)
-                    ? item.content
-                        .filter((contentItem) => contentItem?.type === 'output_text')
-                        .map((contentItem) => contentItem?.text || '')
-                    : [])
-            : [];
-
-        const outputText = response?.output_text ?? fallbackSegments.join('');
-
-        if (!outputText.trim()) {
-            throw new Error('OpenAI response missing output_text.');
-        }
-
         // ==============================|| Parse & Return ||============================== //
+        // The schema guarantees a consistent object shape. Attach the catalog for the UI so it can
+        // surface "other questions you can ask" without another import.
+        const { parsed, normalizedMatch } = parseResponsesOutput(response);
 
-        const parsed = JSON.parse(outputText);
-
-        const normalizedMatch = {
-            ...parsed.match,
-            matchedQuestions: Array.isArray(parsed?.match?.matchedQuestions)
-                ? parsed.match.matchedQuestions
-                : [],
-        };
-
-        // Always echo the latest approved question metadata with the response
         return {
             ...parsed,
             match: normalizedMatch,
             approvedQuestions: APPROVED_QUESTIONS,
+            retrievalSummary,
+            toolDiagnostics,
         };
     } catch (error) {
         // ===============================|| Fallback Path ||============================== //

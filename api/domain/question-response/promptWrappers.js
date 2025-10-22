@@ -115,7 +115,7 @@ const QUESTION_RESPONSE_SCHEMA = {
 
 export const getQuestionResponseSchema = () => QUESTION_RESPONSE_SCHEMA;
 
-export const buildQuestionResponsePrompt = (normalizedEmail) => {
+export const buildQuestionResponsePrompt = (normalizedEmail, options = {}) => {
     const subject = normalizedEmail?.metadata?.subject;
     const senderName = normalizedEmail?.metadata?.sender?.displayName;
     const senderEmail = normalizedEmail?.metadata?.sender?.emailAddress;
@@ -123,6 +123,7 @@ export const buildQuestionResponsePrompt = (normalizedEmail) => {
         typeof normalizedEmail?.optionalPrompt === 'string'
             ? normalizedEmail.optionalPrompt
             : null;
+    const retrievalSummary = options?.retrievalSummary || null;
 
     // ============================|| Email Header Stitching ||============================ //
     // The model performs better when it sees the same headers a human agent would use to
@@ -234,6 +235,105 @@ export const buildQuestionResponsePrompt = (normalizedEmail) => {
             ],
         },
     ];
+
+    if (retrievalSummary) {
+        const { searchHints, knowledgeBases } = retrievalSummary;
+        // Mirror the retrieval plan inside the prompt so the Responses call and Node logs stay in sync for debugging.
+        const retrievalLines = [];
+
+        if (searchHints?.senderDomain) {
+            // Domain hints nudge the model toward the right property manager docs.
+            retrievalLines.push(`Sender domain hint: ${searchHints.senderDomain}`);
+        }
+
+        if (searchHints?.summary) {
+            // Email summary primes the model with our deterministic read before tools fire.
+            retrievalLines.push(`Email summary hint: ${searchHints.summary}`);
+        }
+
+        if (Array.isArray(knowledgeBases) && knowledgeBases.length > 0) {
+            // List the File Search libraries so the model understands which uploads it can reach.
+            retrievalLines.push('File Search knowledge bases prepared for this request:');
+
+            knowledgeBases.forEach((base, index) => {
+                const label = typeof base?.label === 'string' && base.label.trim().length > 0
+                    ? base.label.trim()
+                    : `Knowledge base ${index + 1}`;
+                const handleTag = typeof base?.handle === 'string' && base.handle.trim().length > 0
+                    ? ` [${base.handle.trim()}]`
+                    : '';
+                const questionIds = Array.isArray(base?.questionIds)
+                    ? base.questionIds.filter((id) => typeof id === 'string' && id.trim().length > 0)
+                    : [];
+                const questionText = questionIds.length > 0
+                    ? questionIds.join(', ')
+                    : 'Catch-all (applies to all approved questions)';
+                const description = typeof base?.description === 'string' && base.description.trim().length > 0
+                    ? base.description.trim()
+                    : null;
+
+                retrievalLines.push(
+                    `   ${index + 1}. ${label}${handleTag} → Questions: ${questionText}`,
+                );
+
+                if (description) {
+                    retrievalLines.push(`      Notes: ${description}`);
+                }
+
+                const fileContexts = Array.isArray(base?.fileContexts) ? base.fileContexts : [];
+
+                if (fileContexts.length > 0) {
+                    retrievalLines.push('      File context sources:');
+
+                    fileContexts.forEach((context, contextIndex) => {
+                        const contextTitle = typeof context?.title === 'string' && context.title.trim().length > 0
+                            ? context.title.trim()
+                            : `Source ${contextIndex + 1}`;
+                        const contextUrl = typeof context?.url === 'string' && context.url.trim().length > 0
+                            ? context.url.trim()
+                            : null;
+                        const contextSummary = typeof context?.summary === 'string' && context.summary.trim().length > 0
+                            ? context.summary.trim()
+                            : null;
+                        const contextFileId = typeof context?.fileId === 'string' && context.fileId.trim().length > 0
+                            ? context.fileId.trim()
+                            : null;
+                        const relatedQuestionIds = Array.isArray(context?.questionIds)
+                            ? context.questionIds.filter((id) => typeof id === 'string' && id.trim().length > 0)
+                            : [];
+
+                        retrievalLines.push(
+                            `         • ${contextTitle}${contextUrl ? ` → ${contextUrl}` : ''}${
+                                relatedQuestionIds.length > 0
+                                    ? ` (answers: ${relatedQuestionIds.join(', ')})`
+                                    : ''
+                            }${contextFileId ? ` [OpenAI file: ${contextFileId}]` : ''}`,
+                        );
+
+                        if (contextSummary) {
+                            retrievalLines.push(`           Note: ${contextSummary}`);
+                        }
+                    });
+                }
+            });
+        }
+
+        if (retrievalLines.length > 0) {
+            // Skip the extra developer message when retrieval contributed nothing; keeps prompts tight.
+            messages.push({
+                role: 'developer',
+                content: [
+                    {
+                        type: 'input_text',
+                        text: [
+                            'Retrieval context prepared by pipeline:',
+                            ...retrievalLines,
+                        ].join('\n'),
+                    },
+                ],
+            });
+        }
+    }
 
     if (optionalPrompt) {
         messages.push({

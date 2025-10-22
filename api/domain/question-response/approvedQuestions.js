@@ -5,6 +5,8 @@
  * `answerGuidance` captures the operational talking points the model should lean on when
  * preparing summaries and next steps. `resourceHints` offers canonical condo-website URLs
  * the model should treat as the first stop for policy language or downloadable forms.
+ * `fileSearchContexts` (optional) links an approved question to specific File Search
+ * uploads so retrieval can automatically attach them when the question appears.
  * Keep these notes aligned with condo leadership so responses stay consistent as the
  * service scales. Avoid adding speculative details—stick to what is published on
  * peka.ab.ca or documented in linked PDFs.
@@ -229,6 +231,22 @@ export const APPROVED_QUESTIONS = [
                 label: 'PEKA Home Page',
                 url: 'https://peka.ab.ca/',
                 usageNote: 'Share this when residents need general PEKA contact details beyond the portals.',
+            },
+            {
+                label: 'Condo Law Alberta – Special Levy Primer',
+                url: 'https://www.condolawalberta.ca/finances/special-levy/',
+                usageNote:
+                    'Use this article when clarifying how special levies are triggered and approved; File Search mirrors it as file-DVJMyiSa2o6W1CNwG2RMPx for fast quoting.',
+            },
+        ],
+        fileSearchContexts: [
+            {
+                vectorStoreHandle: 'pica-master-library',
+                fileId: 'file-DVJMyiSa2o6W1CNwG2RMPx',
+                title: 'Condo Law Alberta – Special Levy Primer',
+                url: 'https://www.condolawalberta.ca/finances/special-levy/',
+                summary:
+                    'Public explainer that outlines how Alberta condo corporations propose, approve, and collect special levies.',
             },
         ],
     },
