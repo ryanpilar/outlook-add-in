@@ -27,7 +27,7 @@ export const generateCandidateResponses = async (contextBundle) => {
     // Derive the approved-question match and answer scaffolding. In the future this will
     // feed into the response drafting prompts so each candidate stays anchored to policy.
     const questionPlan = normalizedEmail
-        ? await getQuestionResponsePlan(normalizedEmail)
+        ? await getQuestionResponsePlan(normalizedEmail, { retrievalPlan: contextBundle })
         : null;
 
     // Stub response payload keeps the pipeline predictable while we implement the remaining
