@@ -17,9 +17,20 @@ import ApiError from '../../http/errors/ApiError.js';
 import getResponsesClient from '../../integrations/openai/client.js';
 import { APPROVED_QUESTIONS } from './approvedQuestions.js';
 import { buildFallbackPayload } from './fallbackPlans.js';
+import { runSinglePassQuestionPlan } from './singlePassWorkflow.js';
 import { runTwoPassQuestionPlan } from './twoPassWorkflow.js';
 
 const DEBUG_LOGS_ENABLED = process.env.PIPELINE_DEBUG_LOGS === 'true';
+const WORKFLOW_MODES = {
+    SINGLE_PASS: 'single-pass',
+    TWO_PASS: 'two-pass',
+};
+const WORKFLOW_SELECTION = process.env.OPENAI_QUESTION_PLAN_WORKFLOW;
+const ACTIVE_WORKFLOW =
+    WORKFLOW_SELECTION === WORKFLOW_MODES.TWO_PASS
+        ? WORKFLOW_MODES.TWO_PASS
+        : WORKFLOW_MODES.SINGLE_PASS;
+const SINGLE_PASS_MODEL = process.env.OPENAI_SINGLE_PASS_MODEL || process.env.OPENAI_VECTOR_PASS_MODEL;
 const VECTOR_PASS_MODEL = process.env.OPENAI_VECTOR_PASS_MODEL;
 const RESEARCH_PASS_MODEL = process.env.OPENAI_RESEARCH_PASS_MODEL;
 
@@ -33,28 +44,41 @@ export const getQuestionResponsePlan = async (normalizedEmail, options = {}) => 
         // Grab the singleton SDK client so each call reuses connection pooling + auth setup.
         const client = getResponsesClient();
 
-        // ============================|| Two-Pass Planning ||============================ //
-        // Delegate the sequential vector-only ➜ research-augmented flow so this service can
-        // stay focused on I/O and error shaping. Model choices stay configurable to support
-        // future experiments without code changes.
+        // ===========================|| Workflow Selection ||=========================== //
+        // Keep both workflows wired up and default to the single-pass path for now.
         const retrievalPlan = options?.retrievalPlan || null;
 
-        const { finalPlan, vectorOnlyDraft, researchAugmentation } = await runTwoPassQuestionPlan({
-            client,
-            normalizedEmail,
-            retrievalPlan,
-            debugLogsEnabled: DEBUG_LOGS_ENABLED,
-            modelOptions: {
-                vectorPassModel: VECTOR_PASS_MODEL,
-                researchPassModel: RESEARCH_PASS_MODEL,
-            },
-        });
+        const useTwoPassWorkflow = ACTIVE_WORKFLOW === WORKFLOW_MODES.TWO_PASS;
+
+        const { finalPlan, vectorOnlyDraft, researchAugmentation } = useTwoPassWorkflow
+            ? await runTwoPassQuestionPlan({
+                  client,
+                  normalizedEmail,
+                  retrievalPlan,
+                  debugLogsEnabled: DEBUG_LOGS_ENABLED,
+                  modelOptions: {
+                      vectorPassModel: VECTOR_PASS_MODEL,
+                      researchPassModel: RESEARCH_PASS_MODEL,
+                  },
+              })
+            : await runSinglePassQuestionPlan({
+                  client,
+                  normalizedEmail,
+                  retrievalPlan,
+                  debugLogsEnabled: DEBUG_LOGS_ENABLED,
+                  modelOptions: {
+                      singlePassModel: SINGLE_PASS_MODEL,
+                      vectorPassModel: VECTOR_PASS_MODEL,
+                      researchPassModel: RESEARCH_PASS_MODEL,
+                  },
+              });
 
         return {
             ...finalPlan,
             approvedQuestions: APPROVED_QUESTIONS,
             vectorOnlyDraft,
             researchAugmentation,
+            questionPlanWorkflow: ACTIVE_WORKFLOW,
         };
     } catch (error) {
         // ===============================|| Fallback Path ||============================== //
