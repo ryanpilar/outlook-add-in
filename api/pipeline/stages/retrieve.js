@@ -53,7 +53,6 @@ export const retrieveContextForEmail = async (normalizedEmail) => {
             fileContexts: (kb.fileContexts || []).map((context) => ({
                 title: context.title,
                 url: context.url,
-                fileId: context.fileId,
                 questionIds: context.questionIds,
             })),
         })));
