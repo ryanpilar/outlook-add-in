@@ -77,12 +77,11 @@ const sanitizeFileContexts = (fileContexts = []) =>
             const title = typeof context.title === 'string' ? context.title.trim() : '';
             const url = typeof context.url === 'string' ? context.url.trim() : '';
             const summary = typeof context.summary === 'string' ? context.summary.trim() : '';
-            const fileId = typeof context.fileId === 'string' ? context.fileId.trim() : '';
             const questionIds = Array.isArray(context.questionIds)
                 ? context.questionIds.filter((id) => typeof id === 'string' && id.trim().length > 0)
                 : [];
 
-            if (!title && !url && !summary && !fileId) {
+            if (!title && !url && !summary) {
                 return null;
             }
 
@@ -90,7 +89,6 @@ const sanitizeFileContexts = (fileContexts = []) =>
                 title: title || null,
                 url: url || null,
                 summary: summary || null,
-                fileId: fileId || null,
                 questionIds,
             };
         })

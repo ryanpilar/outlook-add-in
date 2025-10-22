@@ -71,10 +71,6 @@ export const buildRetrievalContextBody = (retrievalSummary) => {
                         typeof context?.summary === 'string' && context.summary.trim().length > 0
                             ? context.summary.trim()
                             : null;
-                    const contextFileId =
-                        typeof context?.fileId === 'string' && context.fileId.trim().length > 0
-                            ? context.fileId.trim()
-                            : null;
                     const relatedQuestionIds = Array.isArray(context?.questionIds)
                         ? context.questionIds.filter(
                               (id) => typeof id === 'string' && id.trim().length > 0
@@ -82,13 +78,11 @@ export const buildRetrievalContextBody = (retrievalSummary) => {
                         : [];
 
                     retrievalLines.push(
-                        `         • ${contextTitle}${
-                            contextUrl ? ` → ${contextUrl}` : ''
-                        }${
+                        `         • ${contextTitle}${contextUrl ? ` → ${contextUrl}` : ''}${
                             relatedQuestionIds.length > 0
                                 ? ` (answers: ${relatedQuestionIds.join(', ')})`
                                 : ''
-                        }${contextFileId ? ` [OpenAI file: ${contextFileId}]` : ''}`
+                        }`
                     );
 
                     if (contextSummary) {

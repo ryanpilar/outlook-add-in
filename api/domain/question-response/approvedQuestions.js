@@ -219,7 +219,7 @@ export const APPROVED_QUESTIONS = [
             'Reference the condo corporation portal for formal announcements about special assessments.',
             'Encourage owners to review board communications there for background and timelines.',
             'Remind them to contact PEKA if payment logistics posted in the portal need clarification.',
-            'Use the Condo Law Alberta – Special Levy primer mirrored in File Search as your primary source; only trigger external research if that document leaves the resident’s request unresolved.',
+            'Lean on the condo levy guidance mirrored in the vector store as your primary source; only trigger external research if the retrieved passages leave the resident’s request unresolved.',
         ],
         resourceHints: [
             {
@@ -236,18 +236,14 @@ export const APPROVED_QUESTIONS = [
             {
                 label: 'Condo Law Alberta – Special Levy Primer',
                 url: 'https://www.condolawalberta.ca/finances/special-levy/',
-                usageNote:
-                    'Use this article when clarifying how special levies are triggered and approved; File Search mirrors it as file-DVJMyiSa2o6W1CNwG2RMPx for fast quoting.',
+                usageNote: 'Use this article when clarifying how special levies are triggered and approved.',
             },
         ],
         fileSearchContexts: [
             {
                 vectorStoreHandle: 'pica-master-library',
-                fileId: 'file-DVJMyiSa2o6W1CNwG2RMPx',
-                title: 'Condo Law Alberta – Special Levy Primer',
-                url: 'https://www.condolawalberta.ca/finances/special-levy/',
                 summary:
-                    'Public explainer that outlines how Alberta condo corporations propose, approve, and collect special levies. Treat this as the authoritative source when File Search returns it, and only consider web search if no relevant passage is retrieved.',
+                    'Vector library materials covering Alberta condo corporation special assessments. Treat the retrieved passages as the authoritative source.',
             },
         ],
     },

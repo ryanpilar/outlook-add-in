@@ -23,16 +23,8 @@ export const KNOWLEDGE_BASES = [
         // File contexts act as breadcrumbs that link answers back to the canonical PEKA pages mirrored in the store.
         fileContexts: [
             {
-                title: 'PEKA Tenant Portal – Master Forms',
-                url: 'https://peka.ab.ca/portal-renters',
                 summary:
-                    'Matches the tenant-facing forms mirrored in the vector store so residents can self-serve downloads.',
-            },
-            {
-                title: 'PEKA Owner Portal – Policy Documents',
-                url: 'https://peka.ab.ca/client-portal-owner',
-                summary:
-                    'Owners can retrieve the same policy PDFs referenced in File Search directly from the official portal.',
+                    'PEKA-managed policy PDFs, tenant forms, and portal instructions are mirrored in this vector library. Cite the documents returned by File Search and rely on this handle as the enduring reference.',
             },
         ],
         notes: [

@@ -23,7 +23,6 @@ export const cloneFileContexts = (fileContexts = []) =>
             title: typeof context.title === 'string' ? context.title : null,
             url: typeof context.url === 'string' ? context.url : null,
             summary: typeof context.summary === 'string' ? context.summary : null,
-            fileId: typeof context.fileId === 'string' ? context.fileId : null,
             questionIds: Array.isArray(context.questionIds)
                 ? context.questionIds.filter((id) => typeof id === 'string')
                 : [],
@@ -62,7 +61,6 @@ const buildQuestionFileContexts = () =>
                 const title = typeof context.title === 'string' ? context.title.trim() : '';
                 const url = typeof context.url === 'string' ? context.url.trim() : '';
                 const summary = typeof context.summary === 'string' ? context.summary.trim() : '';
-                const fileId = typeof context.fileId === 'string' ? context.fileId.trim() : '';
 
                 return {
                     handle,
@@ -70,7 +68,6 @@ const buildQuestionFileContexts = () =>
                     title: title || null,
                     url: url || null,
                     summary: summary || null,
-                    fileId: fileId || null,
                 };
             })
             .filter(Boolean);
@@ -104,12 +101,12 @@ export const mergeFileContexts = (baseContexts = [], questionContexts = []) => {
     const merged = [...baseContexts];
     const seen = new Set(
         baseContexts.map((context) => {
-            if (context?.fileId) {
-                return `file:${context.fileId}`;
-            }
-
             if (context?.url) {
                 return `url:${context.url}`;
+            }
+
+            if (context?.summary) {
+                return `summary:${context.summary}`;
             }
 
             return null;
@@ -117,7 +114,11 @@ export const mergeFileContexts = (baseContexts = [], questionContexts = []) => {
     );
 
     questionContexts.forEach((context) => {
-        const signature = context.fileId ? `file:${context.fileId}` : context.url ? `url:${context.url}` : null;
+        const signature = context.url
+            ? `url:${context.url}`
+            : context.summary
+            ? `summary:${context.summary}`
+            : null;
 
         if (signature && seen.has(signature)) {
             return;
@@ -131,7 +132,6 @@ export const mergeFileContexts = (baseContexts = [], questionContexts = []) => {
             title: context.title,
             url: context.url,
             summary: context.summary,
-            fileId: context.fileId,
             questionIds: [context.questionId],
         });
     });
