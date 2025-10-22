@@ -219,6 +219,7 @@ export const APPROVED_QUESTIONS = [
             'Reference the condo corporation portal for formal announcements about special assessments.',
             'Encourage owners to review board communications there for background and timelines.',
             'Remind them to contact PEKA if payment logistics posted in the portal need clarification.',
+            'Use the Condo Law Alberta – Special Levy primer mirrored in File Search as your primary source; only trigger external research if that document leaves the resident’s request unresolved.',
         ],
         resourceHints: [
             {
@@ -246,7 +247,7 @@ export const APPROVED_QUESTIONS = [
                 title: 'Condo Law Alberta – Special Levy Primer',
                 url: 'https://www.condolawalberta.ca/finances/special-levy/',
                 summary:
-                    'Public explainer that outlines how Alberta condo corporations propose, approve, and collect special levies.',
+                    'Public explainer that outlines how Alberta condo corporations propose, approve, and collect special levies. Treat this as the authoritative source when File Search returns it, and only consider web search if no relevant passage is retrieved.',
             },
         ],
     },
