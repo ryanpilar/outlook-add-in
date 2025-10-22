@@ -12,11 +12,27 @@ import { buildQuestionResponsePrompt, getQuestionResponseSchema } from './prompt
 
 const WEB_SEARCH_ENV_FLAG = 'true';
 
+export const WEB_SEARCH_MODES = {
+    DISABLED: 'disabled',
+    ENABLED: 'enabled',
+    INHERIT: 'inherit',
+};
+
 // Opt-in support for OpenAI's web_search tool so the model can fetch fresh context when tests
 // explicitly enable it. Keeping this isolated makes it obvious how to extend tool wiring later.
-const buildWebSearchTools = () => {
-    if (process.env.OPENAI_ENABLE_WEB_SEARCH !== WEB_SEARCH_ENV_FLAG) {
+const buildWebSearchTools = (mode = WEB_SEARCH_MODES.INHERIT) => {
+    const normalizedMode = Object.values(WEB_SEARCH_MODES).includes(mode)
+        ? mode
+        : WEB_SEARCH_MODES.INHERIT;
+
+    if (normalizedMode === WEB_SEARCH_MODES.DISABLED) {
         return undefined;
+    }
+
+    if (normalizedMode === WEB_SEARCH_MODES.INHERIT) {
+        if (process.env.OPENAI_ENABLE_WEB_SEARCH !== WEB_SEARCH_ENV_FLAG) {
+            return undefined;
+        }
     }
 
     return [
@@ -148,7 +164,12 @@ const resolveFileSearchHandles = async ({ client, vectorStoreHandles, debugLogsE
     };
 };
 
-export const prepareRetrievalToolkit = async ({ client, retrievalPlan, debugLogsEnabled }) => {
+export const prepareRetrievalToolkit = async ({
+    client,
+    retrievalPlan,
+    debugLogsEnabled,
+    webSearchMode = WEB_SEARCH_MODES.INHERIT,
+}) => {
     const toolDefinitions = [];
     const toolDiagnostics = {
         webSearchEnabled: false,
@@ -156,7 +177,7 @@ export const prepareRetrievalToolkit = async ({ client, retrievalPlan, debugLogs
         knowledgeBasesForPrompt: [],
     };
 
-    const webSearchTools = buildWebSearchTools();
+    const webSearchTools = buildWebSearchTools(webSearchMode);
 
     // Attach web search tooling when the feature flag is active.
     if (webSearchTools) {
@@ -235,9 +256,22 @@ export const prepareRetrievalToolkit = async ({ client, retrievalPlan, debugLogs
     };
 };
 
-export const buildResponsesRequestPayload = ({ normalizedEmail, retrievalSummary, toolDefinitions }) => {
-    const promptOptions = retrievalSummary ? { retrievalSummary } : undefined;
-    const inputMessages = buildQuestionResponsePrompt(normalizedEmail, promptOptions);
+export const buildResponsesRequestPayload = ({
+    normalizedEmail,
+    retrievalSummary,
+    toolDefinitions = [],
+    model,
+    promptOptions,
+}) => {
+    const promptOptionsWithSummary = {
+        ...(promptOptions || {}),
+        ...(retrievalSummary ? { retrievalSummary } : {}),
+    };
+
+    const inputMessages = buildQuestionResponsePrompt(
+        normalizedEmail,
+        promptOptionsWithSummary,
+    );
 
     const textFormat = {
         type: 'json_schema',
@@ -245,7 +279,7 @@ export const buildResponsesRequestPayload = ({ normalizedEmail, retrievalSummary
     };
 
     const payload = {
-        model: 'gpt-5-mini',
+        model: typeof model === 'string' && model.trim().length > 0 ? model.trim() : 'gpt-5-mini',
         input: inputMessages,
         text: {
             format: textFormat,
@@ -281,6 +315,39 @@ export const parseResponsesOutput = (response) => {
 
     const parsed = JSON.parse(outputText);
 
+    const responseMetadata = parsed?.responseMetadata && typeof parsed.responseMetadata === 'object'
+        ? parsed.responseMetadata
+        : {};
+
+    const vectorAnswerMetadata = responseMetadata?.vectorAnswer;
+
+    const normalizedResponseMetadata = {
+        ...responseMetadata,
+        vectorAnswer: vectorAnswerMetadata
+            ? {
+                  isVectorAnswerSufficient: Boolean(
+                      vectorAnswerMetadata.isVectorAnswerSufficient,
+                  ),
+                  reasoning:
+                      typeof vectorAnswerMetadata.reasoning === 'string'
+                          ? vectorAnswerMetadata.reasoning
+                          : '',
+                  missingInformationNotes: Array.isArray(
+                      vectorAnswerMetadata.missingInformationNotes,
+                  )
+                      ? vectorAnswerMetadata.missingInformationNotes.filter(
+                            (note) =>
+                                typeof note === 'string' && note.trim().length > 0,
+                        )
+                      : [],
+              }
+            : {
+                  isVectorAnswerSufficient: false,
+                  reasoning: '',
+                  missingInformationNotes: [],
+              },
+    };
+
     const normalizedMatch = {
         ...parsed.match,
         matchedQuestions: Array.isArray(parsed?.match?.matchedQuestions)
@@ -289,7 +356,10 @@ export const parseResponsesOutput = (response) => {
     };
 
     return {
-        parsed,
+        parsed: {
+            ...parsed,
+            responseMetadata: normalizedResponseMetadata,
+        },
         normalizedMatch,
     };
 };

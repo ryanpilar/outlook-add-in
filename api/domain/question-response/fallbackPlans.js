@@ -43,7 +43,19 @@ export const buildFallbackPayload = (error) => ({
         reasoning: `Fell back to manual handling: ${error.message}`,
     },
     assistantPlan: DEFAULT_ASSISTANT_PLAN,
+    responseMetadata: {
+        vectorAnswer: {
+            isVectorAnswerSufficient: false,
+            reasoning:
+                'Automated planning disabled: a teammate must supply additional condo context or perform web research.',
+            missingInformationNotes: [
+                'No automated vector-store analysis was produced because the Responses API call failed.',
+            ],
+        },
+    },
     approvedQuestions: APPROVED_QUESTIONS,
+    vectorOnlyDraft: null,
+    researchAugmentation: null,
 });
 
 export default {

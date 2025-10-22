@@ -17,13 +17,11 @@ import ApiError from '../../http/errors/ApiError.js';
 import getResponsesClient from '../../integrations/openai/client.js';
 import { APPROVED_QUESTIONS } from './approvedQuestions.js';
 import { buildFallbackPayload } from './fallbackPlans.js';
-import {
-    buildResponsesRequestPayload,
-    parseResponsesOutput,
-    prepareRetrievalToolkit,
-} from './serviceHelpers.js';
+import { runTwoPassQuestionPlan } from './twoPassWorkflow.js';
 
 const DEBUG_LOGS_ENABLED = process.env.PIPELINE_DEBUG_LOGS === 'true';
+const VECTOR_PASS_MODEL = process.env.OPENAI_VECTOR_PASS_MODEL;
+const RESEARCH_PASS_MODEL = process.env.OPENAI_RESEARCH_PASS_MODEL;
 
 export const getQuestionResponsePlan = async (normalizedEmail, options = {}) => {
     if (!normalizedEmail || typeof normalizedEmail !== 'object') {
@@ -35,43 +33,28 @@ export const getQuestionResponsePlan = async (normalizedEmail, options = {}) => 
         // Grab the singleton SDK client so each call reuses connection pooling + auth setup.
         const client = getResponsesClient();
 
-        // ==============================|| Retrieval Prep ||============================= //
-        // Lift the retrieval wiring into helpers so the service can read top-down while we still
-        // attach File Search handles and optional web search tools when the environment toggles demand it.
+        // ============================|| Two-Pass Planning ||============================ //
+        // Delegate the sequential vector-only ➜ research-augmented flow so this service can
+        // stay focused on I/O and error shaping. Model choices stay configurable to support
+        // future experiments without code changes.
         const retrievalPlan = options?.retrievalPlan || null;
 
-        const { toolDefinitions, retrievalSummary, toolDiagnostics } = await prepareRetrievalToolkit({
+        const { finalPlan, vectorOnlyDraft, researchAugmentation } = await runTwoPassQuestionPlan({
             client,
+            normalizedEmail,
             retrievalPlan,
             debugLogsEnabled: DEBUG_LOGS_ENABLED,
+            modelOptions: {
+                vectorPassModel: VECTOR_PASS_MODEL,
+                researchPassModel: RESEARCH_PASS_MODEL,
+            },
         });
-
-        // ================================|| Prompt Prep ||=============================== //
-        // Build the structured message array + JSON schema before hitting the wire. Keeping these
-        // helpers pure makes it trivial to unit test prompt changes in isolation.
-        const payload = buildResponsesRequestPayload({
-            normalizedEmail,
-            retrievalSummary,
-            toolDefinitions,
-        });
-
-        // ============================|| API Invocation ||============================ //
-        // Call the Responses API (SDK v5.23.2). When File Search or tool outputs are enabled the SDK
-        // returns a content array, so always guard against mixed output formats as documented at
-        // https://platform.openai.com/docs/api-reference/responses.
-        const response = await client.responses.create(payload);
-
-        // ==============================|| Parse & Return ||============================== //
-        // The schema guarantees a consistent object shape. Attach the catalog for the UI so it can
-        // surface "other questions you can ask" without another import.
-        const { parsed, normalizedMatch } = parseResponsesOutput(response);
 
         return {
-            ...parsed,
-            match: normalizedMatch,
+            ...finalPlan,
             approvedQuestions: APPROVED_QUESTIONS,
-            retrievalSummary,
-            toolDiagnostics,
+            vectorOnlyDraft,
+            researchAugmentation,
         };
     } catch (error) {
         // ===============================|| Fallback Path ||============================== //
