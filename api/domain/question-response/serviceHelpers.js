@@ -12,8 +12,8 @@ import { buildQuestionResponsePrompt, getQuestionResponseSchema } from './prompt
 
 const WEB_SEARCH_ENV_FLAG = 'true';
 
-export const DEFAULT_RESPONSE_VERBOSITY = 'medium';
-export const DEFAULT_REASONING_EFFORT = 'medium';
+export const DEFAULT_RESPONSE_VERBOSITY = 'high';
+export const DEFAULT_REASONING_EFFORT = 'low';
 
 export const WEB_SEARCH_MODES = {
     DISABLED: 'disabled',
@@ -213,7 +213,7 @@ export const prepareRetrievalToolkit = async ({
 
     const knowledgeBasesForPrompt = fileSearchActive && (resolvedFileSearch || vectorStoreHandles.length > 0)
         ? sanitizeKnowledgeBasesForPrompt(
-              resolvedFileSearch?.handles?.length ? resolvedFileSearch.handles : vectorStoreHandles,
+              resolvedFileSearch?.handles?.length ? resolvedFileSearch?.handles : vectorStoreHandles,
           )
         : [];
 
