@@ -1,5 +1,5 @@
 /**
- * ===========================|| Approved Question Catalog ||===========================
+ * ===========================|| Questions Approved Catalog ||==========================
  *
  * Central list of condo board-approved resident questions the MVP is permitted to answer.
  * `answerGuidance` captures the operational talking points the model should lean on when
@@ -12,7 +12,7 @@
  * peka.ab.ca or documented in linked PDFs.
  */
 
-export const APPROVED_QUESTIONS = [
+export const QUESTIONS_APPROVED = [
     {
         id: 'rental-application',
         title: 'How do I submit a rental application for tenancy?',

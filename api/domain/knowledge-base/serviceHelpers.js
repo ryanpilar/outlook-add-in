@@ -3,7 +3,7 @@
  * responsibility so the service orchestration can read like a checklist.
  */
 
-import { APPROVED_QUESTIONS } from '../question-response/approvedQuestions.js';
+import { QUESTIONS_APPROVED } from '../question-response/questionsApproved.js';
 
 // Normalize question identifiers once so every comparison and log references the
 // same trimmed values.
@@ -41,7 +41,7 @@ export const cloneKnowledgeBaseEntry = (entry) => ({
 // attach question-specific uploads (e.g., Condo Law Alberta articles) without
 // hard-coding them inside the knowledge-base catalog itself.
 const buildQuestionFileContexts = () =>
-    APPROVED_QUESTIONS.flatMap((question) => {
+    QUESTIONS_APPROVED.flatMap((question) => {
         if (!Array.isArray(question.fileSearchContexts) || question.fileSearchContexts.length === 0) {
             return [];
         }

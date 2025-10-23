@@ -12,10 +12,10 @@ import {
     createDeveloperMessage,
     buildBaseSystemInstruction,
     buildDeveloperInstruction,
-    buildVectorPassDeveloperMessages,
-    buildRetrievalContextMessage,
-    buildOptionalOperatorInstructionMessage,
-    buildUserMessage,
+    buildVectorPassMessagesDeveloper,
+    buildMessageRetrievalContext,
+    buildOptionalMessageOperatorInstruction,
+    buildMessageUser,
 } from './promptWrapperHelpers.js';
 import { getQuestionResponseSchema } from './questionResponseSchema.js';
 
@@ -35,27 +35,27 @@ export const buildQuestionResponsePrompt = (normalizedEmail, options = {}) => {
     const messages = [
         createSystemMessage(buildBaseSystemInstruction()),
         createDeveloperMessage(buildDeveloperInstruction(generationMode)),
-        ...buildVectorPassDeveloperMessages({
+        ...buildVectorPassMessagesDeveloper({
             generationMode,
             vectorAnswerMetadata,
             previousAssistantPlan,
         }),
     ];
 
-    const retrievalContextMessage = buildRetrievalContextMessage(retrievalSummary);
+    const messageRetrievalContext = buildMessageRetrievalContext(retrievalSummary);
 
-    if (retrievalContextMessage) {
-        messages.push(retrievalContextMessage);
+    if (messageRetrievalContext) {
+        messages.push(messageRetrievalContext);
     }
 
-    const optionalInstructionMessage =
-        buildOptionalOperatorInstructionMessage(optionalPrompt);
+    const messageOperatorInstruction =
+        buildOptionalMessageOperatorInstruction(optionalPrompt);
 
-    if (optionalInstructionMessage) {
-        messages.push(optionalInstructionMessage);
+    if (messageOperatorInstruction) {
+        messages.push(messageOperatorInstruction);
     }
 
-    messages.push(buildUserMessage(normalizedEmail));
+    messages.push(buildMessageUser(normalizedEmail));
 
     return messages;
 };

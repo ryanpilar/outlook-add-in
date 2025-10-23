@@ -1,12 +1,12 @@
 /**
- * ====================|| Operator Instruction Message ||====================
+ * ====================|| Message Operator Instruction ||====================
  *
  * Converts any operator-provided optional prompt into a developer message so
  * analysts can nudge the assistant for a single request without touching the
  * core prompt definition.
  */
 
-export const buildOptionalOperatorInstructionBody = (optionalPrompt) => {
+export const buildOptionalMessageOperatorInstructionBody = (optionalPrompt) => {
     if (typeof optionalPrompt !== 'string' || optionalPrompt.trim().length === 0) {
         return null;
     }
@@ -15,5 +15,5 @@ export const buildOptionalOperatorInstructionBody = (optionalPrompt) => {
 };
 
 export default {
-    buildOptionalOperatorInstructionBody,
+    buildOptionalMessageOperatorInstructionBody,
 };

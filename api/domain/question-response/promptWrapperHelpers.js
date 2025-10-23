@@ -13,12 +13,12 @@ export {
     buildVectorAssessmentText,
     buildVectorAssistantPlanText,
 } from './promptContent/instructions.js';
-export { buildUserInstruction } from './promptContent/userMessage.js';
+export { buildMessageUserInstruction } from './promptContent/messageUser.js';
 
-import { buildVectorPassDeveloperMessageBodies } from './promptContent/developerMessages.js';
-import { buildRetrievalContextBody } from './promptContent/retrievalContextMessage.js';
-import { buildOptionalOperatorInstructionBody } from './promptContent/operatorInstructionMessage.js';
-import { buildUserMessageBody } from './promptContent/userMessage.js';
+import { buildVectorPassMessagesDeveloperBodies } from './promptContent/messagesDeveloper.js';
+import { buildMessageRetrievalContextBody } from './promptContent/messageRetrievalContext.js';
+import { buildOptionalMessageOperatorInstructionBody } from './promptContent/messageOperatorInstruction.js';
+import { buildMessageUserBody } from './promptContent/messageUser.js';
 
 /**
  * Wrap plain strings in the Responses API message format. Keeping these small
@@ -41,21 +41,21 @@ export const createDeveloperMessage = (text) => createInputTextMessage('develope
 
 export const createUserMessage = (text) => createInputTextMessage('user', text);
 
-export const buildVectorPassDeveloperMessages = (options) =>
-    buildVectorPassDeveloperMessageBodies(options).map((body) =>
+export const buildVectorPassMessagesDeveloper = (options) =>
+    buildVectorPassMessagesDeveloperBodies(options).map((body) =>
         createDeveloperMessage(body)
     );
 
-export const buildRetrievalContextMessage = (retrievalSummary) => {
-    const body = buildRetrievalContextBody(retrievalSummary);
+export const buildMessageRetrievalContext = (retrievalSummary) => {
+    const body = buildMessageRetrievalContextBody(retrievalSummary);
     return body ? createDeveloperMessage(body) : null;
 };
 
-export const buildOptionalOperatorInstructionMessage = (optionalPrompt) => {
-    const body = buildOptionalOperatorInstructionBody(optionalPrompt);
+export const buildOptionalMessageOperatorInstruction = (optionalPrompt) => {
+    const body = buildOptionalMessageOperatorInstructionBody(optionalPrompt);
     return body ? createDeveloperMessage(body) : null;
 };
 
-export const buildUserMessage = (normalizedEmail) =>
-    createUserMessage(buildUserMessageBody(normalizedEmail));
+export const buildMessageUser = (normalizedEmail) =>
+    createUserMessage(buildMessageUserBody(normalizedEmail));
 

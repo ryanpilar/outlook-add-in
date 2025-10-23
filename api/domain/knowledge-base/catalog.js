@@ -8,9 +8,9 @@
  * other files first.
  */
 
-import { APPROVED_QUESTIONS } from '../question-response/approvedQuestions.js';
+import { QUESTIONS_APPROVED } from '../question-response/questionsApproved.js';
 
-const ALL_APPROVED_QUESTION_IDS = APPROVED_QUESTIONS.map((question) => question.id);
+const ALL_QUESTIONS_APPROVED_IDS = QUESTIONS_APPROVED.map((question) => question.id);
 
 export const KNOWLEDGE_BASES = [
     {
@@ -18,7 +18,7 @@ export const KNOWLEDGE_BASES = [
         label: 'PEKA Master Policy & Forms Library',
         description:
             'Catch-all repository of PEKA master policy PDFs, tenant forms, and portal guidance maintained by PICA.',
-        questionIds: ALL_APPROVED_QUESTION_IDS,
+        questionIds: ALL_QUESTIONS_APPROVED_IDS,
         vectorStoreId: 'vs_68f7ed4a55048191bb7c830babd34d30',
         // File contexts act as breadcrumbs that link answers back to the canonical PEKA pages mirrored in the store.
         fileContexts: [

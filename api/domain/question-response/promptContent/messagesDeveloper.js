@@ -1,5 +1,5 @@
 /**
- * ======================|| Developer Message Builders ||======================
+ * ======================|| Messages Developer Builders ||=====================
  *
  * Captures the developer-role message variants that accompany the prompt based
  * on data returned from the vector-only pass. Keeping this in the promptContent
@@ -12,7 +12,7 @@ import {
     buildVectorAssistantPlanText,
 } from './instructions.js';
 
-export const buildVectorPassDeveloperMessageBodies = ({
+export const buildVectorPassMessagesDeveloperBodies = ({
     generationMode,
     vectorAnswerMetadata,
     previousAssistantPlan,
@@ -31,5 +31,5 @@ export const buildVectorPassDeveloperMessageBodies = ({
 };
 
 export default {
-    buildVectorPassDeveloperMessageBodies,
+    buildVectorPassMessagesDeveloperBodies,
 };

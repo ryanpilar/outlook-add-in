@@ -7,7 +7,7 @@
  * runs without dumping resident messages into the logs.
  */
 import { selectKnowledgeBasesForEmail } from '../../domain/knowledge-base/service.js';
-import { APPROVED_QUESTIONS } from '../../domain/question-response/approvedQuestions.js';
+import { QUESTIONS_APPROVED } from '../../domain/question-response/questionsApproved.js';
 
 const DEBUG_LOGS_ENABLED = process.env.PIPELINE_DEBUG_LOGS === 'true';
 
@@ -37,7 +37,7 @@ export const retrieveContextForEmail = async (normalizedEmail) => {
     // Capture the sender's domain—handy heuristic for routing to the right condo corp materials.
     const senderDomain = getSenderDomain(normalizedEmail);
 
-    const allowedQuestionIds = APPROVED_QUESTIONS.map((question) => question.id);
+    const allowedQuestionIds = QUESTIONS_APPROVED.map((question) => question.id);
     const knowledgeBases = selectKnowledgeBasesForEmail(normalizedEmail, { allowedQuestionIds });
 
     // Surface retrieval diagnostics when PIPELINE_DEBUG_LOGS=true so manual runs show the chosen hints and stores.
