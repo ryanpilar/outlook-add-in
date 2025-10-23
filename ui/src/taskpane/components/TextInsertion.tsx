@@ -131,6 +131,8 @@ const useStyles = makeStyles({
         height: "100%",
         boxSizing: "border-box",
         maxHeight: "100%",
+        fontSize: tokens.fontSizeBase200,
+        lineHeight: tokens.lineHeightBase200,
 
     },
     responseActions: {
@@ -152,6 +154,8 @@ const useStyles = makeStyles({
     badge: {
         display: "flex",
         width: "1px",
+        fontSize: tokens.fontSizeBase200,
+        lineHeight: tokens.lineHeightBase200,
     },
     tabContainer: {
         display: "flex",
@@ -270,10 +274,15 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
             return null;
         }
 
-        const currentIndex = props.activeResponseIndex ?? -1;
-        const displayIndex = Math.max(0, Math.min(responseCount, currentIndex + 1));
+        if (
+            props.activeResponseIndex === null ||
+            props.activeResponseIndex < 0 ||
+            props.activeResponseIndex >= responseCount
+        ) {
+            return `${responseCount}/${responseCount}`;
+        }
 
-        return `${displayIndex}/${responseCount}`;
+        return `${props.activeResponseIndex + 1}/${responseCount}`;
     }, [props.activeResponseIndex, responseCount]);
 
     const {
