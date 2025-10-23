@@ -39,10 +39,16 @@ export const useSendLifecycleHandler = ({
           return currentState;
         }
 
+        const previousHistory = currentState.responseHistory ?? [];
+        const updatedHistory = [...previousHistory, response];
+        const nextIndex = updatedHistory.length - 1;
+
         return {
           ...currentState,
           statusMessage: "Email content sent to the server.",
           pipelineResponse: response,
+          responseHistory: updatedHistory,
+          activeResponseIndex: nextIndex,
           isSending: false,
           activeRequestId: null,
           activeRequestPrompt: null,

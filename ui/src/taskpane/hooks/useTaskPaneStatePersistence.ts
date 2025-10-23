@@ -87,6 +87,8 @@ export const useTaskPaneStatePersistence = (): TaskPaneStatePersistence => {
         return {
           ...nextState,
           pipelineResponse: nextState.pipelineResponse ?? null,
+          responseHistory: nextState.responseHistory ?? [],
+          activeResponseIndex: nextState.activeResponseIndex ?? null,
           isSending: nextState.isSending ?? false,
           activeRequestId: nextState.activeRequestId ?? null,
           activeRequestPrompt: nextState.activeRequestPrompt ?? null,
