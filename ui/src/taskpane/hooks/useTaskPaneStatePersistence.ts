@@ -5,7 +5,6 @@ import {
   PersistedTaskPaneState,
   savePersistedState,
   updatePersistedState,
-  normalizeResponseState,
 } from "../helpers/outlook-persistence";
 
 export interface TaskPaneStatePersistence {
@@ -85,16 +84,12 @@ export const useTaskPaneStatePersistence = (): TaskPaneStatePersistence => {
                 ...update,
               };
 
-        const normalized = normalizeResponseState({
+        return {
           ...nextState,
           pipelineResponse: nextState.pipelineResponse ?? null,
           isSending: nextState.isSending ?? false,
           activeRequestId: nextState.activeRequestId ?? null,
           activeRequestPrompt: nextState.activeRequestPrompt ?? null,
-        });
-
-        return {
-          ...normalized,
           lastUpdatedUtc: new Date().toISOString(),
         };
       });
