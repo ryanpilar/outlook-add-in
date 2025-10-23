@@ -1,7 +1,7 @@
 import * as React from "react";
 import {useMemo} from "react";
 import {
-    Button,
+    Badge,
     Tab,
     TabList,
     tokens,
@@ -18,7 +18,6 @@ import FooterActions from "./FooterActions";
 import {useCitationSelection} from "../hooks/useCitationSelection";
 import {useTextInsertionActions} from "../hooks/useTextInsertionActions";
 import {useTabs} from "../hooks/useTabs";
-import {ChevronLeft16Regular, ChevronRight16Regular} from "@fluentui/react-icons";
 
 interface TextInsertionProps {
     optionalPrompt: string;
@@ -27,16 +26,12 @@ interface TextInsertionProps {
     onOptionalPromptVisibilityChange: (visible: boolean) => void;
     statusMessage: string;
     pipelineResponse: PipelineResponse | null;
-    responseHistory: PipelineResponse[];
-    selectedResponseIndex: number | null;
     onSend: () => Promise<void>;
     isSending: boolean;
     onCancel: () => Promise<void>;
     onCopyResponse: (response: string) => Promise<void>;
     onInjectResponse: (response: string) => Promise<void>;
     onClear: () => Promise<void>;
-    onSelectNextResponse: () => void;
-    onSelectPreviousResponse: () => void;
 }
 
 const TOASTER_ID = "text-insertion-toaster";
@@ -145,6 +140,13 @@ const useStyles = makeStyles({
         minWidth: "50px",
         fontWeight: 'normal'
     },
+    responseIcon: {
+        width: "13px",
+    },
+    badge: {
+        display: "flex",
+        width: "1px",
+    },
     tabContainer: {
         display: "flex",
         flexDirection: "column",
@@ -159,9 +161,6 @@ const useStyles = makeStyles({
         paddingInlineStart: "0px",
         marginLeft: "0px",
         marginInlineStart: "0px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
     },
     tab: {
         paddingTop: tokens.spacingVerticalXXS,
@@ -190,20 +189,7 @@ const useStyles = makeStyles({
     responseTabPanel: {
         overflow: "hidden",
     },
-    responseTab: {
-        display: "flex",
-        justifyContent: "center",
-    },
-    responseTabLabel: {
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "8px",
-    },
-    responseNavButton: {
-        minWidth: "auto",
-        paddingInline: tokens.spacingHorizontalXS,
-    },
-    tabLabel: {
+    tabLabelWithBadge: {
         display: "inline-flex",
         alignItems: "center",
         gap: "4px",
@@ -278,23 +264,6 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
     });
 
     const hasResponse = emailResponse.length > 0;
-    const responseCount = props.responseHistory.length;
-    const selectedResponseIndex =
-        props.selectedResponseIndex !== null && props.selectedResponseIndex !== undefined
-            ? props.selectedResponseIndex
-            : responseCount > 0
-                ? responseCount - 1
-                : null;
-    const currentResponseNumber =
-        selectedResponseIndex !== null && selectedResponseIndex !== undefined
-            ? selectedResponseIndex + 1
-            : 0;
-    const canShowPrevious =
-        responseCount > 1 && selectedResponseIndex !== null && selectedResponseIndex > 0;
-    const canShowNext =
-        responseCount > 1 &&
-        selectedResponseIndex !== null &&
-        selectedResponseIndex < responseCount - 1;
 
     const {
         sourceCitations,
@@ -309,36 +278,15 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
         showSuccessToast,
     });
 
-    const {selectedTab, handleTabSelect} = useTabs({
+    const {selectedTab, handleTabSelect, responseBadge} = useTabs({
         hasResponse,
-        responseCount,
         isOptionalPromptVisible: props.isOptionalPromptVisible,
         onOptionalPromptVisibilityChange: props.onOptionalPromptVisibilityChange,
+        responseBadgeClassName: styles.badge,
+        responseIconClassName: styles.responseIcon,
     });
 
     const shouldShowOptionalPrompt = selectedTab === "instruct";
-
-    const handleShowPreviousResponse = React.useCallback(
-        (event: React.MouseEvent) => {
-            event.stopPropagation();
-            event.preventDefault();
-            if (canShowPrevious) {
-                props.onSelectPreviousResponse();
-            }
-        },
-        [canShowPrevious, props.onSelectPreviousResponse]
-    );
-
-    const handleShowNextResponse = React.useCallback(
-        (event: React.MouseEvent) => {
-            event.stopPropagation();
-            event.preventDefault();
-            if (canShowNext) {
-                props.onSelectNextResponse();
-            }
-        },
-        [canShowNext, props.onSelectNextResponse]
-    );
 
 
     return (
@@ -362,31 +310,19 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                         <Tab value="instruct" className={mergeClasses(styles.tab, styles.firstTab)}>
                             Instruct
                         </Tab>
-                        <Tab value="response" className={mergeClasses(styles.tab, styles.responseTab)}>
-                            <span className={styles.responseTabLabel}>
-                                <Button
-                                    appearance="subtle"
-                                    size="small"
-                                    icon={<ChevronLeft16Regular/>}
-                                    onClick={handleShowPreviousResponse}
-                                    disabled={!canShowPrevious}
-                                    className={styles.responseNavButton}
-                                />
-                                {responseCount > 0
-                                    ? `Response (${currentResponseNumber}/${responseCount})`
-                                    : "Response"}
-                                <Button
-                                    appearance="subtle"
-                                    size="small"
-                                    icon={<ChevronRight16Regular/>}
-                                    onClick={handleShowNextResponse}
-                                    disabled={!canShowNext}
-                                    className={styles.responseNavButton}
-                                />
+                        <Tab value="response" className={styles.tab}>
+                            <span className={styles.tabLabelWithBadge}>
+                                Response
+                                {responseBadge}
                             </span>
                         </Tab>
                         <Tab value="links" className={styles.tab}>
-                            <span className={styles.tabLabel}>{`Links (${linksCount})`}</span>
+                            <span className={styles.tabLabelWithBadge}>
+                                Links
+                                <Badge shape="circular" className={styles.badge}>
+                                    {linksCount}
+                                </Badge>
+                            </span>
                         </Tab>
                     </TabList>
                     {selectedTab === "response" ? (
