@@ -17,7 +17,7 @@ const useStyles = makeStyles({
         justifyContent: "flex-end",
         marginTop: "auto",
         paddingTop: "8px",
-        paddingBottom: "4px",
+        paddingBottom: "8px",
         backgroundColor: tokens.colorNeutralBackground1,
     },
     primaryActionButton: {
