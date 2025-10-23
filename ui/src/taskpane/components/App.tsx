@@ -39,11 +39,15 @@ const App: React.FC<AppProps> = () => {
           onOptionalPromptVisibilityChange={actions.setOptionalPromptVisible}
           statusMessage={state.statusMessage}
           pipelineResponse={state.pipelineResponse}
+          responseHistory={state.responseHistory}
+          activeResponseIndex={state.activeResponseIndex}
           onSend={actions.sendCurrentEmail}
           isSending={state.isSending}
           onCancel={actions.cancelCurrentSend}
           onCopyResponse={actions.copyResponseToClipboard}
           onInjectResponse={actions.injectResponseIntoEmail}
+          onShowPreviousResponse={actions.showPreviousResponse}
+          onShowNextResponse={actions.showNextResponse}
           onClear={actions.resetTaskPaneState}
         />
       </div>

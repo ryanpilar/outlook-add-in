@@ -26,11 +26,15 @@ interface TextInsertionProps {
     onOptionalPromptVisibilityChange: (visible: boolean) => void;
     statusMessage: string;
     pipelineResponse: PipelineResponse | null;
+    responseHistory: PipelineResponse[];
+    activeResponseIndex: number | null;
     onSend: () => Promise<void>;
     isSending: boolean;
     onCancel: () => Promise<void>;
     onCopyResponse: (response: string) => Promise<void>;
     onInjectResponse: (response: string) => Promise<void>;
+    onShowPreviousResponse: () => void;
+    onShowNextResponse: () => void;
     onClear: () => Promise<void>;
 }
 
@@ -132,7 +136,7 @@ const useStyles = makeStyles({
     responseActions: {
         display: "flex",
         gap: "4px",
-        justifyContent: "space-between",
+        justifyContent: "flex-start",
         width: "100%",
     },
     responseButtons: {
@@ -140,8 +144,10 @@ const useStyles = makeStyles({
         minWidth: "50px",
         fontWeight: 'normal'
     },
-    responseIcon: {
-        width: "13px",
+    responseNavButton: {
+        flex: "0 0 auto",
+        minWidth: "40px",
+        fontWeight: 'normal',
     },
     badge: {
         display: "flex",
@@ -240,10 +246,35 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
     const styles = useStyles();
     const {showSuccessToast, showErrorToast} = useToasts(TOASTER_ID);
 
+    const activeResponse = useMemo(() => {
+        if (
+            props.activeResponseIndex !== null &&
+            props.activeResponseIndex >= 0 &&
+            props.activeResponseIndex < props.responseHistory.length
+        ) {
+            return props.responseHistory[props.activeResponseIndex];
+        }
+
+        return props.pipelineResponse;
+    }, [props.activeResponseIndex, props.pipelineResponse, props.responseHistory]);
+
     const emailResponse = useMemo(
-        () => props.pipelineResponse?.assistantResponse?.emailResponse?.trim() ?? "",
-        [props.pipelineResponse]
+        () => activeResponse?.assistantResponse?.emailResponse?.trim() ?? "",
+        [activeResponse]
     );
+
+    const responseCount = props.responseHistory.length;
+
+    const responsePositionLabel = useMemo(() => {
+        if (responseCount === 0) {
+            return null;
+        }
+
+        const currentIndex = props.activeResponseIndex ?? -1;
+        const displayIndex = Math.max(0, Math.min(responseCount, currentIndex + 1));
+
+        return `${displayIndex}/${responseCount}`;
+    }, [props.activeResponseIndex, responseCount]);
 
     const {
         handleTextSend,
@@ -265,6 +296,11 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
 
     const hasResponse = emailResponse.length > 0;
 
+    const effectiveIndex = props.activeResponseIndex ?? responseCount;
+    const canShowPrevious = responseCount > 0 && effectiveIndex > 0;
+    const canShowNext =
+        props.activeResponseIndex !== null && props.activeResponseIndex < responseCount - 1;
+
     const {
         sourceCitations,
         linksCount,
@@ -283,7 +319,7 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
         isOptionalPromptVisible: props.isOptionalPromptVisible,
         onOptionalPromptVisibilityChange: props.onOptionalPromptVisibilityChange,
         responseBadgeClassName: styles.badge,
-        responseIconClassName: styles.responseIcon,
+        responseBadgeLabel: responsePositionLabel,
     });
 
     const shouldShowOptionalPrompt = selectedTab === "instruct";
@@ -330,10 +366,15 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
                             emailResponse={emailResponse}
                             onInjectResponse={handleInjectResponse}
                             onCopyResponse={handleCopyResponse}
+                            onShowPreviousResponse={props.onShowPreviousResponse}
+                            onShowNextResponse={props.onShowNextResponse}
+                            canShowPrevious={canShowPrevious}
+                            canShowNext={canShowNext}
                             containerClassName={mergeClasses(styles.tabPanel, styles.responseTabPanel)}
                             fieldClassName={styles.responseField}
                             actionsClassName={styles.responseActions}
                             buttonClassName={styles.responseButtons}
+                            navigationButtonClassName={styles.responseNavButton}
                             textAreaRootClassName={styles.responseTextAreaRoot}
                             textAreaClassName={styles.responseTextArea}
                         />

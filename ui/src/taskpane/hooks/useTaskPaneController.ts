@@ -22,6 +22,8 @@ export interface TaskPaneActions {
     cancelCurrentSend: () => Promise<void>;
     copyResponseToClipboard: (response: string) => Promise<void>;
     injectResponseIntoEmail: (response: string) => Promise<void>;
+    showPreviousResponse: () => void;
+    showNextResponse: () => void;
     resetTaskPaneState: () => Promise<void>;
 }
 
@@ -169,6 +171,56 @@ export const useTaskPaneController = (): TaskPaneController => {
         [setStatusMessage]
     );
 
+    const showPreviousResponse = React.useCallback(() => {
+            mergeState((previousState) => {
+                const history = previousState.responseHistory ?? [];
+
+                if (history.length === 0) {
+                    return previousState;
+                }
+
+                const currentIndex = previousState.activeResponseIndex ?? history.length;
+                const nextIndex = currentIndex - 1;
+
+                if (nextIndex < 0) {
+                    return previousState;
+                }
+
+                return {
+                    ...previousState,
+                    pipelineResponse: history[nextIndex],
+                    activeResponseIndex: nextIndex,
+                };
+            });
+        },
+        [mergeState]
+    );
+
+    const showNextResponse = React.useCallback(() => {
+            mergeState((previousState) => {
+                const history = previousState.responseHistory ?? [];
+
+                if (history.length === 0) {
+                    return previousState;
+                }
+
+                const currentIndex = previousState.activeResponseIndex ?? history.length - 1;
+                const nextIndex = currentIndex + 1;
+
+                if (nextIndex >= history.length) {
+                    return previousState;
+                }
+
+                return {
+                    ...previousState,
+                    pipelineResponse: history[nextIndex],
+                    activeResponseIndex: nextIndex,
+                };
+            });
+        },
+        [mergeState]
+    );
+
     // Bundle all user-facing actions into a stable object that can be passed to UI components
     const actions: TaskPaneActions = React.useMemo(
         () => ({
@@ -179,6 +231,8 @@ export const useTaskPaneController = (): TaskPaneController => {
             cancelCurrentSend,
             copyResponseToClipboard,
             injectResponseIntoEmail,
+            showPreviousResponse,
+            showNextResponse,
             resetTaskPaneState,
         }),
         [
@@ -189,6 +243,8 @@ export const useTaskPaneController = (): TaskPaneController => {
             refreshFromCurrentItem,
             sendCurrentEmail,
             setOptionalPromptVisible,
+            showNextResponse,
+            showPreviousResponse,
             updateOptionalPrompt,
         ]
     );

@@ -515,14 +515,13 @@ export const useTaskPaneController = (): TaskPaneController => {
 
 import {ReactNode, useCallback, useEffect, useMemo, useState} from "react";
 import {Badge, TabListProps, TabValue} from "@fluentui/react-components";
-import {Checkmark16Regular} from "@fluentui/react-icons";
 
 export interface UseTabsOptions {
     hasResponse: boolean;
     isOptionalPromptVisible: boolean;
     onOptionalPromptVisibilityChange: (visible: boolean) => void;
     responseBadgeClassName?: string;
-    responseIconClassName?: string;
+    responseBadgeLabel?: string | null;
 }
 
 export interface UseTabsResult {
@@ -536,7 +535,7 @@ export const useTabs = ({
     isOptionalPromptVisible,
     onOptionalPromptVisibilityChange,
     responseBadgeClassName,
-    responseIconClassName,
+    responseBadgeLabel,
 }: UseTabsOptions): UseTabsResult => {
     const [selectedTab, setSelectedTab] = useState<TabValue>(() =>
         hasResponse ? "response" : "instruct"
@@ -571,17 +570,22 @@ export const useTabs = ({
         []
     );
 
-    const responseBadge = useMemo(() => (
-        hasResponse ? (
+    const responseBadge = useMemo(() => {
+        if (!responseBadgeLabel) {
+            return null;
+        }
+
+        return (
             <Badge
                 appearance="tint"
                 shape="circular"
                 color="success"
                 className={responseBadgeClassName}
-                icon={<Checkmark16Regular className={responseIconClassName} />}
-            />
-        ) : null
-    ), [hasResponse, responseBadgeClassName, responseIconClassName]);
+            >
+                {responseBadgeLabel}
+            </Badge>
+        );
+    }, [responseBadgeClassName, responseBadgeLabel]);
 
     return {
         selectedTab,

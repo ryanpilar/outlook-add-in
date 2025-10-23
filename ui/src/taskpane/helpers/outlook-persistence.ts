@@ -6,6 +6,8 @@ export interface PersistedTaskPaneState {
   optionalPrompt: string;
   statusMessage: string;
   pipelineResponse: PipelineResponse | null;
+  responseHistory: PipelineResponse[];
+  activeResponseIndex: number | null;
   isOptionalPromptVisible: boolean;
   isSending: boolean;
   /**
@@ -71,6 +73,8 @@ const createDefaultState = (): PersistedTaskPaneState => ({
   optionalPrompt: "",
   statusMessage: "",
   pipelineResponse: null,
+  responseHistory: [],
+  activeResponseIndex: null,
   isOptionalPromptVisible: false,
   isSending: false,
   activeRequestId: null,
@@ -93,6 +97,8 @@ export const loadPersistedState = async (itemKey: string): Promise<PersistedTask
       ...createDefaultState(),
       ...parsed,
       pipelineResponse: parsed.pipelineResponse ?? null,
+      responseHistory: parsed.responseHistory ?? [],
+      activeResponseIndex: parsed.activeResponseIndex ?? null,
       isSending: parsed.isSending ?? false,
       activeRequestId: parsed.activeRequestId ?? null,
       activeRequestPrompt: parsed.activeRequestPrompt ?? null,
@@ -136,6 +142,14 @@ const mergeWithDefaults = (
       partial.pipelineResponse !== undefined
         ? partial.pipelineResponse
         : (draft.pipelineResponse ?? null),
+    responseHistory:
+      partial.responseHistory !== undefined
+        ? partial.responseHistory
+        : (draft.responseHistory ?? []),
+    activeResponseIndex:
+      partial.activeResponseIndex !== undefined
+        ? partial.activeResponseIndex
+        : (draft.activeResponseIndex ?? null),
     isSending: partial.isSending !== undefined ? partial.isSending : (draft.isSending ?? false),
     activeRequestId:
       partial.activeRequestId !== undefined
@@ -151,6 +165,8 @@ const mergeWithDefaults = (
 const normalizeUpdatedState = (candidate: PersistedTaskPaneState): PersistedTaskPaneState => ({
   ...candidate,
   pipelineResponse: candidate.pipelineResponse ?? null,
+  responseHistory: candidate.responseHistory ?? [],
+  activeResponseIndex: candidate.activeResponseIndex ?? null,
   isSending: candidate.isSending ?? false,
   activeRequestId: candidate.activeRequestId ?? null,
   activeRequestPrompt: candidate.activeRequestPrompt ?? null,
