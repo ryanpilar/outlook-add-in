@@ -57,7 +57,6 @@ export const useSendLifecycleActions = ({
         await applyStateForKey(targetKey, (previous) => ({
             ...previous,
             statusMessage: "Sending the current email content...",
-            pipelineResponse: null,
             isSending: true,
             activeRequestId: requestId,
             activeRequestPrompt: optionalPrompt || null,
