@@ -45,7 +45,7 @@ const useStyles = makeStyles({
         display: "flex",
         flexDirection: "column",
         alignItems: "stretch",
-        gap: "16px",
+        gap: "12px",
         paddingLeft: "12px",
         paddingRight: "12px",
         width: "100%",
@@ -154,8 +154,8 @@ const useStyles = makeStyles({
     badge: {
         display: "flex",
         width: "1px",
-        fontSize: tokens.fontSizeBase200,
-        lineHeight: tokens.lineHeightBase200,
+        fontSize: tokens.fontSizeBase100,
+        lineHeight: tokens.lineHeightBase100,
     },
     tabContainer: {
         display: "flex",
@@ -166,11 +166,13 @@ const useStyles = makeStyles({
         overflow: "hidden",
     },
     tabList: {
+        display: "flex",
         width: "100%",
         paddingLeft: "0px",
         paddingInlineStart: "0px",
         marginLeft: "0px",
         marginInlineStart: "0px",
+        justifyContent: "center",
     },
     tab: {
         paddingTop: tokens.spacingVerticalXXS,
