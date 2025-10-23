@@ -6,6 +6,15 @@ export interface PersistedTaskPaneState {
   optionalPrompt: string;
   statusMessage: string;
   pipelineResponse: PipelineResponse | null;
+  /**
+   * Stores every response generated for the current email so the user can revisit
+   * previous suggestions after navigating away.
+   */
+  responseHistory: PipelineResponse[];
+  /**
+   * Tracks which entry from {@link responseHistory} is currently selected.
+   */
+  selectedResponseIndex: number | null;
   isOptionalPromptVisible: boolean;
   isSending: boolean;
   /**
@@ -71,11 +80,50 @@ const createDefaultState = (): PersistedTaskPaneState => ({
   optionalPrompt: "",
   statusMessage: "",
   pipelineResponse: null,
+  responseHistory: [],
+  selectedResponseIndex: null,
   isOptionalPromptVisible: false,
   isSending: false,
   activeRequestId: null,
   activeRequestPrompt: null,
 });
+
+export const normalizeResponseState = (
+  candidate: PersistedTaskPaneState
+): PersistedTaskPaneState => {
+  const history = Array.isArray(candidate.responseHistory)
+    ? candidate.responseHistory.filter((entry) => Boolean(entry))
+    : [];
+
+  const pipelineResponse = candidate.pipelineResponse ?? null;
+
+  if (!history.length && pipelineResponse) {
+    history.push(pipelineResponse);
+  }
+
+  let selectedIndex = candidate.selectedResponseIndex;
+
+  if (!history.length) {
+    selectedIndex = null;
+  } else {
+    const fallbackIndex = history.length - 1;
+    if (selectedIndex === null || selectedIndex === undefined) {
+      selectedIndex = fallbackIndex;
+    } else {
+      selectedIndex = Math.min(Math.max(selectedIndex, 0), fallbackIndex);
+    }
+  }
+
+  return {
+    ...candidate,
+    responseHistory: history,
+    selectedResponseIndex: history.length ? selectedIndex : null,
+    pipelineResponse:
+      history.length && selectedIndex !== null && selectedIndex !== undefined
+        ? history[selectedIndex] ?? null
+        : null,
+  };
+};
 
 const buildStorageKey = (itemKey: string): string => `${STORAGE_NAMESPACE}:${itemKey}`;
 
@@ -89,14 +137,21 @@ export const loadPersistedState = async (itemKey: string): Promise<PersistedTask
 
   try {
     const parsed = JSON.parse(storedValue) as Partial<PersistedTaskPaneState>;
-    return {
+    const merged: PersistedTaskPaneState = {
       ...createDefaultState(),
       ...parsed,
       pipelineResponse: parsed.pipelineResponse ?? null,
+      responseHistory: Array.isArray(parsed.responseHistory) ? parsed.responseHistory : [],
+      selectedResponseIndex:
+        parsed.selectedResponseIndex !== undefined && parsed.selectedResponseIndex !== null
+          ? parsed.selectedResponseIndex
+          : null,
       isSending: parsed.isSending ?? false,
       activeRequestId: parsed.activeRequestId ?? null,
       activeRequestPrompt: parsed.activeRequestPrompt ?? null,
     };
+
+    return normalizeResponseState(merged);
   } catch (error) {
     console.warn(`[Taskpane] Failed to parse persisted state for key ${itemKey}.`, error);
     return createDefaultState();
@@ -130,27 +185,36 @@ const mergeWithDefaults = (
     ...partial,
   };
 
-  return {
+  const merged: PersistedTaskPaneState = {
     ...draft,
     pipelineResponse:
       partial.pipelineResponse !== undefined
         ? partial.pipelineResponse
-        : (draft.pipelineResponse ?? null),
-    isSending: partial.isSending !== undefined ? partial.isSending : (draft.isSending ?? false),
+        : draft.pipelineResponse ?? null,
+    responseHistory:
+      partial.responseHistory !== undefined
+        ? partial.responseHistory ?? []
+        : draft.responseHistory ?? [],
+    selectedResponseIndex:
+      partial.selectedResponseIndex !== undefined
+        ? partial.selectedResponseIndex ?? null
+        : draft.selectedResponseIndex ?? null,
+    isSending: partial.isSending !== undefined ? partial.isSending : draft.isSending ?? false,
     activeRequestId:
       partial.activeRequestId !== undefined
         ? partial.activeRequestId
-        : (draft.activeRequestId ?? null),
+        : draft.activeRequestId ?? null,
     activeRequestPrompt:
       partial.activeRequestPrompt !== undefined
         ? partial.activeRequestPrompt
-        : (draft.activeRequestPrompt ?? null),
+        : draft.activeRequestPrompt ?? null,
   };
+
+  return normalizeResponseState(merged);
 };
 
 const normalizeUpdatedState = (candidate: PersistedTaskPaneState): PersistedTaskPaneState => ({
-  ...candidate,
-  pipelineResponse: candidate.pipelineResponse ?? null,
+  ...normalizeResponseState(candidate),
   isSending: candidate.isSending ?? false,
   activeRequestId: candidate.activeRequestId ?? null,
   activeRequestPrompt: candidate.activeRequestPrompt ?? null,

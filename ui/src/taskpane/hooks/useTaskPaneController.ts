@@ -23,6 +23,9 @@ export interface TaskPaneActions {
     copyResponseToClipboard: (response: string) => Promise<void>;
     injectResponseIntoEmail: (response: string) => Promise<void>;
     resetTaskPaneState: () => Promise<void>;
+    selectResponseByIndex: (index: number) => void;
+    selectNextResponse: () => void;
+    selectPreviousResponse: () => void;
 }
 
 export interface TaskPaneController {
@@ -169,6 +172,100 @@ export const useTaskPaneController = (): TaskPaneController => {
         [setStatusMessage]
     );
 
+    const selectResponseByIndex = React.useCallback((index: number) => {
+            mergeState((currentState) => {
+                const history = Array.isArray(currentState.responseHistory)
+                    ? currentState.responseHistory
+                    : [];
+
+                if (!history.length) {
+                    if (currentState.pipelineResponse === null && currentState.selectedResponseIndex === null) {
+                        return currentState;
+                    }
+
+                    return {
+                        ...currentState,
+                        pipelineResponse: null,
+                        selectedResponseIndex: null,
+                    };
+                }
+
+                const clampedIndex = Math.min(Math.max(index, 0), history.length - 1);
+
+                if (clampedIndex === currentState.selectedResponseIndex) {
+                    return currentState;
+                }
+
+                return {
+                    ...currentState,
+                    pipelineResponse: history[clampedIndex] ?? null,
+                    selectedResponseIndex: clampedIndex,
+                };
+            });
+        },
+        [mergeState]
+    );
+
+    const selectNextResponse = React.useCallback(() => {
+            mergeState((currentState) => {
+                const history = Array.isArray(currentState.responseHistory)
+                    ? currentState.responseHistory
+                    : [];
+
+                if (!history.length) {
+                    return currentState;
+                }
+
+                const currentIndex =
+                    currentState.selectedResponseIndex === null || currentState.selectedResponseIndex === undefined
+                        ? history.length - 1
+                        : currentState.selectedResponseIndex;
+                const nextIndex = Math.min(currentIndex + 1, history.length - 1);
+
+                if (nextIndex === currentIndex) {
+                    return currentState;
+                }
+
+                return {
+                    ...currentState,
+                    pipelineResponse: history[nextIndex] ?? null,
+                    selectedResponseIndex: nextIndex,
+                };
+            });
+        },
+        [mergeState]
+    );
+
+    const selectPreviousResponse = React.useCallback(() => {
+            mergeState((currentState) => {
+                const history = Array.isArray(currentState.responseHistory)
+                    ? currentState.responseHistory
+                    : [];
+
+                if (!history.length) {
+                    return currentState;
+                }
+
+                const currentIndex =
+                    currentState.selectedResponseIndex === null || currentState.selectedResponseIndex === undefined
+                        ? history.length - 1
+                        : currentState.selectedResponseIndex;
+                const nextIndex = Math.max(currentIndex - 1, 0);
+
+                if (nextIndex === currentIndex) {
+                    return currentState;
+                }
+
+                return {
+                    ...currentState,
+                    pipelineResponse: history[nextIndex] ?? null,
+                    selectedResponseIndex: nextIndex,
+                };
+            });
+        },
+        [mergeState]
+    );
+
     // Bundle all user-facing actions into a stable object that can be passed to UI components
     const actions: TaskPaneActions = React.useMemo(
         () => ({
@@ -180,12 +277,18 @@ export const useTaskPaneController = (): TaskPaneController => {
             copyResponseToClipboard,
             injectResponseIntoEmail,
             resetTaskPaneState,
+            selectResponseByIndex,
+            selectNextResponse,
+            selectPreviousResponse,
         }),
         [
             cancelCurrentSend,
             copyResponseToClipboard,
             resetTaskPaneState,
             injectResponseIntoEmail,
+            selectNextResponse,
+            selectPreviousResponse,
+            selectResponseByIndex,
             refreshFromCurrentItem,
             sendCurrentEmail,
             setOptionalPromptVisible,

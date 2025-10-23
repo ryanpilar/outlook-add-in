@@ -513,34 +513,31 @@ export const useTaskPaneController = (): TaskPaneController => {
     return { state, actions };
 };
 
-import {ReactNode, useCallback, useEffect, useMemo, useState} from "react";
-import {Badge, TabListProps, TabValue} from "@fluentui/react-components";
-import {Checkmark16Regular} from "@fluentui/react-icons";
+import {useCallback, useEffect, useRef, useState} from "react";
+import {TabListProps, TabValue} from "@fluentui/react-components";
 
 export interface UseTabsOptions {
     hasResponse: boolean;
+    responseCount: number;
     isOptionalPromptVisible: boolean;
     onOptionalPromptVisibilityChange: (visible: boolean) => void;
-    responseBadgeClassName?: string;
-    responseIconClassName?: string;
 }
 
 export interface UseTabsResult {
     selectedTab: TabValue;
     handleTabSelect: NonNullable<TabListProps["onTabSelect"]>;
-    responseBadge: ReactNode;
 }
 
 export const useTabs = ({
     hasResponse,
+    responseCount,
     isOptionalPromptVisible,
     onOptionalPromptVisibilityChange,
-    responseBadgeClassName,
-    responseIconClassName,
 }: UseTabsOptions): UseTabsResult => {
     const [selectedTab, setSelectedTab] = useState<TabValue>(() =>
         hasResponse ? "response" : "instruct"
     );
+    const previousResponseCountRef = useRef<number>(responseCount);
 
     useEffect(() => {
         setSelectedTab((current) => {
@@ -557,6 +554,18 @@ export const useTabs = ({
     }, [hasResponse]);
 
     useEffect(() => {
+        const previousCount = previousResponseCountRef.current;
+
+        if (responseCount > previousCount && responseCount > 0) {
+            setSelectedTab("response");
+        } else if (responseCount === 0 && hasResponse) {
+            setSelectedTab((current) => (current === "response" ? "instruct" : current));
+        }
+
+        previousResponseCountRef.current = responseCount;
+    }, [hasResponse, responseCount]);
+
+    useEffect(() => {
         const shouldShowOptionalPrompt = selectedTab === "instruct";
 
         if (isOptionalPromptVisible !== shouldShowOptionalPrompt) {
@@ -571,22 +580,9 @@ export const useTabs = ({
         []
     );
 
-    const responseBadge = useMemo(() => (
-        hasResponse ? (
-            <Badge
-                appearance="tint"
-                shape="circular"
-                color="success"
-                className={responseBadgeClassName}
-                icon={<Checkmark16Regular className={responseIconClassName} />}
-            />
-        ) : null
-    ), [hasResponse, responseBadgeClassName, responseIconClassName]);
-
     return {
         selectedTab,
         handleTabSelect,
-        responseBadge,
     };
 };
 
