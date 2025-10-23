@@ -274,6 +274,10 @@ const TextInsertion: React.FC<TextInsertionProps> = (props: TextInsertionProps) 
             return null;
         }
 
+        if (responseCount === 1) {
+            return responseCount.toString();
+        }
+
         if (
             props.activeResponseIndex === null ||
             props.activeResponseIndex < 0 ||
