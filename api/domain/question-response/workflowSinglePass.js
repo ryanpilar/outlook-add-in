@@ -1,8 +1,8 @@
 /**
- * =======================|| Single-Pass Question Workflow ||=======================
+ * =======================|| Workflow Single-Pass Question ||=======================
  *
  * Executes the streamlined planning strategy that gathers File Search tooling,
- * feeds the approved-question catalog plus the normalized email into the prompt,
+ * feeds the questions-approved catalog plus the normalized email into the prompt,
  * and asks GPT for the structured response payload in one Responses API call.
  * The model receives the same JSON schema we expose to downstream services so the
  * assistant plan, vector sufficiency analysis, and citations arrive in a single
@@ -19,7 +19,7 @@ import {
 
 const DEFAULT_MODEL = 'gpt-5-mini';
 
-export const runSinglePassQuestionPlan = async ({
+export const runWorkflowSinglePassQuestionPlan = async ({
     client,
     normalizedEmail,
     retrievalPlan,
@@ -80,5 +80,5 @@ export const runSinglePassQuestionPlan = async ({
 };
 
 export default {
-    runSinglePassQuestionPlan,
+    runWorkflowSinglePassQuestionPlan,
 };

@@ -8,7 +8,7 @@
  * message assembly.
  */
 
-import { APPROVED_QUESTIONS } from '../approvedQuestions.js';
+import { QUESTIONS_APPROVED } from '../questionsApproved.js';
 
 export const buildBaseSystemInstruction = () =>
     [
@@ -21,8 +21,8 @@ export const buildBaseSystemInstruction = () =>
         'When providing an emailReply, answer as though you are the human, not as an agent.',
     ].join(' ');
 
-const buildApprovedQuestionCatalog = () =>
-    APPROVED_QUESTIONS.map((question, index) => {
+const buildQuestionsApprovedCatalog = () =>
+    QUESTIONS_APPROVED.map((question, index) => {
         const guidanceLines = question.answerGuidance
             .map((line, lineIndex) => `       ${lineIndex + 1}. ${line}`)
             .join('\n');
@@ -79,7 +79,7 @@ export const buildDeveloperInstruction = (generationMode) => {
         'Follow these directives when drafting response plans for PEKA residents.',
         '',
         'Approved condo management questions you may answer:',
-        buildApprovedQuestionCatalog(),
+        buildQuestionsApprovedCatalog(),
         '',
         'Tasks:',
         '1. Determine if the resident is effectively asking one of the approved questions (allowing paraphrasing).',

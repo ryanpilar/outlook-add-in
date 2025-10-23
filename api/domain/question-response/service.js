@@ -15,21 +15,21 @@
 
 import ApiError from '../../http/errors/ApiError.js';
 import getResponsesClient from '../../integrations/openai/client.js';
-import { APPROVED_QUESTIONS } from './approvedQuestions.js';
+import { QUESTIONS_APPROVED } from './questionsApproved.js';
 import { buildFallbackPayload } from './fallbackPlans.js';
-import { runSinglePassQuestionPlan } from './singlePassWorkflow.js';
-import { runTwoPassQuestionPlan } from './twoPassWorkflow.js';
+import { runWorkflowSinglePassQuestionPlan } from './workflowSinglePass.js';
+import { runWorkflowTwoPassQuestionPlan } from './workflowTwoPass.js';
 
 const DEBUG_LOGS_ENABLED = process.env.PIPELINE_DEBUG_LOGS === 'true';
 const WORKFLOW_MODES = {
-    SINGLE_PASS: 'single-pass',
-    TWO_PASS: 'two-pass',
+    WORKFLOW_SINGLE_PASS: 'single-pass',
+    WORKFLOW_TWO_PASS: 'two-pass',
 };
 const WORKFLOW_SELECTION = process.env.OPENAI_QUESTION_PLAN_WORKFLOW;
 const ACTIVE_WORKFLOW =
-    WORKFLOW_SELECTION === WORKFLOW_MODES.TWO_PASS
-        ? WORKFLOW_MODES.TWO_PASS
-        : WORKFLOW_MODES.SINGLE_PASS;
+    WORKFLOW_SELECTION === WORKFLOW_MODES.WORKFLOW_TWO_PASS
+        ? WORKFLOW_MODES.WORKFLOW_TWO_PASS
+        : WORKFLOW_MODES.WORKFLOW_SINGLE_PASS;
 const SINGLE_PASS_MODEL = process.env.OPENAI_SINGLE_PASS_MODEL || process.env.OPENAI_VECTOR_PASS_MODEL;
 const VECTOR_PASS_MODEL = process.env.OPENAI_VECTOR_PASS_MODEL;
 const RESEARCH_PASS_MODEL = process.env.OPENAI_RESEARCH_PASS_MODEL;
@@ -48,10 +48,10 @@ export const getQuestionResponsePlan = async (normalizedEmail, options = {}) => 
         // Keep both workflows wired up and default to the single-pass path for now.
         const retrievalPlan = options?.retrievalPlan || null;
 
-        const useTwoPassWorkflow = ACTIVE_WORKFLOW === WORKFLOW_MODES.TWO_PASS;
+        const useWorkflowTwoPass = ACTIVE_WORKFLOW === WORKFLOW_MODES.WORKFLOW_TWO_PASS;
 
-        const { finalPlan, vectorOnlyDraft, researchAugmentation } = useTwoPassWorkflow
-            ? await runTwoPassQuestionPlan({
+        const { finalPlan, vectorOnlyDraft, researchAugmentation } = useWorkflowTwoPass
+            ? await runWorkflowTwoPassQuestionPlan({
                   client,
                   normalizedEmail,
                   retrievalPlan,
@@ -61,7 +61,7 @@ export const getQuestionResponsePlan = async (normalizedEmail, options = {}) => 
                       researchPassModel: RESEARCH_PASS_MODEL,
                   },
               })
-            : await runSinglePassQuestionPlan({
+            : await runWorkflowSinglePassQuestionPlan({
                   client,
                   normalizedEmail,
                   retrievalPlan,
@@ -75,7 +75,7 @@ export const getQuestionResponsePlan = async (normalizedEmail, options = {}) => 
 
         return {
             ...finalPlan,
-            approvedQuestions: APPROVED_QUESTIONS,
+            questionsApproved: QUESTIONS_APPROVED,
             vectorOnlyDraft,
             researchAugmentation,
             questionPlanWorkflow: ACTIVE_WORKFLOW,

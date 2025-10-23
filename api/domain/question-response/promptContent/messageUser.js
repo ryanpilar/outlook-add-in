@@ -1,5 +1,5 @@
 /**
- * ========================|| User Message Builder ||========================
+ * ========================|| Message User Builder ||========================
  *
  * Shapes the normalized resident email into the user-role message presented to
  * the model. Keeping the builder close to the other prompt content utilities
@@ -25,7 +25,7 @@ const buildEmailHeaderBlock = (normalizedEmail) => {
     return headerLines.length > 0 ? `${headerLines.join('\n')}\n\n` : '';
 };
 
-export const buildUserInstruction = (normalizedEmail) =>
+export const buildMessageUserInstruction = (normalizedEmail) =>
     [
         'Resident email (plain text):',
         '---',
@@ -33,9 +33,10 @@ export const buildUserInstruction = (normalizedEmail) =>
         '---',
     ].join('\n');
 
-export const buildUserMessageBody = (normalizedEmail) => buildUserInstruction(normalizedEmail);
+export const buildMessageUserBody = (normalizedEmail) =>
+    buildMessageUserInstruction(normalizedEmail);
 
 export default {
-    buildUserInstruction,
-    buildUserMessageBody,
+    buildMessageUserInstruction,
+    buildMessageUserBody,
 };

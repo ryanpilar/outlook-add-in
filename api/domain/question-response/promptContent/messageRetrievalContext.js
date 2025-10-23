@@ -1,5 +1,5 @@
 /**
- * =====================|| Retrieval Context Message ||=====================
+ * =====================|| Message Retrieval Context ||=====================
  *
  * Formats the retrieval summary prepared by the pipeline into textual content
  * that eventually becomes a developer-role message. Surfacing this context
@@ -7,7 +7,7 @@
  * question IDs the orchestrator selected without bloating the wrapper code.
  */
 
-export const buildRetrievalContextBody = (retrievalSummary) => {
+export const buildMessageRetrievalContextBody = (retrievalSummary) => {
     if (!retrievalSummary) {
         return null;
     }
@@ -41,7 +41,7 @@ export const buildRetrievalContextBody = (retrievalSummary) => {
             const questionText =
                 questionIds.length > 0
                     ? questionIds.join(', ')
-                    : 'Catch-all (applies to all approved questions)';
+                    : 'Catch-all (applies to all questions approved)';
             const description =
                 typeof base?.description === 'string' && base.description.trim().length > 0
                     ? base.description.trim()
@@ -101,5 +101,5 @@ export const buildRetrievalContextBody = (retrievalSummary) => {
 };
 
 export default {
-    buildRetrievalContextBody,
+    buildMessageRetrievalContextBody,
 };

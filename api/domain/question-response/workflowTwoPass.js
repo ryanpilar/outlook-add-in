@@ -1,5 +1,5 @@
 /**
- * ========================|| Two-Pass Question Response Flow ||========================
+ * ========================|| Workflow Two-Pass Question Response Flow ||========================
  *
  * Encapsulates the sequential vector-only ➜ research-augmented Responses API calls.
  * Keeping this orchestration isolated lets the service layer stay concise while we wire
@@ -124,7 +124,7 @@ const buildResearchAugmentedPlan = async ({
     };
 };
 
-export const runTwoPassQuestionPlan = async ({
+export const runWorkflowTwoPassQuestionPlan = async ({
     client,
     normalizedEmail,
     retrievalPlan,
@@ -205,5 +205,5 @@ export const runTwoPassQuestionPlan = async ({
 };
 
 export default {
-    runTwoPassQuestionPlan,
+    runWorkflowTwoPassQuestionPlan,
 };

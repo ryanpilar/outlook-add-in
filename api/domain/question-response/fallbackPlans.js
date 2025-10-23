@@ -4,7 +4,7 @@
 // planning utilities ensures the service layer focuses on orchestration rather than constant
 // definitions.
 
-import { APPROVED_QUESTIONS } from './approvedQuestions.js';
+import { QUESTIONS_APPROVED } from './questionsApproved.js';
 
 export const DEFAULT_ASSISTANT_PLAN = {
     emailReply:
@@ -53,7 +53,7 @@ export const buildFallbackPayload = (error) => ({
             ],
         },
     },
-    approvedQuestions: APPROVED_QUESTIONS,
+    questionsApproved: QUESTIONS_APPROVED,
     vectorOnlyDraft: null,
     researchAugmentation: null,
 });
