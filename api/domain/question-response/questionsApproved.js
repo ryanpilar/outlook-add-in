@@ -248,5 +248,3 @@ export const QUESTIONS_APPROVED = [
         ],
     },
 ];
-
-export default APPROVED_QUESTIONS;
