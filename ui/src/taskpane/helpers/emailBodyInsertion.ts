@@ -1,5 +1,5 @@
 
-import { convertPlainTextToHtml } from "./htmlFormatting";
+import { convertMarkdownToHtmlDocument } from "./htmlFormatting";
 
 export const insertResponseIntoBody = async (response: string): Promise<void> => {
   if (!response) {
@@ -16,7 +16,7 @@ export const insertResponseIntoBody = async (response: string): Promise<void> =>
     );
   }
 
-  const htmlContent = convertPlainTextToHtml(response);
+  const htmlContent = convertMarkdownToHtmlDocument(response);
 
   await new Promise<void>((resolve, reject) => {
     body.setSelectedDataAsync(
