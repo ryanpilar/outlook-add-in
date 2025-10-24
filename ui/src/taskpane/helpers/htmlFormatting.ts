@@ -37,7 +37,7 @@ const applyInlineFormatting = (value: string): string => {
     formatted = formatted.replace(/__(.+?)__/g, (_match, text) => `<strong>${text}</strong>`);
     formatted = formatted.replace(/\*(.+?)\*/g, (_match, text) => `<em>${text}</em>`);
 
-    formatted = formatted.replace(/\[([^\]]+)]\(([^)]+)\)/g, (match, linkText, rawUrl) => {
+    formatted = formatted.replace(/\[([^\]]+)]\(([^)]+)\)/g, (_, linkText, rawUrl) => {
         const trimmedUrl = rawUrl.trim();
 
         if (!/^https?:\/\//i.test(trimmedUrl)) {
