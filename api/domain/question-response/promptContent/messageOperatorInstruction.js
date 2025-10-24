@@ -7,11 +7,21 @@
  */
 
 export const buildOptionalMessageOperatorInstructionBody = (optionalPrompt) => {
-    if (typeof optionalPrompt !== 'string' || optionalPrompt.trim().length === 0) {
+    if (typeof optionalPrompt !== 'string') {
         return null;
     }
 
-    return ['Additional operator instructions for this request:', optionalPrompt].join('\n\n');
+    const trimmedPrompt = optionalPrompt.trim();
+
+    if (trimmedPrompt.length === 0) {
+        return null;
+    }
+
+    return [
+        'Additional operator instructions for this request (mandatory – treat each item as a hard requirement):',
+        trimmedPrompt,
+        'If any portion of these operator instructions cannot be satisfied with the available condo knowledge, you must set responseMetadata.vectorAnswer.isVectorAnswerSufficient to false and clearly describe the missing operator requirement in responseMetadata.vectorAnswer.missingInformationNotes so a follow-up pass can address it.',
+    ].join('\n\n');
 };
 
 export default {
