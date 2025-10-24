@@ -1,4 +1,3 @@
-/* global Office */
 
 import { convertPlainTextToHtml } from "./htmlFormatting";
 

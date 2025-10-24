@@ -23,21 +23,21 @@ export interface LinksTabProps {
 }
 
 const LinksTabComponent: React.FC<LinksTabProps> = ({
-    sourceCitations,
-    selectedCitationIndexes,
-    selectedLinksCount,
-    onCitationSelectionChange,
-    onCopySelectedLinks,
-    containerClassName,
-    sectionClassName,
-    fieldClassName,
-    toolbarClassName,
-    copyButtonClassName,
-    listClassName,
-    listItemClassName,
-    anchorClassName,
-    emptyMessageClassName,
-}) => (
+                                                        sourceCitations,
+                                                        selectedCitationIndexes,
+                                                        selectedLinksCount,
+                                                        onCitationSelectionChange,
+                                                        onCopySelectedLinks,
+                                                        containerClassName,
+                                                        sectionClassName,
+                                                        fieldClassName,
+                                                        toolbarClassName,
+                                                        copyButtonClassName,
+                                                        listClassName,
+                                                        listItemClassName,
+                                                        anchorClassName,
+                                                        emptyMessageClassName,
+                                                    }) => (
     <div className={containerClassName}>
         <div className={sectionClassName}>
             <Field className={fieldClassName}>
@@ -45,26 +45,23 @@ const LinksTabComponent: React.FC<LinksTabProps> = ({
                     <div className={sectionClassName}>
                         <div className={toolbarClassName}>
                             <Button
-                                appearance="secondary"
-                                icon={<Copy16Regular/>}
-                                size="medium"
+                                appearance="secondary" icon={<Copy16Regular/>} size="medium"
+                                className={copyButtonClassName}
                                 onClick={() => {
                                     if (!selectedLinksCount) return;
                                     onCopySelectedLinks();
                                 }}
-                                className={copyButtonClassName}
                             >
                                 {`Copy (${selectedLinksCount})`}
                             </Button>
                         </div>
                         <ul className={listClassName}>
+
                             {sourceCitations.map((citation, index) => {
                                 const anchorId = `citation-link-${index}`;
                                 const isSelected = selectedCitationIndexes.includes(index);
-
                                 return (
-                                    <li
-                                        className={listItemClassName}
+                                    <li className={listItemClassName}
                                         key={`${citation?.url ?? "missing-url"}-${index}`}
                                     >
                                         <Checkbox

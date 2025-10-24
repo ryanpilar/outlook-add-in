@@ -1,4 +1,3 @@
-/* global Office, console */
 
 /**
  * Configure the shared runtime so the add-in keeps running when the task pane closes

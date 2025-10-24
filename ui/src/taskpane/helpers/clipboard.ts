@@ -1,4 +1,3 @@
-/* global document, navigator */
 
 export const copyTextToClipboard = async (text: string, html?: string): Promise<void> => {
   if (!text) {

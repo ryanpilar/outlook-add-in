@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Button, Spinner, makeStyles, tokens } from "@fluentui/react-components";
+import {Button, Spinner, makeStyles, tokens} from "@fluentui/react-components";
 
 interface FooterActionsProps {
     isSending: boolean;
@@ -43,51 +43,42 @@ const useStyles = makeStyles({
 });
 
 const FooterActions: React.FC<FooterActionsProps> = ({
-    isSending,
-    emailResponse,
-    onSend,
-    onCancel,
-    onClear,
-}) => {
+                                                         isSending,
+                                                         emailResponse,
+                                                         onSend,
+                                                         onCancel,
+                                                         onClear,
+                                                     }) => {
     const styles = useStyles();
 
     return (
         <div className={styles.root}>
+
             <Button
-                appearance="primary"
-                disabled={isSending}
-                size="large"
-                onClick={onSend}
+                appearance="primary" disabled={isSending} size="large" onClick={onSend}
                 className={styles.primaryActionButton}
             >
                 {isSending ? (
                     <span className={styles.primaryButtonContent}>
-                        <Spinner size="extra-tiny" />
+                        <Spinner size="extra-tiny"/>
                         Sending...
                     </span>
-                ) : (
-                    emailResponse ? "Try Again" : "Generate"
-                )}
+                ) : (emailResponse ? "Try Again" : "Generate")}
             </Button>
+
             {isSending ? (
-                <Button
-                    appearance="secondary"
-                    size="large"
-                    onClick={onCancel}
-                    className={styles.stopButton}
-                >
+                <Button appearance="secondary" size="large" onClick={onCancel} className={styles.stopButton}>
                     Stop
                 </Button>
             ) : (
                 <Button
-                    appearance="secondary"
-                    size="large"
-                    onClick={onClear}
+                    appearance="secondary" size="large" onClick={onClear}
                     className={styles.clearButton}
                 >
                     Reset
                 </Button>
             )}
+
         </div>
     );
 };

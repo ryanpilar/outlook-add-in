@@ -8,7 +8,7 @@ export const useToasts = (toasterId: string) => {
 
     const showSuccessToast = useCallback(
         (title: string, subtitle?: string) => {
-            // unique ID so you can dismiss it manually
+
             const toastId = crypto.randomUUID();
 
             dispatchToast(

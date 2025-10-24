@@ -158,7 +158,6 @@ const findSenderMetadata = async (currentItem: any): Promise<BasicEmailMetadata[
 };
 
 /**
- * Build a lightweight envelope of metadata that accompanies the email body.
  * Includes subject, sender, and threading identifiers so the backend can correlate
  * without parsing the raw email body.
  */
