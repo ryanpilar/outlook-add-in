@@ -60,14 +60,10 @@ const wrapParagraph = (content: string): string => {
     return `<p>${formatted}</p>`;
 };
 
-const flushList = (
-    buffer: string[],
-    type: "ul" | "ol"
-): string => {
+const flushList = (buffer: string[], type: "ul" | "ol"): string => {
     if (buffer.length === 0) {
         return "";
     }
-
     const items = buffer
         .map((item) => `<li>${applyInlineFormatting(item)}</li>`)
         .join("");
