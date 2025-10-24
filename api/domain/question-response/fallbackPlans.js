@@ -4,7 +4,7 @@
 // planning utilities ensures the service layer focuses on orchestration rather than constant
 // definitions.
 
-import { APPROVED_QUESTIONS } from './approvedQuestions.js';
+import { QUESTIONS_APPROVED } from './questionsApproved.js';
 
 export const DEFAULT_ASSISTANT_PLAN = {
     emailReply:
@@ -43,7 +43,19 @@ export const buildFallbackPayload = (error) => ({
         reasoning: `Fell back to manual handling: ${error.message}`,
     },
     assistantPlan: DEFAULT_ASSISTANT_PLAN,
-    approvedQuestions: APPROVED_QUESTIONS,
+    responseMetadata: {
+        vectorAnswer: {
+            isVectorAnswerSufficient: false,
+            reasoning:
+                'Automated planning disabled: a teammate must supply additional condo context or perform web research.',
+            missingInformationNotes: [
+                'No automated vector-store analysis was produced because the Responses API call failed.',
+            ],
+        },
+    },
+    questionsApproved: QUESTIONS_APPROVED,
+    vectorOnlyDraft: null,
+    researchAugmentation: null,
 });
 
 export default {

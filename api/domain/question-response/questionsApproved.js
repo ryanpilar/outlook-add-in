@@ -1,16 +1,18 @@
 /**
- * ===========================|| Approved Question Catalog ||===========================
+ * ===========================|| Questions Approved Catalog ||==========================
  *
  * Central list of condo board-approved resident questions the MVP is permitted to answer.
  * `answerGuidance` captures the operational talking points the model should lean on when
  * preparing summaries and next steps. `resourceHints` offers canonical condo-website URLs
  * the model should treat as the first stop for policy language or downloadable forms.
+ * `fileSearchContexts` (optional) links an approved question to specific File Search
+ * uploads so retrieval can automatically attach them when the question appears.
  * Keep these notes aligned with condo leadership so responses stay consistent as the
  * service scales. Avoid adding speculative details—stick to what is published on
  * peka.ab.ca or documented in linked PDFs.
  */
 
-export const APPROVED_QUESTIONS = [
+export const QUESTIONS_APPROVED = [
     {
         id: 'rental-application',
         title: 'How do I submit a rental application for tenancy?',
@@ -217,6 +219,7 @@ export const APPROVED_QUESTIONS = [
             'Reference the condo corporation portal for formal announcements about special assessments.',
             'Encourage owners to review board communications there for background and timelines.',
             'Remind them to contact PEKA if payment logistics posted in the portal need clarification.',
+            'Lean on the condo levy guidance mirrored in the vector store as your primary source; only trigger external research if the retrieved passages leave the resident’s request unresolved.',
         ],
         resourceHints: [
             {
@@ -230,8 +233,18 @@ export const APPROVED_QUESTIONS = [
                 url: 'https://peka.ab.ca/',
                 usageNote: 'Share this when residents need general PEKA contact details beyond the portals.',
             },
+            {
+                label: 'Condo Law Alberta – Special Levy Primer',
+                url: 'https://www.condolawalberta.ca/finances/special-levy/',
+                usageNote: 'Use this article when clarifying how special levies are triggered and approved.',
+            },
+        ],
+        fileSearchContexts: [
+            {
+                vectorStoreHandle: 'pica-master-library',
+                summary:
+                    'Vector library materials covering Alberta condo corporation special assessments. Treat the retrieved passages as the authoritative source.',
+            },
         ],
     },
 ];
-
-export default APPROVED_QUESTIONS;

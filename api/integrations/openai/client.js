@@ -1,10 +1,4 @@
-/**
- * ============================|| Responses API Client ||============================
- *
- * Provides a lazily-initialized instance of the official OpenAI SDK. Using the SDK keeps us
- * aligned with the latest Responses API surface area (streaming, tool support, error types)
- * without hand-rolling HTTP plumbing in each service layer.
- */
+/** ============================|| Responses API Client ||============================ */
 
 import OpenAI from 'openai';
 import ApiError from '../../http/errors/ApiError.js';

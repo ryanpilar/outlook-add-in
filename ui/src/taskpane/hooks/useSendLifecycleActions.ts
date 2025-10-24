@@ -58,6 +58,7 @@ export const useSendLifecycleActions = ({
             ...previous,
             statusMessage: "Sending the current email content...",
             pipelineResponse: null,
+            activeResponseIndex: null,
             isSending: true,
             activeRequestId: requestId,
             activeRequestPrompt: optionalPrompt || null,

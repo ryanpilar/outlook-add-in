@@ -15,30 +15,26 @@
 
 import ApiError from '../../http/errors/ApiError.js';
 import getResponsesClient from '../../integrations/openai/client.js';
-import { APPROVED_QUESTIONS } from './approvedQuestions.js';
-import {
-    buildQuestionResponsePrompt,
-    getQuestionResponseSchema,
-} from './promptWrappers.js';
+import { QUESTIONS_APPROVED } from './questionsApproved.js';
 import { buildFallbackPayload } from './fallbackPlans.js';
+import { runWorkflowSinglePassQuestionPlan } from './workflowSinglePass.js';
+import { runWorkflowTwoPassQuestionPlan } from './workflowTwoPass.js';
 
-// Opt-in support for OpenAI's web_search tool. When the environment flag is
-// enabled we send the documented `tools` payload so the model can fetch fresh
-// context before responding. Keeping this logic isolated makes it obvious how
-// to wire additional tool configuration without touching the core prompt flow.
-const getWebSearchTools = () => {
-    if (process.env.OPENAI_ENABLE_WEB_SEARCH !== 'true') {
-        return undefined;
-    }
-
-    return [
-        {
-            type: 'web_search',
-        },
-    ];
+const DEBUG_LOGS_ENABLED = process.env.PIPELINE_DEBUG_LOGS === 'true';
+const WORKFLOW_MODES = {
+    WORKFLOW_SINGLE_PASS: 'single-pass',
+    WORKFLOW_TWO_PASS: 'two-pass',
 };
+const WORKFLOW_SELECTION = process.env.OPENAI_QUESTION_PLAN_WORKFLOW;
+const ACTIVE_WORKFLOW =
+    WORKFLOW_SELECTION === WORKFLOW_MODES.WORKFLOW_TWO_PASS
+        ? WORKFLOW_MODES.WORKFLOW_TWO_PASS
+        : WORKFLOW_MODES.WORKFLOW_SINGLE_PASS;
+const SINGLE_PASS_MODEL = process.env.OPENAI_SINGLE_PASS_MODEL || process.env.OPENAI_VECTOR_PASS_MODEL;
+const VECTOR_PASS_MODEL = process.env.OPENAI_VECTOR_PASS_MODEL;
+const RESEARCH_PASS_MODEL = process.env.OPENAI_RESEARCH_PASS_MODEL;
 
-export const getQuestionResponsePlan = async (normalizedEmail) => {
+export const getQuestionResponsePlan = async (normalizedEmail, options = {}) => {
     if (!normalizedEmail || typeof normalizedEmail !== 'object') {
         throw new ApiError(400, 'Normalized email payload missing.');
     }
@@ -48,80 +44,41 @@ export const getQuestionResponsePlan = async (normalizedEmail) => {
         // Grab the singleton SDK client so each call reuses connection pooling + auth setup.
         const client = getResponsesClient();
 
-        // ================================|| Prompt Prep ||=============================== //
-        // Build the structured message array + JSON schema before hitting the wire. Keeping
-        // these helpers pure makes it trivial to unit test prompt changes in isolation.
-        const inputMessages = buildQuestionResponsePrompt(normalizedEmail);
-        // const { name: schemaName, strict, schema } = getQuestionResponseSchema();
-        const textFormat = {
-            type: 'json_schema',
-            ...getQuestionResponseSchema(),
+        // ===========================|| Workflow Selection ||=========================== //
+        // Keep both workflows wired up and default to the single-pass path for now.
+        const retrievalPlan = options?.retrievalPlan || null;
 
-        };
+        const useWorkflowTwoPass = ACTIVE_WORKFLOW === WORKFLOW_MODES.WORKFLOW_TWO_PASS;
 
-        const payload = {
-            model: 'gpt-5-mini',
-            input: inputMessages,
-            text: {
-                format: textFormat,
-            },
-            // reasoning: {
-            //     effort: 'medium'
-            // }
-            // temperature: 0.2,
-        };
-
-        const webSearchTools = getWebSearchTools();
-
-        if (webSearchTools) {
-            payload.tools = webSearchTools;
-            payload.tool_choice = 'auto';
-        }
-
-        // ============================|| API Invocation ||============================ //
-        // Call the Responses API (SDK v5.23.2). When File Search or tool outputs are
-        // enabled the SDK returns a content array, so always guard against mixed output
-        // formats as documented at https://platform.openai.com/docs/api-reference/responses.
-        const response = await client.responses.create(payload);
-
-        // Prefer the convenience helper, but defensively read the content array if needed.
-        // Some SDK versions populate `output` with granular content blocks (future tool
-        // outputs, multiple text segments, etc.), so we gather anything explicitly marked as
-        // model text and stitch it back together.
-        const fallbackSegments = Array.isArray(response?.output)
-            ? response.output.flatMap((item) =>
-                Array.isArray(item?.content)
-                    ? item.content
-                        .filter((contentItem) => contentItem?.type === 'output_text')
-                        .map((contentItem) => contentItem?.text || '')
-                    : [])
-            : [];
-
-        const outputText = response?.output_text ?? fallbackSegments.join('');
-
-        if (!outputText.trim()) {
-            throw new Error('OpenAI response missing output_text.');
-        }
-
-        // ==============================|| Parse & Return ||============================== //
-        // The schema guarantees a consistent object shape. Attach the catalog for the UI so
-        // it can surface "other questions you can ask" without another import.
-        const parsed = JSON.parse(outputText);
-
-        const normalizedMatch = {
-            ...parsed.match,
-            matchedQuestions: Array.isArray(parsed?.match?.matchedQuestions)
-                ? parsed.match.matchedQuestions
-                : [],
-        };
-
-        // Always echo the latest approved question metadata with the response to simplify
-        // front-end rendering and keep a single source of truth for the catalog.
+        const { finalPlan, vectorOnlyDraft, researchAugmentation } = useWorkflowTwoPass
+            ? await runWorkflowTwoPassQuestionPlan({
+                  client,
+                  normalizedEmail,
+                  retrievalPlan,
+                  debugLogsEnabled: DEBUG_LOGS_ENABLED,
+                  modelOptions: {
+                      vectorPassModel: VECTOR_PASS_MODEL,
+                      researchPassModel: RESEARCH_PASS_MODEL,
+                  },
+              })
+            : await runWorkflowSinglePassQuestionPlan({
+                  client,
+                  normalizedEmail,
+                  retrievalPlan,
+                  debugLogsEnabled: DEBUG_LOGS_ENABLED,
+                  modelOptions: {
+                      singlePassModel: SINGLE_PASS_MODEL,
+                      vectorPassModel: VECTOR_PASS_MODEL,
+                      researchPassModel: RESEARCH_PASS_MODEL,
+                  },
+              });
 
         return {
-            ...parsed,
-            match: normalizedMatch,
-            approvedQuestions: APPROVED_QUESTIONS,
+            ...finalPlan,
+            questionsApproved: QUESTIONS_APPROVED,
+            vectorOnlyDraft,
+            researchAugmentation,
+            questionPlanWorkflow: ACTIVE_WORKFLOW,
         };
     } catch (error) {
         // ===============================|| Fallback Path ||============================== //
