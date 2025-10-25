@@ -188,9 +188,10 @@ export const QUESTIONS_APPROVED = [
         title: 'What type of insurance does the Condo Corporation carry and what insurance am I responsible for as an owner.',
         canonicalQuestion: 'What insurance does the condo corporation carry and what coverage must owners maintain?',
         answerGuidance: [
-            'Direct owners to the owner portal for the latest insurance summaries provided by PEKA.',
-            'Encourage them to download the official documents before discussing coverage with their insurer.',
-            'Suggest contacting PEKA through the portal if required insurance documentation is missing.',
+            'Do not solicit extra work for yourself. Do not provide extra assistance unless explicitly asked.',
+            'Prefer vector-store guidance; only use external research if retrieval is insufficient.',
+            'Avoid offering help or extra actions.',
+            'Do not solicit extra work for yourself. Do not provide extra assistance unless explicitly asked.',
         ],
         resourceHints: [
             {
@@ -216,22 +217,26 @@ export const QUESTIONS_APPROVED = [
         title: 'When are special assessments issued and how are they determined.',
         canonicalQuestion: 'When are special assessments issued and how are they determined?',
         answerGuidance: [
-            'Reference the condo corporation portal for formal announcements about special assessments.',
-            'Encourage owners to review board communications there for background and timelines.',
-            'Remind them to contact PEKA if payment logistics posted in the portal need clarification.',
-            'Lean on the condo levy guidance mirrored in the vector store as your primary source; only trigger external research if the retrieved passages leave the resident’s request unresolved.',
+
+            'Be friendly and Keep the answer focused.',
+            'Do not mention enforcement/collections unless directly asked by the sender.',
+            'Group the main reasons for a levy in one sentence — avoid listing the same ideas twice.',
+            'Keep scope narrow: do not include collections/enforcement or definitions unless the email explicitly asks.',
+            'Answer only what is relevant. Do not over provide information.',
+            'Do not speak matter of fact because there is a lot of factors to consider. Be more inclined to point to "Condo Law Alberta", than to speak as an authority.',
+            'Prefer vector-store guidance; only use external research if retrieval is insufficient.',
+            'Do not comment about not paying, unless explicitly asked',
+            'Avoid absolutes.',
+            'Avoid offering help or extra actions.',
+            'Do not solicit extra work for yourself. Do not provide extra assistance unless explicitly asked.',
+            'Avoid quoting or restating legislation verbatim.',
+            'Keep your response under 150 words.',
         ],
         resourceHints: [
             {
                 label: 'PEKA Condo Corp Portal',
                 url: 'https://peka.ab.ca/client-portal-condo',
-                usageNote:
-                    'Direct owners here for official notices, board updates, and supporting documentation.',
-            },
-            {
-                label: 'PEKA Home Page',
-                url: 'https://peka.ab.ca/',
-                usageNote: 'Share this when residents need general PEKA contact details beyond the portals.',
+                usageNote: 'Direct owners here for official notices, board updates, and supporting documentation.',
             },
             {
                 label: 'Condo Law Alberta – Special Levy Primer',

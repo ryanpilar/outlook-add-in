@@ -1,3 +1,8 @@
+const FILE_CITATION_PLACEHOLDER_REGEX = /\uE200filecite\uE202[\s\S]*?\uE201/g;
+
+const stripFileCitationPlaceholders = (value: string): string =>
+    value.replace(FILE_CITATION_PLACEHOLDER_REGEX, "");
+
 export const escapeHtml = (value: string): string =>
     value.replace(/[&<>"']/g, (match) => {
         switch (match) {
@@ -170,8 +175,8 @@ const convertMarkdownBlocks = (text: string): string => {
 };
 
 export const convertMarkdownToHtml = (text: string): string => {
-    const trimmed = text.trim();
-
+    const sanitizedInput = stripFileCitationPlaceholders(text);
+    const trimmed = sanitizedInput.trim();
     if (!trimmed) {
         return "";
     }

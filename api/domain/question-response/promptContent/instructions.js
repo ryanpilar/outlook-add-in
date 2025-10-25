@@ -8,7 +8,7 @@
  * message assembly.
  */
 
-import { QUESTIONS_APPROVED } from '../questionsApproved.js';
+import {QUESTIONS_APPROVED} from '../questionsApproved.js';
 
 export const buildBaseSystemInstruction = () =>
     [
@@ -21,32 +21,28 @@ export const buildBaseSystemInstruction = () =>
         'When providing an emailReply, answer as though you are the human, not as an agent.',
     ].join(' ');
 
-const buildQuestionsApprovedCatalog = () =>
-    QUESTIONS_APPROVED.map((question, index) => {
-        const guidanceLines = question.answerGuidance
-            .map((line, lineIndex) => `       ${lineIndex + 1}. ${line}`)
-            .join('\n');
+const buildQuestionsApprovedCatalog = () => QUESTIONS_APPROVED.map((question, index) => {
+    const guidanceLines = question.answerGuidance
+        .map((line, lineIndex) => `       ${lineIndex + 1}. ${line}`)
+        .join('\n');
 
-        const resourceLines = (question.resourceHints || [])
-            .map(
-                (resource, resourceIndex) =>
-                    `       ${resourceIndex + 1}. ${resource.label} → ${resource.url}${
-                        resource.usageNote ? ` (${resource.usageNote})` : ''
-                    }`
-            )
-            .join('\n');
+    const resourceLines = (question.resourceHints || []).map((resource, resourceIndex) =>
+        `       ${resourceIndex + 1}. ${resource.label} → ${resource.url}${
+            resource.usageNote ? ` (${resource.usageNote})` : ''
+        }`
+    ).join('\n');
 
-        const formattedResourceBlock = resourceLines
-            ? ['   Preferred condo resources:', resourceLines].join('\n')
-            : '   Preferred condo resources:\n       (none provided)';
+    const formattedResourceBlock = resourceLines
+        ? ['   Preferred condo resources:', resourceLines].join('\n')
+        : '   Preferred condo resources:\n       (none provided)';
 
-        return [
-            `${index + 1}. [${question.id}] ${question.title}`,
-            '   Suggested coverage:',
-            guidanceLines,
-            formattedResourceBlock,
-        ].join('\n');
-    }).join('\n\n');
+    return [
+        `${index + 1}. [${question.id}] ${question.title}`,
+        '   Suggested coverage:',
+        guidanceLines,
+        formattedResourceBlock,
+    ].join('\n');
+}).join('\n\n');
 
 const buildModeSpecificLines = (generationMode) => {
     if (generationMode === 'vector-only') {
@@ -107,10 +103,9 @@ export const buildDeveloperInstruction = (generationMode) => {
     return developerInstructionLines.join('\n');
 };
 
-const sanitizeNotes = (notes) =>
-    Array.isArray(notes)
-        ? notes.filter((note) => typeof note === 'string' && note.trim().length > 0)
-        : [];
+const sanitizeNotes = (notes) => Array.isArray(notes)
+    ? notes.filter((note) => typeof note === 'string' && note.trim().length > 0)
+    : [];
 
 export const buildVectorAssessmentText = (vectorAnswerMetadata) => {
     const vectorStatus = vectorAnswerMetadata?.isVectorAnswerSufficient ? 'true' : 'false';
@@ -121,10 +116,9 @@ export const buildVectorAssessmentText = (vectorAnswerMetadata) => {
 
     const vectorNotes = sanitizeNotes(vectorAnswerMetadata?.missingInformationNotes);
 
-    const notesText =
-        vectorNotes.length > 0
-            ? vectorNotes.map((note, index) => `   ${index + 1}. ${note}`).join('\n')
-            : '   (none – the array was empty)';
+    const notesText = vectorNotes.length > 0
+        ? vectorNotes.map((note, index) => `   ${index + 1}. ${note}`).join('\n')
+        : '   (none – the array was empty)';
 
     return [
         'Vector-only assessment summary:',
